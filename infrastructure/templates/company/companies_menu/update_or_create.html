@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% set page_title = 'Добавление компании' if is_create else ('Редактирование компании ' ~ company.name) %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} | {{ page_title }}
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+
+  {# —–– 1. Логотип —–– #}
+  {% if not is_create and company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company.name }}">
+  </div>
+  {% endif %}
+
+  {# —–– 2. Навигация —–– #}
+  <div class="btn-group mb-3">
+    <a href="/companies" class="btn btn-outline-dark label-text fw-bold" style="border-width: 3px;">🏠 На главную
+    </a>
+  </div>
+
+  {{ page_title }}
+</h1>
+
+<div class="card p-4 mb-5">
+  <form
+    id ="company-form"
+    method="{% if is_create %}POST{% else %}PUT{% endif %}"
+    action="{% if is_create %}/companies/api/create{% else %}/companies/api/update?company_id={{company.id}}{% endif %}">
+
+    {# === 1. Текстовые поля (3 в ряд) === #}
+    <div class="row gx-3 gy-4 mb-4">
+      {% for field,label in [
+      ('name','Название компании'),
+      ('email','Электронная почта'),
+      ] %}
+      <div class="col-md-4">
+        <label for="{{ field }}" class="form-label label-text"><b>{{ label }}</b></label>
+        <input type="text" id="{{ field }}" name="{{ field }}" class="form-control text-center input-text"
+          value="{{ (company | attr(field)) if not is_create else '' }}" {% if field in ['name'] %}required{% endif %}>
+      </div>
+      {% endfor %}
+
+      <div class="col-md-4">
+        <label for="inn" class="form-label label-text"><b>ИНН</b></label>
+        <input type="text" id="inn" name="inn"
+          class="form-control text-center input-text"
+          value="{{ (company | attr('inn')) if not is_create else '' }}"
+          minlength="10" maxlength="12" pattern="\d{10,12}" required>
+      </div>
+
+      {% for field,label in [
+      ('address','Юридический адрес компании'),
+      ('workplace','Место осуществления деятельности'),
+      ('accreditation_certificat','Аттестат аккредитации'),
+      ('organization_code','Шифр знака поверки'),
+      ('contact_responsible_person','Контактные данные ответственного лица'),
+      ] %}
+      <div class="col-md-4">
+        <label for="{{ field }}" class="form-label label-text"><b>{{ label }}</b></label>
+        <input type="text" id="{{ field }}" name="{{ field }}" class="form-control text-center input-text"
+          value="{{ (company | attr(field)) if not is_create else '' }}" {% if field in ['name'] %}required{% endif %}>
+      </div>
+      {% endfor %}
+
+      {% for field,label in [
+      ('additional','Дополнительная информация'),
+      ] %}
+      <div class="col-md-4">
+        <label for="{{ field }}" class="form-label label-text"><b>{{ label }}</b></label>
+        <input type="text" id="{{ field }}" name="{{ field }}" class="form-control text-center input-text"
+          value="{{ (company | attr(field)) if not is_create else '' }}">
+      </div>
+      {% endfor %}
+
+      {% for field,label in [
+      ('longitude','Долгота'),
+      ('latitude','Широта'),
+      ('default_pressure','Давление по умолчанию'),
+      ] %}
+      <div class="col-md-4">
+        <label for="{{ field }}" class="form-label label-text"><b>{{ label }}</b></label>
+        <input type="text" id="{{ field }}" name="{{ field }}" class="form-control text-center input-text"
+          value="{% if not is_create %}{{ company | attr(field) or 0 }}{% else %}0{% endif %}">
+      </div>
+      {% endfor %}
+
+      <div class="col-md-3">
+        <label for="timezone" class="form-label label-text"><b>Временная зона</b></label>
+        <select id="timezone" name="timezone" class="form-select text-center input-text">
+          {% for tz_id, tz_name in timezones %}
+          <option value="{{ tz_id }}" {% if not is_create and company.timezone == tz_id %}selected{% elif is_create and tz_id == 'Europe/Moscow' %}selected{% endif %}>
+            {{ tz_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if status == 'admin' or (status == 'director' and (not is_create) and company.auto_teams) %}
+        <div class="col-md-3">
+          <label for="daily_verifier_verif_limit" class="form-label label-text"><b>Кол-во поверок на сотрудника</b></label>
+          <input type="number" id="daily_verifier_verif_limit" name="daily_verifier_verif_limit" class="form-control text-center input-text" min="0"
+            value="{% if not is_create %}{{ company.daily_verifier_verif_limit or 0 }}{% else %}0{% endif %}">
+        </div>
+        <div class="col-md-6">
+          <label for="yandex_disk_token" class="form-label label-text"><b>API-ключ Яндекс Диск</b></label>
+          <input type="text" id="yandex_disk_token" name="yandex_disk_token" class="form-control text-center input-text"
+            value="{% if not is_create %}{{ company.yandex_disk_token if company.yandex_disk_token else '' }}{% else %}{% endif %}">
+        </div>
+      {% endif %}
+
+      {% if status == 'admin' %}
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h6 class="card-title mb-2"><i class="bi bi-people-fill"></i> Автоматизация «Команды»</h6>
+              {% if not is_create %}
+              <span class="badge {% if company.auto_teams %}bg-success{% else %}bg-secondary{% endif %} mb-2">
+                {% if company.auto_teams %}Включена{% else %}Отключена{% endif %}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary mb-2">Не назначена</span>
+              {% endif %}
+              <small class="text-muted d-block"><i class="bi bi-info-circle"></i> Управляется в разделе "Тарифы"</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h6 class="card-title mb-2"><i class="bi bi-gear-fill"></i> Автоматизация «Метрологические характеристики»</h6>
+              {% if not is_create %}
+              <span class="badge {% if company.auto_metrolog %}bg-success{% else %}bg-secondary{% endif %} mb-2">
+                {% if company.auto_metrolog %}Включена{% else %}Отключена{% endif %}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary mb-2">Не назначена</span>
+              {% endif %}
+              <small class="text-muted d-block"><i class="bi bi-info-circle"></i> Управляется в разделе "Тарифы"</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h6 class="card-title mb-2"><i class="bi bi-calendar-event"></i> Автоподстановка года выпуска СИ</h6>
+              {% if not is_create %}
+              <span class="badge {% if company.auto_manufacture_year %}bg-success{% else %}bg-secondary{% endif %} mb-2">
+                {% if company.auto_manufacture_year %}Включена{% else %}Отключена{% endif %}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary mb-2">Не назначена</span>
+              {% endif %}
+              <small class="text-muted d-block"><i class="bi bi-info-circle"></i> Управляется в разделе "Тарифы"</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h6 class="card-title mb-2"><i class="bi bi-building-check"></i> Статус компании</h6>
+              {% if not is_create %}
+              <span class="badge {% if company.is_active %}bg-success{% else %}bg-danger{% endif %} mb-2">
+                {% if company.is_active %}Активна{% else %}Неактивна{% endif %}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary mb-2">Не активна</span>
+              {% endif %}
+              <small class="text-muted d-block"><i class="bi bi-info-circle"></i> Управляется в разделе "Тарифы"</small>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if status == 'admin' %}
+      <hr class="my-4">
+
+      <div class="card p-3 mb-4">
+        <h5 class="mb-3 text-center">Сотрудники компании</h5>
+
+        <label for="employee_ids" class="form-label label-text"><b>Выберите сотрудников</b></label>
+        <select id="employee_ids" name="employee_ids" multiple class="form-select">
+          {% for emp in all_employees %}
+          {% set fio = (emp.last_name|capitalize ~ ' ' ~ emp.name|capitalize ~ ' ' ~ (emp.patronymic or '')|capitalize)
+          %}
+          {% set status_map = {'admin':'Администратор','director':'Директор','auditor':'Аудитор'} %}
+          {% set label_status = status_map.get(emp.status, emp.status) %}
+          <option value="{{ emp.id }}" {% if not is_create and emp.id in selected_employee_ids %}selected{% endif %}>
+            {{ fio }} — {{ label_status }}
+          </option>
+          {% endfor %}
+        </select>
+
+        <p class="text-muted mt-0 mb-0 fs-sm">Подсказка: начните вводить ФИО или статус для фильтрации.</p>
+      </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    {# === 2. Блоки вкладок (2 колонки по 50%) === #}
+    <div class="row">
+      {# --- Поля выбора --- #}
+      <div class="col-lg-6">
+        <div class="card p-3 mb-4 h-100">
+          <h5 class="mb-3 text-center">Заголовки для дополнительных полей выбора</h5>
+          <ul class="nav nav-tabs" id="tabSelectFields" role="tablist">
+            {% for num in range(1,6) %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {% if num == 1 %}active{% endif %}" id="tab-select-{{ num }}" data-bs-toggle="tab"
+                data-bs-target="#select-{{ num }}" type="button" role="tab">
+                Поле №{{ num }}
+              </button>
+            </li>
+            {% endfor %}
+          </ul>
+          <div class="tab-content p-3 border border-top-0 rounded-bottom">
+            {% for num in range(1,6) %}
+            <div class="tab-pane fade {% if num == 1 %}show active{% endif %}" id="select-{{ num }}" role="tabpanel">
+              <input type="text" id="additional_checkbox_{{ num }}" name="additional_checkbox_{{ num }}"
+                class="form-control text-center input-text"
+                value="{{ (company | attr('additional_checkbox_' ~ num|string)) if not is_create else '' }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# --- Поля ввода --- #}
+      <div class="col-lg-6">
+        <div class="card p-3 mb-4 h-100">
+          <h5 class="mb-3 text-center">Заголовки для дополнительных полей ввода</h5>
+          <ul class="nav nav-tabs" id="tabInputFields" role="tablist">
+            {% for num in range(1,6) %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {% if num == 1 %}active{% endif %}" id="tab-input-{{ num }}" data-bs-toggle="tab"
+                data-bs-target="#input-{{ num }}" type="button" role="tab">
+                Поле №{{ num }}
+              </button>
+            </li>
+            {% endfor %}
+          </ul>
+          <div class="tab-content p-3 border border-top-0 rounded-bottom">
+            {% for num in range(1,6) %}
+            <div class="tab-pane fade {% if num == 1 %}show active{% endif %}" id="input-{{ num }}" role="tabpanel">
+              <input type="text" id="additional_input_{{ num }}" name="additional_input_{{ num }}"
+                class="form-control text-center input-text"
+                value="{{ (company | attr('additional_input_' ~ num|string)) if not is_create else '' }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4">
+
+    {# === 3. Календарные опции (чекбоксы по центру) === #}
+    <div class="row gx-3 gy-4 mb-4">
+      {% for field,label in [
+      ('customer_field','«Заказчик»'),
+      ('price_field','«Цена»'),
+      ('water_field','«Вода»')
+      ] %}
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100 text-center">
+          <p class="label-text fw-bold mb-3">Поле {{ label }}</p>
+          <div class="form-check d-flex justify-content-center align-items-center mb-2">
+            <input type="checkbox" name="{{ field }}" class="form-check-input me-2" {% if company_calendar_params and
+              (company_calendar_params|attr(field)) %}checked{% endif %}>
+            <label class="form-check-label label-text"><b>Отображать</b></label>
+          </div>
+          <div class="form-check d-flex justify-content-center align-items-center">
+            <input type="checkbox" name="{{ field }}_required" class="form-check-input me-2" {% if
+              company_calendar_params and (company_calendar_params|attr(field ~ '_required' )) %}checked{% endif %}>
+            <label class="form-check-label label-text"><b>Обязательное</b></label>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+        {% if is_create %}✅ Создать{% else %}✅ Сохранить{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  window.isCreate = {{ is_create|tojson }};
+  window.userStatus = '{{ status }}';
+  {% if not is_create %}
+  window.companyId = {{ company.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/companies_menu/js/update_or_create.js"></script>
+
+{% endblock %}

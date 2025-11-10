@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} | Настраиваемые отчёты (Календарь)
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/company/calendar_reports/css/view.css" />
+
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+
+  <div class="btn-group mb-3">
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+
+  Настраиваемые отчёты (Календарь)
+</h1>
+
+<div class="mb-4 d-flex justify-content-center">
+  <div class="input-group" style="flex-basis:60%;">
+    <input type="text" id="search-input" style="font-size: var(--font-base);" class="form-control input-text"
+      placeholder="Поиск по названию отчёта">
+  </div>
+</div>
+
+<div class="d-flex justify-content-center mb-4">
+  <a href="/companies/calendar-reports/create?company_id={{company_id}}"
+    class="btn btn-outline-primary fw-bold label-text" style="flex-basis:50%; border-width: 3px;">➕ Добавить новый отчёт</a>
+</div>
+
+<div id="reports-list" class="row mb-5"></div>
+
+<nav aria-label="Навигация страниц">
+  <ul id="pagination" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+  window.companyId = {{ company_id }};
+</script>
+
+<script type="module" src="/static/company/calendar_reports/js/view.js"></script>
+
+{% endblock %}

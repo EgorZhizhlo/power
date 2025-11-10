@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %} {{ title_name }} {% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/verification/metrologs_control/css/update.css">
+
+<div class="update-page container px-3">
+  <h1 class="text-center mb-5">{{ title_name }}</h1>
+
+  <div class="back-btn-wrapper text-center my-3">
+    <a href="/verification/?company_id={{ company_id }}" class="btn btn-home fw-bold">
+      🏠 На главную
+    </a>
+  </div>
+
+  <div class="update-form-wrapper">
+    <h2 class="form-title mb-4 text-center">Редактирование условий поверки</h2>
+
+    <form id="update-entry-form" method="post">
+      <div class="row g-3 rounded-section">
+        <div class="col-md-6">
+          <h4 class="text-center mb-3">До поверки</h4>
+          <div class="rounded-section">
+            <label class="form-label">Температура воды, ℃</label>
+            <input type="number" name="before_water_temperature" class="form-control mb-2"
+              value="{{ metrolog_info.before_water_temperature or '' }}" step="0.00001">
+
+            <label class="form-label">Температура окружающей среды, ℃</label>
+            <input type="number" name="before_air_temperature" class="form-control mb-2"
+              value="{{ metrolog_info.before_air_temperature or '' }}" step="0.00001">
+
+            <label class="form-label">Влажность окружающей среды, %</label>
+            <input type="number" name="before_humdity" class="form-control mb-2"
+              value="{{ metrolog_info.before_humdity or '' }}" step="0.00001">
+
+            <label class="form-label">Атмосферное давление, кПа</label>
+            <input type="number" name="before_pressure" class="form-control"
+              value="{{ metrolog_info.before_pressure or '' }}" step="0.00001">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <h4 class="text-center mb-3">После поверки</h4>
+          <div class="rounded-section">
+            <label class="form-label">Температура воды, ℃</label>
+            <input type="number" name="after_water_temperature" class="form-control mb-2"
+              value="{{ metrolog_info.after_water_temperature or '' }}" step="0.00001">
+
+            <label class="form-label">Температура окружающей среды, ℃</label>
+            <input type="number" name="after_air_temperature" class="form-control mb-2"
+              value="{{ metrolog_info.after_air_temperature or '' }}" step="0.00001">
+
+            <label class="form-label">Влажность окружающей среды, %</label>
+            <input type="number" name="after_humdity" class="form-control mb-2"
+              value="{{ metrolog_info.after_humdity or '' }}" step="0.00001">
+
+            <label class="form-label">Атмосферное давление, кПа</label>
+            <input type="number" name="after_pressure" class="form-control"
+              value="{{ metrolog_info.after_pressure or '' }}" step="0.00001">
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-section text-center">
+        <label class="form-label me-2">Использовать оптосчитыватель</label>
+        <select id="use_opt" name="use_opt" class="form-select w-auto mx-auto" onchange="toggleFields()">
+          <option value="True" {% if metrolog_info.use_opt %}selected{% endif %}>Да</option>
+          <option value="False" {% if not metrolog_info.use_opt %}selected{% endif %}>Нет</option>
+        </select>
+      </div>
+
+      {% include 'metrologs_control/q_sections.html' %}
+
+      <div class="rounded-section text-center">
+        <label class="form-label mb-3">Наибольший расход воды в трубопроводе Qнаиб., м³/ч</label>
+        <input type="number" name="qh" class="form-control text-center mx-auto" value="{{ metrolog_info.qh or '' }}"
+          step="0.00001" min="0.6" max="1.5" style="max-width: 400px;">
+      </div>
+
+      <div class="valid-conclusion" style="display: none;">
+        <h3>Заключение: счетчик воды годен к дальнейшей эксплуатации согласно описанию типа</h3>
+      </div>
+
+      <div class="invalid-conclusion" style="display: none;">
+        <h3 id="invalid-conclusion-text"></h3>
+      </div>
+
+      <div class="third-invalid-conclusion" style="display: none;">
+        <h3>Заключение: средство измерений признано непригодным, по причине: Относительная погрешность превышает
+          допустимые значения п.2.7.3</h3>
+      </div>
+
+      <input type="hidden" name="high_error_rate" value="false">
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-save">✒️ Подписать</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  window.companyId = {{ company_id | default (None) | tojson | safe }};
+  window.reasonType = {{ reason.type | default (None) | tojson | safe }};
+  window.reasonFullName = {{ reason.full_name | default (None) | tojson | safe }};
+  window.verificationEntryId = {{ verification_entry_id | default (None) | tojson | safe }};
+  window.metrologInfoId = {{ metrolog_info.id | default (None) | tojson | safe }};
+</script>
+
+<script src="/static/verification/metrologs_control/js/update.js"></script>
+{% endblock %}

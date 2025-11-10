@@ -1,0 +1,16 @@
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: #f8f9fa;
+}
+
+#fields-list .list-group-item {
+  transition: all 0.2s ease;
+}
+
+#fields-list .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.bi-grip-vertical {
+  color: #6c757d;
+}

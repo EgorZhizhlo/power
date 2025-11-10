@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} номера бланка
+{% endblock %}
+
+{% block content %}
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+    {% if company_image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company_image }}"
+             alt="Изображение компании: {{ company_name }}">
+      </div>
+    {% endif %}
+
+    <div class="btn-group mb-3">
+      <a href="/companies/act-numbers?company_id={{company_id}}"
+         class="btn btn-outline-secondary label-text fw-bold"
+        style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company_id}}"
+         class="btn btn-outline-dark label-text fw-bold"
+        style="border-width: 3px;">🏠 На главную</a>
+    </div>
+
+    {% if is_create %}Добавление{% else %}Редактирование{% endif %} номера бланка
+  </h1>
+
+  <div class="card p-4 mb-5">
+    <form 
+      id="act-number-form"
+      method="{% if is_create %}POST{% else %}PUT{% endif %}"
+      action="
+      {% if is_create %}
+        /companies/api/act-numbers/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/act-numbers/update?company_id={{company_id}}&act_number_id={{act_number_entry.id}}
+      {% endif %}">
+
+      <div class="row g-3">
+        <!-- Номер бланка -->
+        <div class="col-12 col-lg-6">
+          <label for="act_number" class="form-label label-text"><b>Номер бланка</b></label>
+          <input type="number"
+                 id="act_number"
+                 name="act_number"
+                 class="form-control text-center input-text"
+                 value="{{ act_number_entry.act_number if not is_create else '' }}"
+                 required>
+        </div>
+
+        <!-- Физ/юр лицо -->
+        <div class="col-12 col-lg-6">
+          <label for="legal_entity" class="form-label label-text"><b>Физ./Юр. лицо</b></label>
+          <select id="legal_entity"
+                  name="legal_entity"
+                  class="form-select text-center input-text"
+                  required>
+            {% if is_create %}
+              <option value="" selected disabled>Выберите тип</option>
+            {% endif %}
+            <option value="individual" {% if not is_create and act_number_entry.legal_entity == 'individual' %}selected{% endif %}>Физ. лицо</option>
+            <option value="legal" {% if not is_create and act_number_entry.legal_entity == 'legal' %}selected{% endif %}>Юр. лицо</option>
+          </select>
+        </div>
+
+        <!-- ФИО -->
+        <div class="col-12 col-lg-6">
+          <label for="client_full_name" class="form-label label-text"><b>ФИО клиента</b></label>
+          <input type="text"
+                 id="client_full_name"
+                 name="client_full_name"
+                 class="form-control text-center input-text"
+                 value="{{ act_number_entry.client_full_name if not is_create else '' }}"
+                 required>
+        </div>
+
+        <!-- Телефон -->
+        <div class="col-12 col-lg-6">
+          <label for="client_phone" class="form-label label-text"><b>Телефон клиента</b></label>
+          <input type="tel"
+                 id="client_phone"
+                 name="client_phone"
+                 class="form-control text-center input-text"
+                 placeholder="+7 (___) ___-__-__"
+                 value="{{ act_number_entry.client_phone if not is_create else '' }}"
+                 required>
+        </div>
+
+        <!-- Адрес (полная ширина) -->
+        <div class="col-12 col-lg-6"">
+          <label for="address" class="form-label label-text"><b>Адрес клиента</b></label>
+          <input type="text"
+                 id="address"
+                 name="address"
+                 class="form-control text-center input-text"
+                 value="{{ act_number_entry.address if not is_create else '' }}"
+                 required>
+        </div>
+
+        <!-- Город -->
+        <div class="col-12 col-lg-6">
+          <label for="city_id" class="form-label label-text"><b>Населённый пункт</b></label>
+          <select id="city_id"
+                  name="city_id"
+                  class="form-select text-center input-text"
+                  required>
+            {% if is_create %}
+              <option value="" selected disabled>Выберите населённый пункт</option>
+            {% endif %}
+            {% for c in cities %}
+              <option value="{{ c.id }}"
+                {% if not is_create and c.id==act_number_entry.city_id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Серия акта -->
+        <div class="col-12 col-lg-6">
+          <label for="series_id" class="form-label label-text"><b>Серия акта</b></label>
+          <select id="series_id"
+                  name="series_id"
+                  class="form-select text-center input-text"
+                  required>
+            {% if is_create %}
+              <option value="" selected disabled>Выберите серию</option>
+            {% endif %}
+            {% for s in act_series %}
+              <option value="{{ s.id }}"
+                {% if not is_create and s.id==act_number_entry.series_id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Дата поверки -->
+        <div class="col-12 col-lg-6">
+          <label for="verification_date" class="form-label label-text"><b>Дата поверки</b></label>
+          <input type="date"
+                 id="verification_date"
+                 name="verification_date"
+                 class="form-control text-center input-text"
+                 value="{{ act_number_entry.verification_date if not is_create else '' }}"
+                 required>
+        </div>
+
+        <!-- Пустая колонка для выравнивания кнопки (на md) -->
+        <div class="col-12 col-lg-6 d-none d-md-block"></div>
+
+        <!-- Кнопка -->
+        <div class="col-12 d-flex justify-content-end mt-2">
+          <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+            ✅ Сохранить
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/imask@7.6.0/dist/imask.min.js"></script>
+  <script>
+    window.companyId = {{ company_id }};
+    window.isCreate = {{ is_create|tojson }};
+    {% if not is_create %}
+    window.actNumberId = {{ act_number.id }};
+    {% endif %}
+  </script>
+  <script type="module" src="/static/company/act_numbers/js/update_or_create.js"></script>
+{% endblock %}

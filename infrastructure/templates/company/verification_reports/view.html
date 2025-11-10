@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} | Настраиваемые отчёты (Поверка)
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/company/verification_reports/css/view.css" />
+
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company.image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company.image }}"
+      alt="Изображение компании: {{ company.name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/company?company_id={{company.id}}" class="btn btn-outline-dark fw-bold label-text"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+
+  Настраиваемые отчёты (Поверка)
+</h1>
+
+<div class="mb-4 d-flex justify-content-center">
+  <div class="input-group" style="flex-basis:60%;">
+    <input type="text" id="search-input" style="font-size: var(--font-base);" class="form-control input-text"
+      placeholder="Поиск по названию отчёта">
+  </div>
+</div>
+
+<div class="d-flex justify-content-center mb-4">
+  <a href="/companies/verification-reports/create?company_id={{company.id}}"
+    class="btn btn-outline-primary fw-bold label-text" style="flex-basis:50%; border-width: 3px;">➕ Добавить новый
+    отчёт</a>
+</div>
+
+<div id="reports-list" class="row mb-5"></div>
+
+<nav aria-label="Навигация страниц">
+  <ul id="pagination" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+  window.companyId = {{ company.id }};
+  window.addLabels = [
+    {{ company.additional_checkbox_1 | tojson | safe }},
+    {{ company.additional_checkbox_2 | tojson | safe }},
+    {{ company.additional_checkbox_3 | tojson | safe }},
+    {{ company.additional_checkbox_4 | tojson | safe }},
+    {{ company.additional_checkbox_5 | tojson | safe }},
+  ];
+  window.inputLabels = [
+    {{ company.additional_input_1 | tojson | safe }},
+    {{ company.additional_input_2 | tojson | safe }},
+    {{ company.additional_input_3 | tojson | safe }},
+    {{ company.additional_input_4 | tojson | safe }},
+    {{ company.additional_input_5 | tojson | safe }},
+  ];
+</script>
+
+<script type="module" src="/static/company/verification_reports/js/view.js"></script>
+
+{% endblock %}

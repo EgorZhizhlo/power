@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Тариф компании{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/tariff/">Список компаний</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ company_name }}</li>
+                </ol>
+            </nav>
+            <h2>Управление тарифом компании</h2>
+        </div>
+        <div class="col-auto">
+            {% if tariff_info.has_active_tariff %}
+            <a href="/tariff/assign-page/?company_id={{ company_id }}" 
+               class="btn btn-success me-2" 
+               title="Назначить новый тариф (заменит текущий)">
+                <i class="bi bi-plus-circle"></i> Новый тариф
+            </a>
+            <a href="/tariff/edit-page/?company_id={{ company_id }}" 
+               class="btn btn-warning me-2"
+               title="Продлить или изменить текущий тариф">
+                <i class="bi bi-pencil"></i> Изменить
+            </a>
+            <button class="btn btn-danger" 
+                    onclick="deleteTariff({{ company_id }})"
+                    title="Удалить тариф компании">
+                <i class="bi bi-trash"></i> Удалить
+            </button>
+            {% else %}
+            <a href="/tariff/assign-page/?company_id={{ company_id }}" 
+               class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Назначить тариф
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if tariff_info.has_active_tariff %}
+    <!-- Текущее состояние -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Текущий тариф</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-speedometer2"></i> Лимиты</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th><i class="bi bi-people-fill"></i> Сотрудники:</th>
+                            <td>
+                                {% if tariff_info.state.max_employees is not none %}
+                                    {{ tariff_info.state.used_employees }} / {{ tariff_info.state.max_employees }}
+                                    {% if tariff_info.state.max_employees > 0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {{ (tariff_info.state.used_employees / tariff_info.state.max_employees * 100)|round }}%"></div>
+                                    </div>
+                                    {% elif tariff_info.state.max_employees == 0 %}
+                                    <span class="badge bg-danger">Запрещено</span>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-infinity text-success"></i> Безлимит / Безлимит
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><i class="bi bi-clipboard-check"></i> Поверки:</th>
+                            <td>
+                                {% if tariff_info.state.max_verifications is not none %}
+                                    {{ tariff_info.state.used_verifications }} / {{ tariff_info.state.max_verifications }}
+                                    {% if tariff_info.state.max_verifications > 0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {{ (tariff_info.state.used_verifications / tariff_info.state.max_verifications * 100)|round }}%"></div>
+                                    </div>
+                                    {% elif tariff_info.state.max_verifications == 0 %}
+                                    <span class="badge bg-danger">Запрещено</span>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-infinity text-success"></i> Безлимит / Безлимит
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><i class="bi bi-cart-check"></i> Заявки:</th>
+                            <td>
+                                {% if tariff_info.state.max_orders is not none %}
+                                    {{ tariff_info.state.used_orders }} / {{ tariff_info.state.max_orders }}
+                                    {% if tariff_info.state.max_orders > 0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {{ (tariff_info.state.used_orders / tariff_info.state.max_orders * 100)|round }}%"></div>
+                                    </div>
+                                    {% elif tariff_info.state.max_orders == 0 %}
+                                    <span class="badge bg-danger">Запрещено</span>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-infinity text-success"></i> Безлимит / Безлимит
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="bi bi-info-circle"></i> Информация</h5>
+                    <p><strong><i class="bi bi-tag"></i> Название тарифа:</strong> 
+                        {{ tariff_info.state.title or 'Не указано' }}
+                    </p>
+                    <p><strong><i class="bi bi-calendar-event"></i> Действует до:</strong> 
+                        {% if tariff_info.state.valid_to %}
+                            {{ tariff_info.state.valid_to.strftime('%d.%m.%Y') }}
+                        {% else %}
+                            <i class="bi bi-infinity text-success"></i> Бессрочно
+                        {% endif %}
+                    </p>
+                    <h6><i class="bi bi-robot"></i> Автоматизации:</h6>
+                    <div>
+                        {% if tariff_info.state.auto_manufacture_year %}
+                        <span class="badge bg-success"><i class="bi bi-calendar-check"></i> Автовыбор года выпуска СИ</span>
+                        {% endif %}
+                        {% if tariff_info.state.auto_teams %}
+                        <span class="badge bg-success"><i class="bi bi-people"></i> Автоматизация «Команды»</span>
+                        {% endif %}
+                        {% if tariff_info.state.auto_metrolog %}
+                        <span class="badge bg-success"><i class="bi bi-person-badge"></i> Автоматизация «Метрологические характеристики»</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="mt-3"><i class="bi bi-arrow-repeat"></i> Переносы:</h6>
+                    <div>
+                        {% if tariff_info.state.carry_over_verifications %}
+                        <span class="badge bg-info"><i class="bi bi-arrow-right-circle"></i> Перенос остаток лимита поверок</span>
+                        {% endif %}
+                        {% if tariff_info.state.carry_over_orders %}
+                        <span class="badge bg-info"><i class="bi bi-arrow-right-circle"></i> Перенос остаток лимита заявок</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- История (отображается всегда, даже если тариф удален) -->
+    <div class="card {% if tariff_info.has_active_tariff %}mt-4{% endif %}">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> История изменений тарифа</h5>
+        </div>
+        <div class="card-body">
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th><i class="bi bi-clock"></i> Дата</th>
+                            <th><i class="bi bi-tag"></i> Тариф</th>
+                            <th><i class="bi bi-calendar-range"></i> Период действия</th>
+                            <th><i class="bi bi-speedometer2"></i> Лимиты</th>
+                            <th><i class="bi bi-chat-left-text"></i> Причина</th>
+                            <th><i class="bi bi-link-45deg"></i> Базовый тариф</th>
+                            <th><i class="bi bi-toggle-on"></i> Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr class="{% if h.is_active %}table-success{% endif %}">
+                            <td>{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>{{ h.title or '-' }}</td>
+                            <td>
+                                {{ h.valid_from.strftime('%d.%m.%Y') }} - 
+                                {% if h.valid_to %}{{ h.valid_to.strftime('%d.%m.%Y') }}{% else %}<i class="bi bi-infinity"></i> Безлимит{% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    <i class="bi bi-people"></i> Сотрудники: {{ h.max_employees or 'Безлимит' }}<br>
+                                    <i class="bi bi-clipboard-check"></i> Поверки/мес: {{ h.monthly_verifications or 'Безлимит' }}<br>
+                                    <i class="bi bi-cart-check"></i> Заявки/мес: {{ h.monthly_orders or 'Безлимит' }}
+                                </small>
+                            </td>
+                            <td>{{ h.reason or '-' }}</td>
+                            <td>
+                                {% if h.base_tariff_id %}
+                                <a href="/tariff/base-tariffs/edit/?tariff_id={{ h.base_tariff_id }}" 
+                                   class="text-decoration-none" 
+                                   title="Перейти к базовому тарифу">
+                                    <i class="bi bi-box-arrow-up-right"></i> Базовый тариф
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if h.is_active %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Активен</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Завершён</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Пагинация -->
+            {% if history_total_pages > 1 %}
+            <nav aria-label="Пагинация истории">
+                <ul class="pagination justify-content-center">
+                    <!-- Первая страница -->
+                    <li class="page-item {% if history_page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?company_id={{ company_id }}&page=1&page_size={{ history_page_size }}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    
+                    <!-- Предыдущая страница -->
+                    <li class="page-item {% if history_page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?company_id={{ company_id }}&page={{ history_page - 1 }}&page_size={{ history_page_size }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    <!-- Номера страниц -->
+                    {% set start_page = [history_page - 2, 1]|max %}
+                    {% set end_page = [history_page + 2, history_total_pages]|min %}
+                    
+                    {% if start_page > 1 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if p == history_page %}active{% endif %}">
+                        <a class="page-link" href="?company_id={{ company_id }}&page={{ p }}&page_size={{ history_page_size }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if end_page < history_total_pages %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+
+                    <!-- Следующая страница -->
+                    <li class="page-item {% if history_page == history_total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="?company_id={{ company_id }}&page={{ history_page + 1 }}&page_size={{ history_page_size }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    
+                    <!-- Последняя страница -->
+                    <li class="page-item {% if history_page == history_total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="?company_id={{ company_id }}&page={{ history_total_pages }}&page_size={{ history_page_size }}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                </ul>
+                <p class="text-center text-muted small">
+                    Показано {{ (history_page - 1) * history_page_size + 1 }} - 
+                    {{ [(history_page * history_page_size), history_total]|min }} из {{ history_total }}
+                </p>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <p class="text-muted"><i class="bi bi-inbox"></i> История изменений пуста</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not tariff_info.has_active_tariff %}
+    <div class="alert alert-warning mt-4">
+        <i class="bi bi-exclamation-triangle"></i> 
+        У компании нет активного тарифа. Назначьте тариф для начала работы.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function deleteTariff(companyId) {
+    if (!confirm('Вы уверены, что хотите удалить тариф компании?\n\nЭто действие:\n- Деактивирует все записи в истории\n- Удалит текущее состояние тарифа\n- Компания останется без тарифа\n\nПродолжить?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/tariff/api/company-tariffs/?company_id=${companyId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert('Тариф успешно удалён');
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(`Ошибка: ${error.detail || 'Неизвестная ошибка'}`);
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при удалении тарифа');
+    }
+}
+</script>
+{% endblock %}
+

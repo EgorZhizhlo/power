@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} календарного отчёта
+{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="/static/company/calendar_reports/css/update_or_create.css">
+
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+    {% if company_image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company_image }}"
+             alt="Изображение компании: {{ company_name }}">
+      </div>
+    {% endif %}
+
+    <div class="btn-group mb-3">
+      <a href="/companies/calendar-reports?company_id={{company_id}}"
+         class="btn btn-outline-secondary label-text fw-bold"
+        style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company_id}}"
+         class="btn btn-outline-dark label-text fw-bold"
+        style="border-width: 3px;">🏠 На главную</a>
+    </div>
+
+    {% if is_create %}Добавление{% else %}Редактирование{% endif %} календарного отчёта
+  </h1>
+
+  <div class="card p-4 mb-5">
+    <form id="calendar-report-form">
+
+      <div class="mb-4">
+        <label for="name" class="form-label fw-bold label-text">Название отчёта</label>
+        <input type="text" id="name" name="name"
+               class="form-control text-center input-text"
+               value=""
+               required maxlength="100">
+      </div>
+
+      <h3 class="fw-bold label-text mb-3">Дополнительные параметры</h3>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label for="for_auditor" class="form-label label-text">Доступен ревизору</label>
+          <select id="for_auditor" class="form-select input-text">
+            <option value="false" selected>Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="for_dispatcher1" class="form-label label-text">Доступен диспетчеру 1</label>
+          <select id="for_dispatcher1" class="form-select input-text">
+            <option value="false" selected>Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label for="for_dispatcher2" class="form-label label-text">Доступен диспетчеру 2</label>
+          <select id="for_dispatcher2" class="form-select input-text">
+            <option value="false" selected>Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="no_date" class="form-label label-text">Отображать заявки без даты</label>
+          <select id="no_date" class="form-select input-text">
+            <option value="false" selected>Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 class="fw-bold label-text mb-3">Настройка полей отчёта</h3>
+      <p class="label-text text-muted mb-3">
+        Перетаскивайте поля для изменения порядка. Выберите "Да" для включения поля в отчёт.
+      </p>
+
+      <div id="fields-list" class="list-group mb-4">
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-outline-success fw-bold label-text" style="border-width: 3px;">
+          ✅ Сохранить
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    window.companyId = {{ company_id }};
+    window.isCreate = {{ 'true' if is_create else 'false' }};
+    {% if not is_create %}
+    window.calendarReportId = {{ calendar_report_id }};
+    {% endif %}
+  </script>
+  <script src="/static/company/calendar_reports/js/update_or_create.js"></script>
+{% endblock %}

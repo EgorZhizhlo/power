@@ -1,0 +1,38 @@
+<div
+  class="modal fade"
+  id="modalDayComment"
+  tabindex="-1"
+  aria-labelledby="modalDayCommentLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Комментарий на <span id="comment-date"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <textarea
+          id="day-comment-text"
+          class="form-control"
+          rows="4"
+          placeholder="Напишите комментарий..."
+        ></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="save-day-comment" class="btn btn-outline-success fw-bold" style="border-width: 3px;">
+          ✅ Сохранить
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-bold" style="border-width: 3px;"
+          data-bs-dismiss="modal"
+        >
+          ✖️ Отмена
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

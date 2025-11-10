@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title_name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/verification/orders_control/css/view.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+<div class="container-fluid verification-page px-3">
+  <h1 class="text-center mb-5">{{ title_name }}</h1>
+
+  <!-- Statistics blocks -->
+  <div class="container-statistic">
+    <div class="row justify-content-center gap-3">
+      <div class="col-12 col-md-5 stats-box">
+        <span id="total-count">Всего заявок: 0</span>
+      </div>
+      <div class="col-12 col-md-5 stats-box">
+        <span id="current-page">Страница: 1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter form -->
+  <div class="container-filter">
+    <h2 class="text-start mb-4">Фильтр отображаемых заявок</h2>
+    <form id="filter-form">
+      <div class="row py-2 px-1" style="border: 2px solid #858181; background: #dddcdcbb; border-radius: 20px;">
+        <div class="col-12 col-md-6 mb-3">
+          <label for="date-input" class="form-label">Дата</label>
+          <input type="date" id="date-input" name="date" class="form-control" required>
+        </div>
+        
+        <div class="col-12 col-md-6 mb-3">
+          <label for="limit-select" class="form-label">На странице</label>
+          <select id="limit-select" name="limit" class="form-select">
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row mt-2 mb-1 g-2">
+        <div class="col-12 col-md-6">
+          <button type="submit" class="btn btn-primary w-100 fw-bold">
+            🔍 Применить фильтр
+          </button>
+        </div>
+        <div class="col-12 col-md-3">
+          <button type="button" id="reset-button" class="btn btn-secondary w-100 fw-bold">
+            🔄 Сбросить
+          </button>
+        </div>
+        <div class="col-12 col-md-3">
+          <button type="button" id="download-button" class="btn btn-success w-100 fw-bold">
+            📥 Отчет
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal for delete reason -->
+  <div class="modal fade" id="deleteReasonModal" tabindex="-1" aria-labelledby="deleteReasonLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteReasonLabel">Причина удаления счётчика</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <form id="delete-reason-form">
+          <div class="modal-body">
+            <label for="delete-reason-input" class="form-label">Введите причину</label>
+            <textarea id="delete-reason-input" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-danger">Удалить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders table -->
+  <div class="table-shell">
+    <div class="table-scroll">
+      <table class="table table-bordered table-striped align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th class="text-center" style="width: 50px;">#</th>
+            <th class="text-center" style="min-width: 200px;">Адрес</th>
+            <th class="text-center" style="min-width: 150px;">ФИО клиента</th>
+            <th class="text-center" style="min-width: 130px;">Телефон</th>
+            <th class="text-center" style="width: 120px;">Действия</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <nav id="pagination-block" aria-label="Page navigation" class="mt-3">
+    <ul class="pagination justify-content-center" id="pagination-ul"></ul>
+  </nav>
+</div>
+
+<script>
+  window.companyId = {{ company_id | default(None) | tojson | safe }};
+</script>
+
+<script src="/static/verification/orders_control/js/view.js"></script>
+
+{% endblock %}

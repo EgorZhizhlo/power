@@ -1,0 +1,53 @@
+.series-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+}
+
+.series-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.series-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.series-text {
+    column-gap: 2rem;
+}
+
+.series-text p {
+    break-inside: avoid;
+    margin-bottom: 0.5rem;
+}
+
+@media (min-width: 1400px) {
+    .series-text {
+        columns: 2;
+    }
+}
+
+@media (max-width: 1399px) {
+    .series-text {
+        columns: 1;
+    }
+}
+
+.series-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.series-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}

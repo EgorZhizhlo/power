@@ -1,0 +1,74 @@
+{# Модалка Виды измерений #}
+<div class="modal fade" id="activitiesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold label-text">Виды измерений</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body label-text">
+                <div class="input-group mb-3">
+                    <input id="new-activity-name" type="text" class="form-control" placeholder="Введите название">
+                    <button class="btn btn-primary" onclick="createActivity()">Добавить</button>
+                </div>
+                <ul id="activities-list" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Модалка Типы СИ #}
+<div class="modal fade" id="siTypesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold label-text">Типы СИ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body label-text">
+                <div class="input-group mb-3">
+                    <input id="new-si-type-name" type="text" class="form-control" placeholder="Введите название">
+                    <button class="btn btn-primary" onclick="createSiType()">Добавить</button>
+                </div>
+                <ul id="si-types-list" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 🧾 Модалка ЖУРНАЛ ВЫДАЧИ ОБОРУДОВАНИЯ #}
+<div class="modal fade" id="equipmentHistoryModal" tabindex="-1" aria-labelledby="equipmentHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold label-text" id="equipmentHistoryModalLabel">📖 Журнал выдачи оборудования</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+
+            <div class="modal-body label-text">
+                <form id="historyReportForm">
+                    <div class="mb-3">
+                        <label for="dateFrom" class="form-label">Дата выдачи (от)</label>
+                        <input type="date" id="dateFrom" name="date_from" class="form-control input-text" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dateTo" class="form-label">Дата выдачи (по)</label>
+                        <input type="date" id="dateTo" name="date_to" class="form-control input-text" required>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="forceSignature" name="force_signature">
+                        <label class="form-check-label" for="forceSignature">
+                            Проставить подпись
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="downloadReportBtn" style="border-width:3px;">⬇️ Скачать отчёт</button>
+            </div>
+        </div>
+    </div>
+</div>

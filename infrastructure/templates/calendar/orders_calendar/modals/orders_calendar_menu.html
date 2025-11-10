@@ -1,0 +1,91 @@
+<style>
+  /* Много колонок в модалке — без «самой высокой строки» */
+  #modalContent {
+    column-gap: 1rem;           /* расстояние между колонками */
+  }
+
+  /* Кол-во колонок по брейкпоинтам (подобно col-*) */
+  @media (min-width: 1200px) {  /* ~lg+ */
+    #modalContent { column-count: 4; }
+  }
+  @media (min-width: 992px) and (max-width: 1199.98px) {  /* md */
+    #modalContent { column-count: 3; }
+  }
+  @media (min-width: 576px) and (max-width: 991.98px) {   /* sm */
+    #modalContent { column-count: 2; }
+  }
+  @media (max-width: 575.98px) {                          /* xs */
+    #modalContent { column-count: 1; }
+  }
+
+  /* Каждый маршрут — неделимый блок в колонке */
+  #modalContent .group-wrapper {
+    break-inside: avoid;        /* критично: не разрывать маршрут между колонками */
+    display: inline-block;      /* чтобы корректно участвовать в columns-раскладке */
+    width: 100%;
+    margin: 0 0 1rem 0;         /* вертикальный отступ между маршрутами */
+  }
+
+  .modal-dialog.modal-xl {
+    max-width: 95vw; /* чуть меньше полной ширины окна */
+  }
+</style>
+
+<div
+  class="modal fade"
+  id="modalCalendar"
+  tabindex="-1"
+  aria-labelledby="modalCalendarLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content rounded-3 shadow">
+      <div class="modal-header bg-white d-flex align-items-center">
+        <button
+          type="button"
+          id="prevCalendarDay"
+          class="btn btn-outline-secondary me-2 fw-bold" style="border-width: 3px;"
+          aria-label="Предыдущий день"
+        >&lt;</button>
+
+        <h5 class="modal-title mb-0" id="modalCalendarLabel">
+          Меню заявок на <span id="modalDate">…</span>
+        </h5>
+
+        <!-- блок кнопок справа -->
+        <div class="ms-auto d-flex align-items-center">
+          <button
+            id="btn-day-comment"
+            class="btn btn-outline-secondary me-2 fw-bold" style="border-width: 3px;"
+            style="display: none;"
+          >
+            ✎ Добавить комментарий
+          </button>
+          <button
+            type="button"
+            id="createRequest"
+            class="btn btn-outline-primary me-2 fw-bold" style="border-width: 3px;"
+          >
+            ➕ Добавить заявку
+          </button>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Закрыть"
+          ></button>
+          <button
+            type="button"
+            id="nextCalendarDay"
+            class="btn btn-outline-secondary ms-2 fw-bold" style="border-width: 3px;"
+            aria-label="Следующий день"
+          >&gt;</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="modalContent">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

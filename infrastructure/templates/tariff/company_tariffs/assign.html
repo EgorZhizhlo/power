@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Назначить тариф{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/tariff/">Список компаний</a></li>
+                    <li class="breadcrumb-item"><a href="/tariff/view/?company_id={{ company_id }}">{{ company_name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Назначить тариф</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Назначение тарифа: {{ company_name }}</h4>
+                    <a href="/tariff/view/?company_id={{ company_id }}" class="btn btn-light btn-sm">
+                        Назад
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if has_active_tariff %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        <strong>Внимание!</strong> У компании уже есть активный тариф. 
+                        При назначении нового тарифа текущий будет <strong>заменён</strong> (деактивирован).
+                        Если вы хотите продлить или изменить существующий тариф, используйте кнопку 
+                        <a href="/tariff/edit-page/?company_id={{ company_id }}" class="alert-link">"Изменить"</a>.
+                    </div>
+                    {% endif %}
+                    <form id="assignTariffForm" data-company-id="{{ company_id }}">
+                        <div class="mb-3">
+                            <label for="base_tariff_id" class="form-label">
+                                <i class="bi bi-card-list"></i> Базовый тариф <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="base_tariff_id" name="base_tariff_id" required>
+                                <option value="" selected disabled>Выберите базовый тариф</option>
+                                {% for tariff in base_tariffs %}
+                                <option value="{{ tariff.id }}" 
+                                        data-max-employees="{{ tariff.max_employees or '' }}"
+                                        data-max-verifications="{{ tariff.max_verifications_per_month or '' }}"
+                                        data-max-orders="{{ tariff.max_orders_per_month or '' }}"
+                                        data-auto-year="{{ tariff.auto_manufacture_year }}"
+                                        data-auto-teams="{{ tariff.auto_teams }}"
+                                        data-auto-metrolog="{{ tariff.auto_metrolog }}">
+                                    {{ tariff.title }}
+                                    {% if tariff.description %} - {{ tariff.description }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">
+                                Выберите один из базовых тарифных планов. Поля будут автоматически заполнены его значениями.
+                            </small>
+                        </div>
+
+                        <hr>
+
+                        <h5><i class="bi bi-calendar-range"></i> Период действия</h5>
+                        <div class="alert alert-info">
+                            <strong>Важно:</strong> Разница между датами должна быть кратна 30 дням (1 месяц = 30 дней).
+                            Минимум 30 дней. Оставьте "Действует до" пустым для безлимитной подписки.
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="valid_from" class="form-label">Действует с</label>
+                                <input type="date" class="form-control" id="valid_from" name="valid_from" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="duration_months" class="form-label">Срок действия (в месяцах)</label>
+                                <input type="number" class="form-control" id="duration_months" name="duration_months" 
+                                       min="1" placeholder="Например: 12">
+                                <small class="text-muted">Автоматически рассчитает дату окончания (месяц = 30 дней)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="valid_to" class="form-label">Действует до</label>
+                                <input type="date" class="form-control" id="valid_to" name="valid_to">
+                                <small class="text-muted">Оставьте пустым для бессрочного</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h5><i class="bi bi-speedometer2"></i> Лимиты</h5>
+                        <div class="alert alert-warning">
+                            <strong>Месячные лимиты:</strong> Укажите количество поверок и заявок 
+                            <strong>в месяц</strong>. Система автоматически рассчитает общие лимиты на весь срок тарифа.
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="max_employees" class="form-label">
+                                    <i class="bi bi-people-fill"></i> Максимум сотрудников
+                                </label>
+                                <input type="number" class="form-control" id="max_employees" name="max_employees" 
+                                       min="0" disabled>
+                                <small class="text-muted">Глобальный максимум одновременно активных сотрудников</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="max_verifications_per_month" class="form-label">
+                                    <i class="bi bi-clipboard-check"></i> Поверок в месяц
+                                </label>
+                                <input type="number" class="form-control" id="max_verifications_per_month" 
+                                       name="max_verifications_per_month" min="0" disabled>
+                                <small class="text-muted">Месячный лимит (система умножит на количество месяцев)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="max_orders_per_month" class="form-label">
+                                    <i class="bi bi-cart-check"></i> Заявок в месяц
+                                </label>
+                                <input type="number" class="form-control" id="max_orders_per_month" 
+                                       name="max_orders_per_month" min="0" disabled>
+                                <small class="text-muted">Месячный лимит (система умножит на количество месяцев)</small>
+                            </div>
+                        </div>
+
+                        <h5><i class="bi bi-robot"></i> Автоматизации</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_manufacture_year" 
+                                       name="auto_manufacture_year" disabled>
+                                <label class="form-check-label" for="auto_manufacture_year">
+                                    <i class="bi bi-calendar-event"></i> Автоматический выбор года выпуска СИ
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_teams" name="auto_teams" disabled>
+                                <label class="form-check-label" for="auto_teams">
+                                    <i class="bi bi-people"></i> Автоматизация «Команды»
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_metrolog" name="auto_metrolog" disabled>
+                                <label class="form-check-label" for="auto_metrolog">
+                                    <i class="bi bi-gear"></i> Автоматизация «Метрологические характеристики»
+                                </label>
+                            </div>
+                        </div>
+
+                        <h5><i class="bi bi-arrow-repeat"></i> Переносы остатков</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="carry_over_verifications" 
+                                       name="carry_over_verifications">
+                                <label class="form-check-label" for="carry_over_verifications">
+                                    <i class="bi bi-arrow-right-circle"></i> Переносить неиспользованные слоты заявок поверок
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="carry_over_orders" 
+                                       name="carry_over_orders">
+                                <label class="form-check-label" for="carry_over_orders">
+                                    <i class="bi bi-arrow-right-circle"></i> Переносить неиспользованные слоты заявок
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reason" class="form-label"><i class="bi bi-chat-left-text"></i> Комментарий</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="2" maxlength="255"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-success flex-grow-1" id="submitBtn" disabled>
+                                <i class="bi bi-check-circle"></i> Назначить тариф
+                            </button>
+                            <a href="/tariff/view/?company_id={{ company_id }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/tariff/company_tariffs/js/assign.js"></script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Изменить тариф{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/tariff/">Список компаний</a></li>
+                    <li class="breadcrumb-item"><a href="/tariff/view/?company_id={{ company_id }}">{{ company_name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Изменить тариф</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Изменение тарифа: {{ company_name }}</h4>
+                    <a href="/tariff/view/?company_id={{ company_id }}" class="btn btn-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Назад
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form id="editTariffForm" data-company-id="{{ company_id }}">
+                        {% if tariff_info.state %}
+                        <div class="alert alert-info">
+                            <strong>Текущие лимиты (осталось / максимум):</strong><br>
+                            • Сотрудники: {{ 0 if tariff_info.state.used_employees == 0 else (tariff_info.state.used_employees or 'Безлимит') }} / {{ tariff_info.state.max_employees or 'Безлимит' }}<br>
+                            • Записи поверок: {{ 0 if tariff_info.state.used_verifications == 0 else (tariff_info.state.used_verifications or 'Безлимит') }} / {{ tariff_info.state.max_verifications or 'Безлимит' }}<br>
+                            • Заявки: {{ 0 if tariff_info.state.used_orders == 0 else (tariff_info.state.used_orders or 'Безлимит') }} / {{ tariff_info.state.max_orders or 'Безлимит' }}
+                            {% if tariff_info.state.valid_to %}
+                            <br><small class="text-muted">Действует до: {{ tariff_info.state.valid_to.strftime('%d.%m.%Y') }}</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Срок действия -->
+                        <h5><i class="bi bi-calendar-range"></i> Срок действия</h5>
+                        <div class="alert alert-info">
+                            <strong>Как это работает:</strong>
+                            <ul class="mb-0">
+                                <li>При загрузке поле «Срок действия (в месяцах)» <strong>автоматически вычисляется</strong> из разницы дат начала и конца</li>
+                                <li>Если изменить <strong>количество месяцев</strong> → дата окончания пересчитается от даты начала</li>
+                                <li>Если изменить <strong>дату начала</strong> и есть количество месяцев → дата окончания пересчитается</li>
+                                <li>Если изменить <strong>дату окончания вручную</strong> → количество месяцев пересчитается</li>
+                                <li><strong>Важно:</strong> Разница между датами должна быть кратна 30 дням (1 месяц = 30 дней)</li>
+                            </ul>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="valid_from" class="form-label">Действует с</label>
+                                <input type="date" class="form-control" id="valid_from" name="valid_from" 
+                                       value="{{ tariff_info.state.valid_from.strftime('%Y-%m-%d') if tariff_info.state.valid_from else '' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="duration_months" class="form-label">Срок действия (в месяцах)</label>
+                                <input type="number" class="form-control" id="duration_months" name="duration_months" 
+                                       min="1" placeholder="Автоматически вычисляется">
+                                <small class="text-muted">Вычисляется из дат. Изменение пересчитает дату окончания (месяц = 30 дней)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="valid_to" class="form-label">Действует до</label>
+                                <input type="date" class="form-control" id="valid_to" name="valid_to"
+                                       value="{{ tariff_info.state.valid_to.strftime('%Y-%m-%d') if tariff_info.state.valid_to else '' }}">
+                                <small class="text-muted">Оставьте пустым для бессрочного</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Лимиты -->
+                        <h5><i class="bi bi-speedometer2"></i> Лимиты</h5>
+                        <div class="alert alert-warning">
+                            <strong>Месячные лимиты:</strong> Укажите количество поверок и заявок 
+                            <strong>в месяц</strong>. Система автоматически рассчитает общие лимиты на весь срок тарифа 
+                            исходя из разницы между датами начала и окончания.
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="max_employees" class="form-label"><i class="bi bi-people-fill"></i> Максимум сотрудников</label>
+                                <input type="number" class="form-control" id="max_employees" name="max_employees" 
+                                       min="0" value="{{ tariff_info.state.max_employees if tariff_info.state else '' }}">
+                                <small class="text-muted">Глобальный максимум одновременно активных сотрудников</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="max_verifications_per_month" class="form-label"><i class="bi bi-clipboard-check"></i> Записей поверок в месяц</label>
+                                <input type="number" class="form-control" id="max_verifications_per_month" 
+                                       name="max_verifications_per_month" min="0"
+                                       value="{{ tariff_info.active_history.monthly_verifications if tariff_info.active_history else '' }}">
+                                <small class="text-muted">Месячный лимит (система умножит на количество месяцев)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="max_orders_per_month" class="form-label"><i class="bi bi-cart-check"></i> Заявок в месяц</label>
+                                <input type="number" class="form-control" id="max_orders_per_month" 
+                                       name="max_orders_per_month" min="0"
+                                       value="{{ tariff_info.active_history.monthly_orders if tariff_info.active_history else '' }}">
+                                <small class="text-muted">Месячный лимит (система умножит на количество месяцев)</small>
+                            </div>
+                        </div>
+
+                        <!-- Автоматизации -->
+                        <h5><i class="bi bi-robot"></i> Автоматизации</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_manufacture_year" 
+                                       name="auto_manufacture_year" 
+                                       {% if tariff_info.state.auto_manufacture_year %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_manufacture_year">
+                                    <i class="bi bi-calendar-event"></i> Автоматический выбор года выпуска СИ
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_teams" name="auto_teams"
+                                       {% if tariff_info.state.auto_teams %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_teams">
+                                    <i class="bi bi-people"></i> Автоматизация «Команды»
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_metrolog" name="auto_metrolog"
+                                       {% if tariff_info.state.auto_metrolog %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_metrolog">
+                                    <i class="bi bi-gear"></i> Автоматизация «Метрологические характеристики»
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Комментарий -->
+                        <div class="mb-3">
+                            <label for="reason" class="form-label"><i class="bi bi-chat-left-text"></i> Причина изменения</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="2" 
+                                      placeholder="Укажите причину изменения тарифа" maxlength="255"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning flex-grow-1">
+                                <i class="bi bi-save"></i> Сохранить изменения
+                            </button>
+                            <a href="/tariff/view/?company_id={{ company_id }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Нет активного тарифа для редактирования
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/tariff/company_tariffs/js/edit.js"></script>
+{% endblock %}

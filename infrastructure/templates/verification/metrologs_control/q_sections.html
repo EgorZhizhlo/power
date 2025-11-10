@@ -1,0 +1,109 @@
+<div class="row g-3">
+
+  <div class="col-md-4">
+    <div class="rounded-section q-section" data-range="qmin">
+      <h5 class="text-center mb-3">Q<sub>наим.</sub></h5>
+
+      <label class="form-label">Объём воды по показаниям поверяемого счётчика, м³</label>
+      <input type="number" name="first_meter_water_according_qmin" class="form-control mb-2"
+             value="{{ metrolog_info.first_meter_water_according_qmin or '' }}" step="0.00001">
+      <input type="number" name="second_meter_water_according_qmin" class="form-control mb-2"
+             value="{{ metrolog_info.second_meter_water_according_qmin or '' }}" step="0.00001">
+      <input type="number" name="third_meter_water_according_qmin" class="form-control mb-3"
+             value="{{ metrolog_info.third_meter_water_according_qmin or '' }}" step="0.00001">
+
+      <label class="form-label">Объём воды по показаниям эталонной установки, м³</label>
+      <input type="number" name="first_reference_water_according_qmin" class="form-control mb-2"
+             value="{{ metrolog_info.first_reference_water_according_qmin or '' }}" step="0.00001">
+      <input type="number" name="second_reference_water_according_qmin" class="form-control mb-2"
+             value="{{ metrolog_info.second_reference_water_according_qmin or '' }}" step="0.00001">
+      <input type="number" name="third_reference_water_according_qmin" class="form-control mb-3"
+             value="{{ metrolog_info.third_reference_water_according_qmin or '' }}" step="0.00001">
+
+      <label class="form-label">Относительная погрешность, %</label>
+      <input type="number" name="first_water_count_qmin" class="form-control mb-2" 
+             value="{{ metrolog_info.first_water_count_qmin or '' }}" disabled step="0.00001">
+      <input type="number" name="second_water_count_qmin" class="form-control mb-2"
+             value="{{ metrolog_info.second_water_count_qmin or '' }}" disabled step="0.00001">
+      <input type="number" name="third_water_count_qmin" class="form-control mb-3"
+             value="{{ metrolog_info.third_water_count_qmin or '' }}" disabled step="0.00001">
+
+      <label class="form-label">Предел допускаемой погрешности, %</label>
+      <input type="text" class="form-control text-center" value="±5" disabled>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="rounded-section q-section" data-range="qp">
+      <h5 class="text-center mb-3">1.1 × Q<sub>п</sub></h5>
+
+      <label class="form-label">Объём воды по показаниям поверяемого счётчика, м³</label>
+      <input type="number" name="first_meter_water_according_qp" class="form-control mb-2"
+             value="{{ metrolog_info.first_meter_water_according_qp or '' }}" step="0.00001">
+      <input type="number" name="second_meter_water_according_qp" class="form-control mb-2"
+             value="{{ metrolog_info.second_meter_water_according_qp or '' }}" step="0.00001">
+      <input type="number" name="third_meter_water_according_qp" class="form-control mb-3"
+             value="{{ metrolog_info.third_meter_water_according_qp or '' }}" step="0.00001">
+
+      <label class="form-label">Объём воды по показаниям эталонной установки, м³</label>
+      <input type="number" name="first_reference_water_according_qp" class="form-control mb-2"
+             value="{{ metrolog_info.first_reference_water_according_qp or '' }}" step="0.00001">
+      <input type="number" name="second_reference_water_according_qp" class="form-control mb-2"
+             value="{{ metrolog_info.second_reference_water_according_qp or '' }}" step="0.00001">
+      <input type="number" name="third_reference_water_according_qp" class="form-control mb-3"
+             value="{{ metrolog_info.third_reference_water_according_qp or '' }}" step="0.00001">
+
+      <label class="form-label">Относительная погрешность, %</label>
+      <input type="number" name="first_water_count_qp" class="form-control mb-2"
+             value="{{ metrolog_info.first_water_count_qp or '' }}" disabled step="0.00001">
+      <input type="number" name="second_water_count_qp" class="form-control mb-2"
+             value="{{ metrolog_info.second_water_count_qp or '' }}" disabled step="0.00001">
+      <input type="number" name="third_water_count_qp" class="form-control mb-3"
+             value="{{ metrolog_info.third_water_count_qp or '' }}" disabled step="0.00001">
+
+      <label class="form-label">Предел допускаемой погрешности, %</label>
+      <input type="text" class="form-control text-center" value="±2" disabled>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="rounded-section q-section" data-range="qmax">
+      <h5 class="text-center mb-3">Q<sub>наиб.</sub></h5>
+
+      <label class="form-label">Объём воды по показаниям поверяемого счётчика, м³</label>
+      <input type="number" name="first_meter_water_according_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.first_meter_water_according_qmax or '' }}" step="0.00001">
+      <input type="number" name="second_meter_water_according_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.second_meter_water_according_qmax or '' }}" step="0.00001">
+      <input type="number" name="third_meter_water_according_qmax" class="form-control mb-3"
+             value="{{ metrolog_info.third_meter_water_according_qmax or '' }}" step="0.00001">
+
+      <label class="form-label">Объём воды по показаниям эталонной установки, м³</label>
+      <input type="number" name="first_reference_water_according_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.first_reference_water_according_qmax or '' }}" step="0.00001">
+      <input type="number" name="second_reference_water_according_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.second_reference_water_according_qmax or '' }}" step="0.00001">
+      <input type="number" name="third_reference_water_according_qmax" class="form-control mb-3"
+             value="{{ metrolog_info.third_reference_water_according_qmax or '' }}" step="0.00001">
+
+      <label class="form-label">Относительная погрешность, %</label>
+      <input type="number" name="first_water_count_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.first_water_count_qmax or '' }}" disabled step="0.00001">
+      <input type="number" name="second_water_count_qmax" class="form-control mb-2"
+             value="{{ metrolog_info.second_water_count_qmax or '' }}" disabled step="0.00001">
+      <input type="number" name="third_water_count_qmax" class="form-control mb-3"
+             value="{{ metrolog_info.third_water_count_qmax or '' }}" disabled step="0.00001">
+
+      <label class="form-label">Предел допускаемой погрешности, %</label>
+      <input type="text" class="form-control text-center" value="±2" disabled>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <div class="rounded-section text-center">
+      <h5 class="mb-3">Наибольший расход воды в трубопроводе Q<sub>наиб.</sub>, м³/ч</h5>
+      <input type="number" name="qh" class="form-control w-50 mx-auto"
+             value="{{ metrolog_info.qh or '' }}" step="0.00001" min="0.6" max="1.5">
+    </div>
+  </div>
+</div>

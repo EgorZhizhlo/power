@@ -1,0 +1,68 @@
+.employee-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+}
+
+.employee-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.employee-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.emp-photo {
+    width: 230px;
+    height: 270px;
+    border: 2px solid #ccc;
+    border-radius: .5rem;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emp-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: zoom-in;
+}
+
+.lg-current img {
+    cursor: move;
+}
+
+.employee-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.employee-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.employee-text {
+    columns: 1;
+    column-gap: 2rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+.employee-text p {
+    break-inside: avoid;
+    margin-bottom: .5rem;
+}

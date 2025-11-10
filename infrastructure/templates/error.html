@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ошибка {{ status_code }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html {
+            font-size: 16px;
+        }
+
+        @media (max-width: 575.98px) {
+            html {
+                font-size: 14px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 2.5rem;
+            border-radius: 0.625rem;
+            background: #ffffff;
+            box-shadow: 0 0 0.9375rem rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 28rem;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 576px) {
+            .error-container {
+                width: 80%;
+                max-width: 32rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .error-container {
+                width: 70%;
+                max-width: 40rem;
+            }
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+            font-size: 2rem;
+            color: #dc3545;
+        }
+
+        @media (max-width: 575.98px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            h1 {
+                font-size: 2.25rem;
+            }
+        }
+
+        .lead {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .lead {
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .lead {
+                font-size: 1.125rem;
+            }
+        }
+
+        .btn-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .btn-grid .btn-block {
+            width: calc(50% - 2rem);
+            margin-left: 1rem;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-grid .btn-block>* {
+            width: 100%;
+        }
+
+        @media (max-width: 575.98px) {
+            .btn-grid .btn-block {
+                width: calc(100% - 2rem);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-container">
+        <h1>Ошибка {{ status_code }}</h1>
+        <p id="container" class="lead"></p>
+
+        <div class="btn-grid">
+            <div class="btn-block">
+                <button class="btn btn-outline-primary fw-bold" style="border-width: 3px;" onclick="goBack()">🔙
+                    Вернуться назад</button>
+            </div>
+            <div class="btn-block">
+                <button class="btn btn-outline-warning fw-bold" style="border-width: 3px;"
+                    onclick="retryPage()">Попробовать снова 🔄</button>
+            </div>
+            <div class="btn-block">
+                <a href="/logout" class="btn btn-outline-danger fw-bold" style="border-width: 3px;">Выйти из аккаунта
+                    🚪</a>
+            </div>
+            {% if company_id %}
+            <div class="btn-block">
+                <a href="/companies/company?company_id=company_id" class="btn btn-outline-dark fw-bold"
+                    style="border-width: 3px;">На главную 🏠</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const htmlString = {{ error | tojson | safe }};
+        const formatted = htmlString
+            .replace(/\n{2,}/g, '<br><br>') // двойные переводы строк → двойной отступ
+            .replace(/\n/g, '<br>');        // одиночные переводы → обычный перенос
+
+        document.getElementById('container').innerHTML = formatted;
+
+        function goBack() {
+            if (document.referrer) {
+                window.history.back();
+            } else {
+                window.location.href = "/";
+            }
+        }
+
+        function retryPage() {
+            window.location.reload();
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

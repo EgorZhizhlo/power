@@ -1,0 +1,158 @@
+{# templates/modal/order-create.html #}
+<div
+  class="modal fade"
+  id="modalCreateRequest"
+  tabindex="-1"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-3 shadow">
+      <div class="modal-header bg-white">
+        <h5 class="modal-title">➕ Добавление заявки</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Закрыть"
+        ></button>
+      </div>
+      <form id="formCreateRequest" autocomplete="off" method="post">
+        <div class="modal-body">
+          <div class="row gy-3">
+            <div class="col-md-6 form-group">
+              <label for="createDate" class="form-label">Дата</label>
+              <input
+                id="createDate"
+                name="date"
+                type="date"
+                class="form-control"
+              >
+            </div>
+            <div class="col-md-6 form-group d-flex align-items-center">
+              <div class="form-check mt-3">
+                <input
+                  id="createNoDate"
+                  name="no_date"
+                  type="checkbox"
+                  class="form-check-input"
+                >
+                <label for="createNoDate" class="form-check-label">Без даты</label>
+              </div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createRoute" class="form-label">Маршрут</label>
+              <select id="createRoute" name="route_id" class="form-select"></select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createCity" class="form-label">Город</label>
+              <select id="createCity" name="city_id" class="form-select"></select>
+            </div>
+            <div class="col-12 form-group">
+              <label for="createAddress" class="form-label">Адрес</label>
+              <input
+                id="createAddress"
+                name="address"
+                type="text"
+                class="form-control"
+                required
+              >
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createPhone" class="form-label">Телефон</label>
+              <input
+                id="createPhone"
+                name="phone_number"
+                type="tel"
+                class="form-control"
+                data-phone-input
+                required
+              >
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createSecPhone" class="form-label">Доп. телефон</label>
+              <input
+                id="createSecPhone"
+                name="sec_phone_number"
+                type="tel"
+                class="form-control"
+                data-phone-input
+              >
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createClient" class="form-label">Заказчик</label>
+              <input
+                id="createClient"
+                name="client_full_name"
+                type="text"
+                class="form-control"
+                required
+              >
+            </div>
+            <div class="col-md-6 form-group d-flex align-items-center">
+              <div class="form-check">
+                <input
+                  id="createLegal"
+                  name="legal_entity_status"
+                  type="checkbox"
+                  class="form-check-input"
+                >
+                <label for="createLegal" class="form-check-label">Юр. лицо</label>
+              </div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createCounter" class="form-label">Количество счётчиков</label>
+              <input
+                id="createCounter"
+                name="counter_number"
+                type="number"
+                class="form-control"
+                required
+                min="0"
+                max="10"
+                step="1"
+                oninput="this.value = Math.max(Math.min(this.value, 10), 0)"
+              >
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createWater" class="form-label">Тип воды</label>
+              <select
+                id="createWater"
+                name="water_type"
+                class="form-select"
+                required
+              >
+                <option value="cold">Холодная</option>
+                <option value="hot">Горячая</option>
+                <option value="cold_hot">Холодная и Горячая</option>
+                <option value="unnamed">Неизвестно</option>
+              </select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="createPrice" class="form-label">Цена</label>
+              <input
+                id="createPrice"
+                name="price"
+                type="number"
+                step="0.01"
+                class="form-control"
+                required
+              >
+            </div>
+            <div class="col-12 form-group">
+              <label for="createInfo" class="form-label">Доп. информация</label>
+              <textarea
+                id="createInfo"
+                name="additional_info"
+                class="form-control"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-success fw-bold" style="border-width: 3px;">✅ Сохранить</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" style="border-width: 3px;" data-bs-dismiss="modal">✖️ Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

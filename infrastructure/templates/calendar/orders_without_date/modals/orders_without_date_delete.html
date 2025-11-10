@@ -1,0 +1,43 @@
+{# templates/modal/order-delete.html #}
+<div
+  class="modal fade"
+  id="modalConfirmDelete"
+  tabindex="-1"
+  aria-labelledby="modalConfirmDeleteLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3 shadow">
+      <div class="modal-header bg-white">
+        <h5 class="modal-title" id="modalConfirmDeleteLabel">
+          Подтверждение удаления
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Закрыть"
+        ></button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить эту заявку?
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          id="confirmDelete"
+          class="btn btn-outline-danger fw-bold" style="border-width: 3px;"
+        >
+          🗑️ Удалить заявку
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-bold" style="border-width: 3px;"
+          data-bs-dismiss="modal"
+        >
+          ✖️ Отмена
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+{# templates/modals/appeal-detail.html #}
+<div class="modal fade" id="modal-detail" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Обращение №<span id="detail-id"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+            <dt class="col-sm-4 text-sm-end">Создатель обращения</dt>
+            <dd class="col-sm-8 d-flex align-items-center" id="detail-dispatcher"></dd>
+
+          <dt class="col-sm-4 text-sm-end">Дата получения</dt>
+          <dd class="col-sm-8 d-flex align-items-center" id="detail-date"></dd>
+          {% if customer_field %}
+            <dt class="col-sm-4 text-sm-end">Заказчик</dt>
+            <dd class="col-sm-8 d-flex align-items-center " id="detail-client"></dd>
+          {% endif %}
+
+          <dt class="col-sm-4 text-sm-end">Адрес</dt>
+          <dd class="col-sm-8 d-flex align-items-center" id="detail-address"></dd>
+
+          <dt class="col-sm-4 text-sm-end">Телефон</dt>
+          <dd class="col-sm-8 d-flex align-items-center" id="detail-phone"></dd>
+
+          <dt class="col-sm-4 text-sm-end">Доп. инфо</dt>
+          <dd class="col-sm-8 d-flex align-items-center" id="detail-info"></dd>
+
+          <dt class="col-sm-4 text-sm-end">Статус</dt>
+          <dd class="col-sm-8 d-flex align-items-center" id="detail-status"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-edit"   type="button" class="btn btn-outline-warning fw-bold" style="border-width: 3px;">🔄 Редактировать обращение</button>
+        <button id="btn-delete" type="button" class="btn btn-outline-danger fw-bold" style="border-width: 3px;">🗑️ Удалить обращение</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}
+{{title_name}}
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/verification/reports/css/act_numbers.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+<div class="report-container">
+  <div class="report-header">
+    <h1>{{title_name}}</h1>
+  </div>
+
+  <div class="report-actions">
+    <a href="/verification/?company_id={{company_id}}"
+       class="btn-home">
+      🏠 На главную
+    </a>
+  </div>
+
+  <!-- Индикатор загрузки -->
+  <div id="loading-indicator" style="display: none; text-align: center; margin: 2rem 0;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Загрузка...</span>
+    </div>
+    <p class="mt-2">Формирование отчета...</p>
+  </div>
+
+  <!-- Сообщение об ошибке -->
+  <div id="error-message" class="alert alert-danger" style="display: none; margin: 1rem auto; max-width: 80%;" role="alert">
+  </div>
+
+  <form id="act-number-form" class="report-filter">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="act_number_from" class="form-label">Номера бланков с</label>
+        <input
+          type="number"
+          id="act_number_from"
+          name="act_number_from"
+          class="form-control"
+          placeholder="Начало диапазона"
+          required />
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label for="act_number_to" class="form-label">По</label>
+        <input 
+          type="number" 
+          id="act_number_to" 
+          name="act_number_to"
+          class="form-control"
+          placeholder="Конец диапазона"
+          required />
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label for="series_id" class="form-label">Серия бланка</label>
+        <select
+          id="series_id"
+          name="series_id"
+          class="form-control">
+          <option value="">Все серии</option>
+          {% if series %}
+            {% for s in series %}
+              <option value="{{s.id}}">{{s.name}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-end gap-3 mt-3">
+      <button type="submit" class="btn btn-primary">Сформировать отчет</button>
+      <button type="button" id="reset-form" class="btn btn-outline-primary">
+        Сбросить фильтр
+      </button>
+    </div>
+  </form>
+
+  <!-- Информационное сообщение -->
+  <div class="alert alert-info" style="margin: 1.5rem auto; max-width: 80%; border-radius: 1rem; border: 2px solid #0dcaf0;">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <strong>Информация:</strong> Отчет показывает отсутствующие номера актов в указанном диапазоне.
+    Заполните поля выше и нажмите "Сформировать отчет" для скачивания Excel файла.
+  </div>
+</div>
+
+<script>
+  window.company_id = {{ company_id }};
+</script>
+
+<!-- Подключаем JavaScript для обработки формы -->
+<script src="/static/verification/reports/js/act_numbers.js"></script>
+{% endblock %}

@@ -1,0 +1,72 @@
+.registry-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+}
+
+.registry-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.registry-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.registry-text {
+    column-gap: 2rem;
+}
+
+.registry-text p {
+    break-inside: avoid;
+    margin-bottom: .5rem;
+}
+
+@media (min-width: 1400px) {
+    .registry-text {
+        columns: 2;
+    }
+}
+
+@media (max-width: 1399px) {
+    .registry-text {
+        columns: 1;
+    }
+}
+
+.registry-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.registry-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.registry-actions .btn,
+form button.btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.btn-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}

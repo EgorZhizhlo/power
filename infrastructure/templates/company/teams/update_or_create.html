@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+{% if is_create %}Добавление{% else %}Редактирование{% endif %} команды
+{% endblock %}
+
+{% block content %}
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/teams?company_id={{company_id}}"
+        class="btn btn-outline-secondary label-text fw-bold"
+      style="border-width: 3px;">🔙 Вернуться назад</a>
+    <a href="/companies/company?company_id={{company_id}}"
+        class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} команды
+</h1>
+
+<div class="card p-4 mb-5">
+  <form
+      id = "team-form"
+      method="{% if is_create %}POST{% else %}PUT{% endif %}"
+      action="
+      {% if is_create %}
+        /companies/api/teams/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/teams/update?company_id={{company_id}}&team_id={{team.id}}
+      {% endif %}">
+
+    <div class="mb-3">
+      <label for="team_name" class="form-label label-text"><b>Название команды</b></label>
+      <input type="text" id="team_name" name="name" class="form-control text-center input-text"
+        value="{% if not is_create %}{{ team.name }}{% endif %}" required>
+    </div>
+
+    {% if verifiers %}
+    <div class="mb-3">
+      <label for="verifiers" class="form-label label-text"><b>Поверители</b></label>
+      <select id="verifiers" name="verifiers" class="form-select input-text choices" multiple
+        data-placeholder="Выберите сотрудников">
+        {% for v in verifiers %}
+        <option value="{{ v.id }}" {% if not is_create and v.id in team.verifiers|map(attribute='id' )|list %}selected{%
+          endif %}>
+          {{ v.last_name|capitalize }} {{ v.name|capitalize }} {{ v.patronymic|capitalize }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+        ✅ Сохранить
+      </button>
+    </div>
+  </form>
+</div>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+  window.companyId = {{ company_id }};
+  window.isCreate = {{ is_create|tojson }};
+  {% if not is_create %}
+  window.teamId = {{ team.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/teams/js/update_or_create.js"></script>
+{% endblock %}

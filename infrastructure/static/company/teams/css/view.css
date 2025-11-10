@@ -1,0 +1,53 @@
+.team-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+}
+
+.team-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.team-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.team-text {
+    column-gap: 2rem;
+}
+
+.team-text p {
+    break-inside: avoid;
+    margin-bottom: .5rem;
+}
+
+@media (min-width: 1400px) {
+    .team-text {
+        columns: 2;
+    }
+}
+
+@media (max-width: 1399px) {
+    .team-text {
+        columns: 1;
+    }
+}
+
+.team-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.team-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}

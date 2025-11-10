@@ -1,0 +1,337 @@
+.verification-page {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.container-statistic {
+  margin-bottom: 2rem;
+  max-width: 100%;
+}
+
+.stats-box {
+  background: linear-gradient(145deg, #cde1ff, #a3c8ff);
+  border: 2px solid #000;
+  border-radius: 1.5rem;
+  color: #000;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  padding: 1rem;
+}
+
+.stats-box:hover {
+  transform: translateY(-5px);
+  background: linear-gradient(145deg, #bcd6ff, #94bfff);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.container-filter {
+  background: #f5f7fb;
+  border: 2px solid #b8b8b8;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  max-width: 100%;
+}
+
+.container-filter h2 {
+  font-weight: 700;
+  color: #222;
+}
+
+.card {
+  background: #f5f7fb;
+  border: 2px solid #b8b8b8;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card h2,
+.card h5 {
+  font-weight: 700;
+  color: #222;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.form-control,
+.form-select {
+  border-radius: 0.75rem;
+  border: 1px solid #adb5bd;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #6fa8ff;
+  box-shadow: 0 0 0 3px rgba(111, 168, 255, 0.25);
+}
+
+.btn {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border: 2px solid #000;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+}
+
+.btn-primary {
+  background: linear-gradient(145deg, #b7d8ff, #82baff);
+  color: #000;
+  border-color: #000;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(145deg, #98c8ff, #66a9ff);
+  color: #000;
+}
+
+.btn-secondary {
+  background: linear-gradient(145deg, #e0e0e0, #b8b8b8);
+  color: #000;
+  border-color: #000;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(145deg, #cfcfcf, #a0a0a0);
+  color: #000;
+}
+
+.btn-success {
+  background: linear-gradient(145deg, #c1f1c1, #8de78d);
+  color: #000;
+  border-color: #000;
+}
+
+.btn-success:hover {
+  background: linear-gradient(145deg, #a8eba8, #6cd76c);
+  color: #000;
+}
+
+.btn-danger {
+  background: linear-gradient(145deg, #ffb3b3, #ff7979);
+  color: #000;
+  border-color: #000;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(145deg, #ff9999, #ff5555);
+  color: #000;
+}
+
+.table-shell {
+  width: 100%;
+  max-width: 100%;
+  height: 70vh;
+  margin: 0 auto 2rem;
+  border: 2px solid #b8b8b8;
+  border-radius: 1.25rem;
+  background-color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-scroll {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-color: #a3c8ff #f1f1f1;
+  scrollbar-width: thin;
+}
+
+.table-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #a3c8ff;
+  border-radius: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6fa8ff;
+}
+
+.table-scroll table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+}
+
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: #212529 !important;
+  color: #fff;
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal !important;
+  word-break: break-word;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.table {
+  margin-bottom: 0;
+  background-color: #fff;
+}
+
+.table th {
+  background-color: #212529 !important;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #f3f6fa;
+}
+
+.table-striped tbody tr:hover {
+  background-color: #e4f0ff;
+  transition: background-color 0.15s ease;
+}
+
+.table .bi {
+  transition: transform 0.15s ease-in-out, color 0.2s ease;
+  cursor: pointer;
+}
+
+.table .bi:hover {
+  transform: scale(1.2);
+  color: #0d6efd;
+}
+
+.pagination {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.pagination .page-link {
+  color: #0d6efd;
+  border: 1px solid #ced4da;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border-radius: 0.5rem;
+  margin: 0 0.2rem;
+}
+
+.pagination .page-link:hover {
+  background-color: #cfe2ff;
+  transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.modal-content {
+  border-radius: 1rem;
+  border: 2px solid #000;
+}
+
+.modal-header {
+  background: linear-gradient(145deg, #f0f6ff, #c1d9fb);
+  border-bottom: 2px solid #b8b8b8;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.modal-footer {
+  border-top: 2px solid #b8b8b8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container,
+.card,
+.table-responsive {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .stats-box {
+    min-height: 60px;
+    font-size: 0.9rem;
+  }
+
+  .table-shell {
+    height: 60vh;
+  }
+
+  .table-scroll table {
+    min-width: 600px;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .verification-page {
+    padding: 0 0.5rem 1rem;
+  }
+
+  .container-filter {
+    padding: 1rem;
+  }
+
+  .stats-box {
+    min-height: 50px;
+    font-size: 0.85rem;
+  }
+}

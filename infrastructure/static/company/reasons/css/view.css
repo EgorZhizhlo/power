@@ -1,0 +1,53 @@
+.reason-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+}
+
+.reason-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.reason-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.reason-text {
+    column-gap: 2rem;
+}
+
+.reason-text p {
+    break-inside: avoid;
+    margin-bottom: .5rem;
+}
+
+@media (min-width: 1400px) {
+    .reason-text {
+        columns: 2;
+    }
+}
+
+@media (max-width: 1399px) {
+    .reason-text {
+        columns: 1;
+    }
+}
+
+.reason-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.reason-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}

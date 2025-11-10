@@ -1,0 +1,24 @@
+.report-item {
+    transition: opacity .2s, filter .2s;
+}
+
+.report-text {
+    column-gap: 2rem;
+}
+
+.report-text p {
+    break-inside: avoid;
+    margin-bottom: 0.5rem;
+}
+
+@media (min-width: 1400px) {
+    .report-text {
+        columns: 2;
+    }
+}
+
+@media (max-width: 1399px) {
+    .report-text {
+        columns: 1;
+    }
+}

@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+{% if is_create %}Создание{% else %}Редактирование{% endif %} оборудования
+{% endblock %}
+
+{% block content %}
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/equipments?company_id={{company_id}}" class="btn btn-outline-secondary label-text fw-bold"
+      style="border-width: 3px;">🔙 Вернуться назад</a>
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  {% if is_create %}Создание{% else %}Редактирование{% endif %} карточки оборудования
+</h1>
+
+<div class="card p-4 mb-5">
+  <form method="{% if is_create %}POST{% else %}PUT{% endif %}" action="
+      {% if is_create %}
+        /companies/api/equipments/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/equipments/update?company_id={{company_id}}&equipment_id={{equipment.id}}
+      {% endif %}" enctype="multipart/form-data" id="equipment-form">
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="image" class="form-label label-text"><b>Фотография оборудования</b></label>
+        <input type="file" id="image" name="image" class="form-control input-text" accept="image/*">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="image2" class="form-label label-text"><b>Второе фото</b></label>
+        <input type="file" id="image2" name="image2" class="form-control input-text" accept="image/*">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="document_pdf" class="form-label label-text"><b>Документ (PDF)</b></label>
+        <input type="file" id="document_pdf" name="document_pdf" accept="application/pdf"
+          class="form-control input-text">
+      </div>
+    </div>
+
+    <!-- Ряд 1 -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="name" class="form-label label-text"><b>Название</b></label>
+        <input type="text" id="name" name="name" class="form-control input-text text-center"
+          value="{{ equipment.name if not is_create and equipment else '' }}" required maxlength="80">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="full_name" class="form-label label-text"><b>Полное название</b></label>
+        <input type="text" id="full_name" name="full_name" class="form-control input-text text-center"
+          value="{{ equipment.full_name if not is_create and equipment else '' }}" required maxlength="150">
+      </div>
+    </div>
+
+    <!-- Ряд 2 -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="factory_number" class="form-label label-text"><b>Заводской номер</b></label>
+        <input type="text" id="factory_number" name="factory_number" class="form-control input-text text-center"
+          value="{{ equipment.factory_number if not is_create and equipment else '' }}" required maxlength="30"
+          pattern="^[\w\d\s\-,.]+$">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="inventory_number" class="form-label label-text"><b>Инвентарный номер</b></label>
+        <input type="number" id="inventory_number" name="inventory_number" class="form-control input-text text-center"
+          value="{{ equipment.inventory_number if not is_create and equipment else '' }}" required min="0" step="1">
+      </div>
+    </div>
+
+    <!-- Ряд 3 -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="year_of_issue" class="form-label label-text"><b>Год выпуска</b></label>
+        <input type="number" id="year_of_issue" name="year_of_issue" class="form-control input-text text-center"
+          value="{{ equipment.year_of_issue if not is_create and equipment else '' }}" required min="1901" max="2099"
+          step="1">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="commissioning_year" class="form-label label-text"><b>Год ввода в эксплуатацию</b></label>
+        <input type="number" id="commissioning_year" name="commissioning_year" required
+          class="form-control input-text text-center"
+          value="{{ equipment.commissioning_year if not is_create and equipment else '' }}" min="1900" max="2100"
+          step="1">
+      </div>
+    </div>
+
+    <!-- Ряд 4: выборы -->
+    {% set eq_act_id = (
+    equipment.activity_id if equipment and equipment.activity_id
+    else (equipment.activity.id if equipment and equipment.activity else '')
+    ) %}
+    {% set eq_si_id = (
+    equipment.si_type_id if equipment and equipment.si_type_id
+    else (equipment.si_type.id if equipment and equipment.si_type else '')
+    ) %}
+
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label class="form-label label-text"><b>Виды измерений</b></label>
+        <input type="hidden" id="activity_id" name="activity_id" value="{{ eq_act_id }}">
+        <div class="border p-3 rounded">
+          {% for a in activities %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="activity_choice" value="{{ a.id }}" {% if eq_act_id==a.id
+              %}checked{% endif %} onclick="document.getElementById('activity_id').value=this.value">
+            <label class="form-check-label">{{ a.name }}</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label class="form-label label-text"><b>Тип средства измерений</b></label>
+        <input type="hidden" id="si_type_id" name="si_type_id" value="{{ eq_si_id }}">
+        <div class="border p-3 rounded">
+          {% for s in si_types %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="si_choice" value="{{ s.id }}" {% if eq_si_id==s.id
+              %}checked{% endif %} onclick="document.getElementById('si_type_id').value=this.value">
+            <label class="form-check-label">{{ s.name }}</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Ряд 5 -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="manufacturer_country" class="form-label label-text"><b>Страна изготовителя</b></label>
+        <input type="text" id="manufacturer_country" name="manufacturer_country"
+          class="form-control input-text text-center"
+          value="{{ equipment.manufacturer_country if not is_create and equipment else '' }}" maxlength="120">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="manufacturer_name" class="form-label label-text"><b>Изготовитель</b></label>
+        <input type="text" id="manufacturer_name" name="manufacturer_name" class="form-control input-text text-center"
+          value="{{ equipment.manufacturer_name if not is_create and equipment else '' }}" maxlength="255">
+      </div>
+    </div>
+
+    <!-- Ряд 6 -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="ownership_document" class="form-label label-text"><b>Документ владения/пользования</b></label>
+        <input type="text" id="ownership_document" name="ownership_document" class="form-control input-text text-center"
+          value="{{ equipment.ownership_document if not is_create and equipment else '' }}" maxlength="255">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="storage_place" class="form-label label-text"><b>Место установки/хранения</b></label>
+        <input type="text" id="storage_place" name="storage_place" class="form-control input-text text-center"
+          value="{{ (equipment.storage_place or place if equipment else place) or '' }}" maxlength="255">
+      </div>
+    </div>
+
+    <!-- Диапазоны -->
+    <div class="mb-3" id="rangesWrapper">
+      <label class="form-label label-text"><b>Диапазоны измерений и погрешность</b></label>
+      <div id="ranges-container">
+        {% set ranges = (equipment.measurement_range or '').split('|') if equipment and equipment.measurement_range else
+        [''] %}
+        {% set errors = (equipment.error_or_uncertainty or '').split('|') if equipment and
+        equipment.error_or_uncertainty else [''] %}
+        {% set count = ranges|length if ranges|length > errors|length else errors|length %}
+        {% for i in range(count) %}
+        <div class="d-flex mb-2 range-row">
+          <input type="text" name="measurement_range_item" class="form-control input-text text-center me-2"
+            placeholder="Диапазон, например: (0,1...10) м³/ч" value="{{ ranges[i] if i < ranges|length else '' }}">
+          <input type="text" name="error_or_uncertainty_item" class="form-control input-text text-center me-2"
+            placeholder="Погрешность, например: 1" value="{{ errors[i] if i < errors|length else '' }}">
+          <button type="button" class="btn btn-outline-danger fw-bold remove-range"
+            style="border-width: 3px;">✖</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-range" class="btn btn-outline-success btn-sm mt-2 fw-bold"
+        style="border-width: 3px;">➕ Добавить</button>
+
+      <input type="hidden" id="measurement_range" name="measurement_range">
+      <input type="hidden" id="error_or_uncertainty" name="error_or_uncertainty">
+
+      <div class="form-text">
+        Диапазоны сохраняются как «(значение) м³/ч», погрешность — «ПГ ±(значение)%».
+        Для типов «Вспомогательное оборудование» и «Другое» не требуются.
+      </div>
+    </div>
+
+    <!-- ПО и тип -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <label for="software_identifier" class="form-label label-text"><b>Идентификационный номер ПО</b></label>
+        <input type="text" id="software_identifier" name="software_identifier"
+          class="form-control input-text text-center"
+          value="{{ equipment.software_identifier if (not is_create or equipment) and equipment.software_identifier else '' }}"
+          maxlength="255">
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <label for="type" class="form-label label-text"><b>Тип оборудования</b></label>
+        <select id="type" name="type" class="form-select input-text text-center" onchange="toggleFields()" required>
+          {% for key, value in {
+          'standard': 'Средство измерений, используемое в качестве эталона',
+          'measurement': 'Средство измерений',
+          'auxiliary': 'Вспомогательное оборудование',
+          'other': 'Другое'
+          }.items() %}
+          <option value="{{ key }}" {% if (not is_create or equipment) and equipment.type==key %}selected{% endif %}>{{
+            value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Госреестр / Перечень / Оптосчитыватель -->
+    <div class="row">
+      <div class="col-md-6 mb-3" id="registerNumberWrapper">
+        <label for="register_number" class="form-label label-text"><b>Номер гос.реестра</b></label>
+        <input type="text" id="register_number" name="register_number" class="form-control input-text text-center"
+          value="{{ equipment.register_number if not is_create and equipment else '' }}" maxlength="100">
+      </div>
+
+      <div class="col-md-6 mb-3" id="listNumberWrapper">
+        <label for="list_number" class="form-label label-text"><b>Номер в перечне</b></label>
+        <input type="text" id="list_number" name="list_number" class="form-control input-text text-center"
+          value="{{ equipment.list_number if not is_create and equipment else '' }}" maxlength="100">
+      </div>
+
+      <div class="col-md-6 mb-3" id="isOptWrapper">
+        <label for="is_opt" class="form-label label-text"><b>Оптосчитыватель</b></label>
+        <div class="d-flex justify-content-center">
+          <input type="checkbox" id="is_opt" name="is_opt" class="form-check-input me-2" {% if not is_create and
+            equipment is defined and equipment and equipment.is_opt %}checked{% endif %}>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+        ✅ Сохранить
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  window.companyId = {{ company_id }};
+  window.isCreate = {{ is_create | tojson }};
+  {% if not is_create %}
+  window.equipmentId = {{ equipment.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/equipments/js/update_or_create.js"></script>
+
+{% endblock %}

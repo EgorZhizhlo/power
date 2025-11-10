@@ -1,0 +1,28 @@
+{# templates/modal/order-detail.html #}
+<div class="modal fade" id="modalRequest" tabindex="-1" aria-labelledby="modalRequestLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-3 shadow">
+      <div class="modal-header bg-white d-flex align-items-center">
+        <button type="button" id="prevRequest" class="btn btn-outline-secondary me-2 fw-bold" style="border-width: 3px;"
+          aria-label="Предыдущая заявка">&lt;</button>
+        <h5 class="modal-title flex-grow-1 text-center" id="modalRequestLabel">
+          Заявка №…
+        </h5>
+        <button type="button" id="nextRequest" class="btn btn-outline-secondary ms-2 fw-bold" style="border-width: 3px;"
+          aria-label="Следующая заявка">&gt;</button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body" id="modalRequestBody">
+        <!-- Здесь динамически будет отрисована детальная информация -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="editRequest" class="btn btn-outline-warning fw-bold" style="border-width: 3px;">
+          🔄 Редактировать заявку
+        </button>
+        <button type="button" id="deleteRequest" class="btn btn-outline-danger fw-bold" style="border-width: 3px;">
+          🗑️ Удалить заявку
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

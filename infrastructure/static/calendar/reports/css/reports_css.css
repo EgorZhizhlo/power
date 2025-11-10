@@ -1,0 +1,95 @@
+:root {
+    --card-border: #dee2e6;
+    --card-bg: #fff;
+    --header-bg: #f8f9fa;
+    --text-color: #333;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: var(--text-color);
+}
+
+.search-card {
+    border: 2px solid var(--card-border);
+    border-radius: .75rem;
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+}
+
+.report-section .card {
+    border: 2px solid var(--card-border);
+    border-radius: .75rem;
+    background-color: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.report-section .card-header {
+    background-color: var(--header-bg);
+    border-bottom: 2px solid var(--card-border);
+    border-top-left-radius: .75rem;
+    border-top-right-radius: .75rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.report-section .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.report-section .card-footer {
+    border-top: 2px solid var(--card-border);
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.form-group.dates .d-flex {
+    width: 100%;
+}
+
+.form-group.dates .d-flex input {
+    flex: 1;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+    display: none;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* Динамические отчеты */
+#dynamic-reports-container .card {
+    border-color: #6c757d;
+}
+
+#dynamic-reports-container .card-header {
+    background-color: #e9ecef;
+    border-bottom-color: #6c757d;
+}
+
+/* Модальное окно */
+.modal-content {
+    border-radius: .75rem;
+}
+
+.modal-header {
+    border-bottom: 2px solid var(--card-border);
+}
+
+.modal-footer {
+    border-top: 2px solid var(--card-border);
+}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+Сотрудники
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/company/employees/css/view.css" />
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/css/lightgallery-bundle.min.css">
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/lightgallery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
+
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Компания {{ company_name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark fw-bold label-text"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  Сотрудники
+</h1>
+
+<div class="mb-4 d-flex justify-content-center">
+  <div class="input-group" style="flex-basis:60%;">
+    <input id="search-input" style="font-size: var(--font-base);" class="form-control input-text"
+      placeholder="Поиск по ФИО или email">
+  </div>
+</div>
+
+<div class="d-flex justify-content-center mb-4">
+  <a id="create-btn" href="/companies/employees/create?company_id={{company_id}}"
+    class="btn btn-outline-primary fw-bold label-text" style="flex-basis:50%; border-width: 3px;">➕ Добавить нового
+    сотрудника</a>
+</div>
+
+<div id="employees-list" class="row mb-5"></div>
+
+<nav aria-label="Навигация страниц">
+  <ul id="pagination" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+  window.companyId = {{ company_id }};
+</script>
+
+<script type="module" src="/static/company/employees/js/view.js"></script>
+
+{% endblock %}

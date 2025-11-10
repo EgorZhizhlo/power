@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+{% if is_create %}Добавление{% else %}Редактирование{% endif %} поверителя
+{% endblock %}
+
+{% block content %}
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/verifiers?company_id={{company_id}}" class="btn btn-outline-secondary label-text fw-bold"
+      style="border-width: 3px;">🔙 Вернуться назад</a>
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} поверителя
+</h1>
+
+<div class="card p-4 mb-5">
+  <form id="verifier-form" method="{% if is_create %}POST{% else %}PUT{% endif %}" action="
+      {% if is_create %}
+        /companies/api/verifiers/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/verifiers/update?company_id={{company_id}}&verifier_id={{verifier.id}}
+      {% endif %}">
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="last_name" class="form-label label-text"><b>Фамилия</b></label>
+        <input type="text" id="last_name" name="last_name" class="form-control input-text text-center"
+          value="{{ verifier.last_name if not is_create else '' }}" required maxlength="100">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="name" class="form-label label-text"><b>Имя</b></label>
+        <input type="text" id="name" name="name" class="form-control input-text text-center"
+          value="{{ verifier.name if not is_create else '' }}" required maxlength="100">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="patronymic" class="form-label label-text"><b>Отчество</b></label>
+        <input type="text" id="patronymic" name="patronymic" class="form-control input-text text-center"
+          value="{{ verifier.patronymic if not is_create else '' }}" required maxlength="100">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="snils" class="form-label label-text"><b>СНИЛС</b></label>
+        <input type="text" id="snils" name="snils" class="form-control input-text text-center" pattern="\d{11}"
+          maxlength="11" value="{{ verifier.snils if not is_create else '' }}" placeholder="11 цифр без знаков"
+          required>
+      </div>
+
+      {% if equipments %}
+      <div class="col-12 mb-3">
+        <label for="equipments" class="form-label label-text"><b>Оборудование</b></label>
+        <select id="equipments" name="equipments" multiple class="form-select input-text choices"
+          data-placeholder="Выберите оборудование">
+          {% for eq in equipments %}
+          <option value="{{ eq.id }}" {% if not is_create and eq.id in verifier.equipments|map(attribute='id' )|list
+            %}selected{% endif %}>
+            {{ eq.name }}, Зав. №: {{ eq.factory_number }}, Инв. №: {{ eq.inventory_number }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+        ✅ Сохранить
+      </button>
+    </div>
+  </form>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+  window.companyId = {{ company_id }};
+  window.isCreate = {{ is_create | tojson }};
+  {% if not is_create %}
+  window.verifierId = {{ verifier.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/verifiers/js/update_or_create.js"></script>
+
+{% endblock %}

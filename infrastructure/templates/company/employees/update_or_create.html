@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Создание{% else %}Редактирование{% endif %} сотрудника
+{% endblock %}
+
+{% block content %}
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+    <div class="photo mb-3">
+      <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+    </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/employees?company_id={{company_id}}"
+        class="btn btn-outline-secondary label-text fw-bold"
+      style="border-width: 3px;">🔙 Вернуться назад</a>
+    <a href="/companies/company?company_id={{company_id}}"
+        class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  {% if is_create %}Создание{% else %}Редактирование{% endif %} сотрудника
+</h1>
+
+<div class="card p-4 mb-5">
+  <form
+      id="employee-form"
+      method="{% if is_create %}POST{% else %}PUT{% endif %}"
+      action="
+      {% if is_create %}
+        /companies/api/employees/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/employees/update?company_id={{company_id}}&employee_id={{employee.id}}
+      {% endif %}" enctype="multipart/form-data">
+
+    <div class="mb-4">
+      <label for="image" class="form-label label-text">Фотография сотрудника</label>
+      <input type="file" class="form-control input-text" id="image" name="image">
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="mb-3">
+          <label for="username" class="form-label label-text">Имя пользователя</label>
+          <input type="text" class="form-control input-text text-center"
+                 id="username" name="username"
+                 value="{{ employee.username if not is_create }}" required maxlength="150">
+        </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label label-text">Email</label>
+          <input type="email" class="form-control input-text text-center"
+                 id="email" name="email"
+                 value="{{ employee.email if not is_create }}" required maxlength="120">
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label label-text">Пароль</label>
+          <input type="password" class="form-control input-text text-center"
+                 id="password" name="password"
+                 {% if not is_create %}placeholder="Оставьте пустым, если не хотите менять"{% endif %}
+                 maxlength="200">
+        </div>
+
+        <div class="mb-3">
+          <label for="last_name" class="form-label label-text">Фамилия</label>
+          <input type="text" class="form-control input-text text-center"
+                 id="last_name" name="last_name"
+                 value="{{ employee.last_name if not is_create }}" required maxlength="100">
+        </div>
+
+        <div class="mb-3">
+          <label for="name" class="form-label label-text">Имя</label>
+          <input type="text" class="form-control input-text text-center"
+                 id="name" name="name"
+                 value="{{ employee.name if not is_create }}" required maxlength="100">
+        </div>
+
+        <div class="mb-3">
+          <label for="patronymic" class="form-label label-text">Отчество</label>
+          <input type="text" class="form-control input-text text-center"
+                 id="patronymic" name="patronymic"
+                 value="{{ employee.patronymic if not is_create }}" required maxlength="100">
+        </div>
+
+        <div class="mb-3">
+          <label for="status" class="form-label label-text">Статус</label>
+          <select id="status" name="status"
+                  class="form-select input-text choices" data-placeholder="Выберите статус" required>
+            <option value="" disabled {% if not is_create and not employee.status %}selected{% endif %}>Выберите статус</option>
+            {% if status == 'admin' %}
+              <option value="admin" {% if not is_create and employee.status=='admin' %}selected{% endif %}>Администратор</option>
+              <option value="director" {% if not is_create and employee.status=='director' %}selected{% endif %}>Руководитель компании</option>
+            {% elif status == 'director' and not is_create and employee.id==id %}
+              <option value="director" {% if employee.status=='director' %}selected{% endif %}>Руководитель компании</option>
+            {% endif %}
+            <option value="auditor" {% if not is_create and employee.status=='auditor' %}selected{% endif %}>Ревизор</option>
+            <option value="dispatcher1" {% if not is_create and employee.status=='dispatcher1' %}selected{% endif %}>Диспетчер 1</option>
+            <option value="dispatcher2" {% if not is_create and employee.status=='dispatcher2' %}selected{% endif %}>Диспетчер 2</option>
+            <option value="verifier" {% if not is_create and employee.status=='verifier' %}selected{% endif %}>Поверитель</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="position" class="form-label label-text">Должность</label>
+          <input type="text" class="form-control input-text text-center"
+                 id="position" name="position"
+                 value="{{ employee.position if not is_create and employee.position else '' }}" maxlength="150">
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div id="trust-fields" class="mb-3" style="display:none;">
+          <div class="mb-3">
+            <label for="trust_verifier" class="form-label label-text">Доступ к «Поверителям»</label>
+            <select id="trust_verifier" name="trust_verifier"
+                    class="form-select input-text choices" data-placeholder="Выберите">
+              <option value="false" {% if not is_create and not employee.trust_verifier %}selected{% endif %}>Нет</option>
+              <option value="true" {% if not is_create and employee.trust_verifier %}selected{% endif %}>Да</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="trust_equipment" class="form-label label-text">Доступ к «Оборудованию»</label>
+            <select id="trust_equipment" name="trust_equipment"
+                    class="form-select input-text choices" data-placeholder="Выберите">
+              <option value="false" {% if not is_create and not employee.trust_equipment %}selected{% endif %}>Нет</option>
+              <option value="true" {% if not is_create and employee.trust_equipment %}selected{% endif %}>Да</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3 form-check">
+          <input type="hidden" name="is_active" value="false">
+          <input type="checkbox" class="form-check-input input-text" id="is_active" name="is_active" value="true"
+                 {% if is_create or employee.is_active %}checked{% endif %}>
+          <label class="form-check-label label-text" for="is_active">Активный</label>
+        </div>
+
+        {% if verifiers %}
+          <div class="mb-3">
+            <label for="default_verifier_id" class="form-label label-text">Поверитель по умолчанию</label>
+            <select id="default_verifier_id" name="default_verifier_id"
+                    class="form-select input-text choices" data-placeholder="Не выбрано">
+              <option value="" {% if not is_create and not employee.default_verifier_id %}selected{% endif %}>Не выбрано</option>
+              {% for v in verifiers %}
+                <option value="{{ v.id }}" {% if not is_create and employee.default_verifier_id==v.id %}selected{% endif %}>
+                  {{ v.last_name|capitalize }} {{ v.name|capitalize }} {{ v.patronymic|capitalize }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        {% if series %}
+          <div class="mb-3">
+            <label for="series_id" class="form-label label-text">Серия акта по умолчанию</label>
+            <select id="series_id" name="series_id"
+                    class="form-select input-text choices" data-placeholder="Не выбрано">
+              <option value="" {% if not is_create and not employee.series_id %}selected{% endif %}>Не выбрано</option>
+              {% for s in series %}
+                <option value="{{ s.id }}" {% if not is_create and employee.series_id==s.id %}selected{% endif %}>
+                  {{ s.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        {% if cities %}
+          <div class="mb-3">
+            <label for="default_city_id" class="form-label label-text">Город по умолчанию</label>
+            <select id="default_city_id" name="default_city_id"
+                    class="form-select input-text choices" data-placeholder="Не выбрано">
+              <option value="" {% if not is_create and not employee.default_city_id %}selected{% endif %}>Не выбрано</option>
+              {% for c in cities %}
+                <option value="{{ c.id }}" {% if not is_create and employee.default_city_id==c.id %}selected{% endif %}>
+                  {{ c.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="city_ids" class="form-label label-text">Города для отображения</label>
+            <select id="city_ids" name="city_ids"
+                    class="form-select input-text choices" multiple data-placeholder="Выберите города">
+              {% for c in cities %}
+                <option value="{{ c.id }}" {% if not is_create and c.id in (employee.cities|map(attribute='id')|list) %}selected{% endif %}>
+                  {{ c.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        {% if routes %}
+          <div class="mb-3">
+            <label for="route_ids" class="form-label label-text">Маршруты для календаря</label>
+            <select id="route_ids" name="route_ids"
+                    class="form-select input-text choices" multiple data-placeholder="Выберите маршруты">
+              {% for r in routes %}
+                <option value="{{ r.id }}" {% if not is_create and r.id in (employee.routes|map(attribute='id')|list) %}selected{% endif %}>
+                  {{ r.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button type="submit" class="btn btn-outline-success label-text fw-bold" style="border-width: 3px;">
+        ✅ Сохранить
+      </button>
+    </div>
+  </form>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+  window.companyId = {{ company_id }};
+  window.isCreate = {{ is_create|tojson }};
+  {% if not is_create %}
+  window.employeeId = {{ employee.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/employees/js/update_or_create.js"></script>
+
+{% endblock %}

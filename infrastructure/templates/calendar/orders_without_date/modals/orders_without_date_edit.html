@@ -1,0 +1,94 @@
+{# templates/modal/order-edit.html #}
+<div class="modal fade" id="modalEditRequest" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-3 shadow">
+      <div class="modal-header bg-white">
+        <h5 class="modal-title">🔄 Редактирование заявки</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditRequest" autocomplete="off"  method="patch">
+        <div id="editError" class="text-danger mb-2"></div>
+        <div class="modal-body">
+          <div class="row gy-3">
+            <div class="col-md-6 form-group">
+              <label for="editDate" class="form-label">Дата</label>
+              <input id="editDate" name="date" type="date" class="form-control">
+            </div>
+            <div class="col-md-6 form-group d-flex align-items-center">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" id="editNoDate" name="no_date">
+                <label class="form-check-label" for="editNoDate">Без даты</label>
+              </div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editRoute" class="form-label">Маршрут</label>
+              <select id="editRoute" name="route_id" class="form-select"></select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editCity" class="form-label">Город</label>
+              <select id="editCity" name="city_id" class="form-select"></select>
+            </div>
+            <div class="col-12 form-group">
+              <label for="editAddress" class="form-label">Адрес</label>
+              <input id="editAddress" name="address" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editPhone" class="form-label">Телефон</label>
+              <input id="editPhone" data-phone-input name="phone_number" type="tel" class="form-control" required>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editSecPhone" class="form-label">Доп. телефон</label>
+              <input id="editSecPhone" data-phone-input name="sec_phone_number" type="tel" class="form-control">
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editClient" class="form-label">Заказчик</label>
+              <input id="editClient" name="client_full_name" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6 form-group d-flex align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="editLegal" name="legal_entity_status">
+                <label class="form-check-label" for="editLegal">Юр. лицо</label>
+              </div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editCounter" class="form-label">Количество счётчиков</label>
+              <input
+                id="editCounter"
+                name="counter_number"
+                type="number"
+                class="form-control"
+                required
+                min="0"
+                max="10"
+                step="1"
+                oninput="this.value = Math.max(Math.min(this.value, 10), 0)"
+              >
+            </div>
+
+            <div class="col-md-6 form-group">
+              <label for="editWater" class="form-label">Тип воды</label>
+              <select id="editWater" name="water_type" class="form-select" required>
+                <option value="Холодная">Холодная</option>
+                <option value="Горячая">Горячая</option>
+                <option value="Холодная и Горячая">Холодная и Горячая</option>
+                <option value="Неизвестно">Неизвестно</option>
+              </select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="editPrice" class="form-label">Цена</label>
+              <input id="editPrice" name="price" type="number" step="0.01" class="form-control" required>
+            </div>
+            <div class="col-12 form-group">
+              <label for="editInfo" class="form-label">Доп. информация</label>
+              <textarea id="editInfo" name="additional_info" class="form-control"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-success fw-bold" style="border-width: 3px;">✅ Сохранить</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" style="border-width: 3px;" data-bs-dismiss="modal">✖️ Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}
+{{title_name}}
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/verification/reports/css/employees_cities.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+<div class="report-container">
+  <div class="report-header">
+    <h1>{{title_name}}</h1>
+  </div>
+
+  <div class="report-actions">
+    <a href="/verification/?company_id={{company_id}}"
+       class="btn-home">
+      🏠 На главную
+    </a>
+  </div>
+
+  <!-- Индикатор загрузки -->
+  <div id="loading-indicator" style="display: none; text-align: center; margin: 2rem 0;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Загрузка...</span>
+    </div>
+    <p class="mt-2">Загрузка данных...</p>
+  </div>
+
+  <!-- Сообщение об ошибке -->
+  <div id="error-message" class="alert alert-danger" style="display: none;" role="alert">
+  </div>
+
+  <div class="report-filter">
+    <form method="GET" action="/verification/api/reports/cities/?company_id={{company_id}}">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="date_from" class="form-label">Дата с</label>
+          <input type="date" id="date_from" name="date_from" class="form-control"
+                 value="{{ date_from or '' }}"/>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="date_to" class="form-label">По</label>
+          <input type="date" id="date_to" name="date_to" class="form-control"
+                 value="{{ date_to or '' }}"/>
+        </div>
+      </div>
+      
+      <div class="d-flex justify-content-end gap-3 mt-3">
+        <button type="submit" class="btn btn-primary">Отобрать</button>
+        <a class="btn btn-outline-primary"
+           href="/verification/reports/cities/?company_id={{company_id}}">
+          Сбросить фильтр
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div class="report-table-wrapper">
+    <div class="report-table-scroll">
+      <table class="report-table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Населенный пункт</th>
+            <th>Пригодно</th>
+            <th>Непригодно</th>
+            <th>Холодная вода</th>
+            <th>Горячая вода</th>
+            {% if column_labels.checkbox_1 %}
+            <th>{{ column_labels.checkbox_1 }}</th>
+            {% endif %}
+            {% if column_labels.checkbox_2 %}
+            <th>{{ column_labels.checkbox_2 }}</th>
+            {% endif %}
+            {% if column_labels.checkbox_3 %}
+            <th>{{ column_labels.checkbox_3 }}</th>
+            {% endif %}
+            {% if column_labels.checkbox_4 %}
+            <th>{{ column_labels.checkbox_4 }}</th>
+            {% endif %}
+            {% if column_labels.checkbox_5 %}
+            <th>{{ column_labels.checkbox_5 }}</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Данные будут загружены через JavaScript -->
+          <tr>
+            <td colspan="11" class="text-center text-muted">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+              </div>
+              Загрузка данных...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Подключаем JavaScript для загрузки данных -->
+<script src="/static/verification/reports/js/cities_statistics.js"></script>
+{% endblock %}

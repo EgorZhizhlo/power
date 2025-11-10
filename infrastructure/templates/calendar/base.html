@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Кабинет истории поверок" />
+    <meta name="author" content="Egor Zhizhlo Tg:@EgorZhizhlo" />
+    <title>
+      Календарь || {{ last_name | capitalize}} {{ name | capitalize}} {{
+      patronymic | capitalize}} || {% block title%} {%endblock%}
+    </title>
+    <link rel="icon" href="/static/data/logo.svg" type="image/svg+xml" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/calendar/base.css" />
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-xxl fixed-top navbar-dark bg-dark">
+      <div class="container-fluid">
+        {% if companies | length > 1 %}
+        <div class="nav-item dropdown py-1 px-3 my-1 text-center">
+          <a class="nav-link dropdown-toggle text-white" href="#" role="button"
+            data-bs-toggle="dropdown" aria-expanded="false" style="font-size: calc(14px + 0.7vw);">
+            <b>{{ last_name | capitalize }} {{ name | capitalize }} {{ patronymic | capitalize }}</b>
+          </a>
+          <ul class="dropdown-menu bg-secondary w-100">
+            {% for company in companies %}
+              <li><a class="dropdown-item text-center text-white p-2"
+                href="/calendar/?company_id={{ company.id }}">
+                {% if company.id == company_id %}<b>✓</b>{% endif %} {{company.name}}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% elif companies | length == 1 %}
+          {% for company in companies %}
+          <a class="navbar-brand" href="/calendar/?company_id={{ company_id }}"><b>{{ last_name | capitalize }} {{ name | capitalize }} {{ patronymic | capitalize }}</b></a>
+          {% endfor %}
+        {% endif %}
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav" >
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/?company_id={{ company_id }}">Главная</a>
+            </li>
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/without-date/?company_id={{ company_id }}">Заявки без даты</a>
+            </li>
+            {% if status != "dispatcher2" %}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/appeals/?company_id={{ company_id }}">Обращения</a>
+            </li>
+            {% endif %}
+            {% if status not in ["dispatcher1", "dispatcher2"] %}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/reports/static/?company_id={{ company_id }}">Отчеты</a>
+            </li>
+            {% endif %}
+            {% if status != "dispatcher2" %}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/planning/?company_id={{ company_id }}">Порядок заявок</a>
+            </li>
+            {% endif %}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/calendar/search/?company_id={{ company_id }}">Поиск</a>
+            </li>
+            {% if status in ["director", "admin", "auditor"] %}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/companies/">Мои компании</a>
+            </li>
+            {% endif %}
+            {% if status in ["auditor", "director", "admin"]%}
+            <li class="nav-item py-1 px-1">
+              <a class="btn nav-link active w-100 fw-bold" style="color: black"
+                href="/verification/?company_id={{company_id}}">Поверка</a>
+            </li>
+            {% endif %}
+            <li class="nav-item py-1 px-1">
+              <a class="nav-link active text-center w-100" style="color: rgb(255, 255, 255); font-weight: 700;"
+               aria-current="page" href="/logout">Выйти</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="content-wrapper my-4">
+      {% block content %}
+      {% endblock %}
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-auto fixed-footer">
+      <div class="container">
+        <p>&copy; Календарь</p>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  </body>
+</html>

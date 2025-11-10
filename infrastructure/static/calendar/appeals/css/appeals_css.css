@@ -1,0 +1,70 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* Карточка-обёртка */
+.search-card {
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    background-color: #fff;
+}
+
+/* Если нужна будет поисковая строка — аналогичная исходной */
+.search-input {
+    width: 80%;
+    margin: 1rem auto 2rem;
+}
+
+.search-input .form-control {
+    height: 2.5rem;
+    font-size: 1.25rem;
+}
+
+/* Таблица: выравнивание по вертикали */
+#ordersTable th,
+#ordersTable td {
+    vertical-align: middle;
+}
+
+/* Пагинация по центру */
+.pagination {
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.page-link {
+    cursor: pointer;
+}
+
+/* Спиннер поверх таблицы */
+.spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.table-responsive {
+    position: relative;
+}
+
+/* Ссылки на ID */
+.id-link,
+.link-id {
+    color: inherit;
+    text-decoration: none;
+}
+
+.id-link:hover,
+.link-id:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,76 @@
+.route-item.deleted {
+    opacity: .55;
+    filter: blur(2px);
+  }
+
+  .route-item.deleted:hover {
+    opacity: 1;
+    filter: none;
+  }
+
+  .route-item {
+    transition: opacity .2s, filter .2s;
+  }
+
+  .route-text {
+    column-gap: 2rem;
+  }
+
+  .route-text p {
+    break-inside: avoid;
+    margin-bottom: .5rem;
+  }
+
+  @media (min-width: 1400px) {
+    .route-text {
+      columns: 2;
+    }
+  }
+
+  @media (max-width: 1399px) {
+    .route-text {
+      columns: 1;
+    }
+  }
+
+  .color-dot {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #000;
+    border-radius: 4px;
+  }
+
+  .route-item .row p {
+    font-size: var(--font-base);
+  }
+
+  .route-item .row {
+    align-items: center;
+  }
+
+  .color-dot {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #000;
+    border-radius: 4px;
+  }
+
+  /* футер действий — одинаково везде */
+  .route-actions {
+    margin-top: auto;
+    padding-top: .75rem;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .route-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }

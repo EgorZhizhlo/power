@@ -1,0 +1,133 @@
+.calendar-container {
+    max-width: 99vw;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.card-calendar {
+    width: 100%;
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.calendar-header {
+    background-color: #fff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #fff;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.calendar-weekdays {
+    padding: 0.5rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.calendar-weekdays div {
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    justify-content: center;
+}
+
+.calendar-grid {
+    gap: 0.5rem;
+    padding: 2rem;
+}
+
+.btn-date {
+    width: calc(13vw - 17px);
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s ease-in-out;
+    cursor: pointer;
+    font-size: calc(6px + 1vw);
+}
+
+.btn-date:hover {
+    transform: translateY(-4px);
+}
+
+.btn-date.active-day {
+    background-color: #ffc107;
+    color: #212529;
+    border-color: #ffc107;
+}
+
+.request-card {
+    word-break: break-word;
+    white-space: normal;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease-in-out;
+    background-color: transparent;
+}
+
+.request-card:hover {
+    transform: translateY(-2px);
+}
+
+.optimize-btn {
+    width: calc(100px + 5vw);
+    font-size: calc(10px + 0.5vw);
+}
+
+.day-column {
+    border: 1px solid #e9ecef;
+    min-height: 200px;
+    overflow-y: auto;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info {
+    display: block;
+    width: 100%;
+    font-size: calc(10px + 0.5vw);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.verifier-name,
+.client-address,
+.client-phone {
+    font-weight: normal;
+}
+
+.btn-date .day-info {
+    font-size: 0.7em;
+    color: #555;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+}
+
+.day-info-card {
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    font-size: 0.9em;
+    word-break: break-word;
+    white-space: pre-wrap;
+}

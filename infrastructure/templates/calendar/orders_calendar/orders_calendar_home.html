@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title_name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="/static/calendar/orders_calendar/css/orders_calendar_css.css">
+
+<div class="container-fluid calendar-container">
+  <div class="card card-calendar">
+    <div class="d-flex justify-content-end p-3" style="background: #fff;">
+      <button id="btn-calendar-create" class="btn btn-outline-primary fw-bold" style="border-width: 3px;">➕ Добавить заявку</button>
+    </div>
+    <div class="calendar-header">
+      <button id="prev-month" class="btn btn-outline-primary fw-bold" style="border-width: 3px;">
+        <i class="bi bi-arrow-left-circle py-2 px-2"></i>
+      </button>
+      <p id="current-month-year" class="mb-0" style="font-weight: 900; text-align: center;"></p>
+      <button id="next-month" class="btn btn-outline-primary fw-bold" style="border-width: 3px;">
+        <i class="bi bi-arrow-right-circle py-2 px-2"></i>
+      </button>
+    </div>
+    <div class="d-flex justify-content-center my-3">
+      <div class="btn-group" role="group" aria-label="View toggle">
+        <button id="view-month" type="button" class="btn btn-outline-primary active optimize-btn fw-bold" style="border-width: 3px;">Месяц</button>
+        <button id="view-week"  type="button" class="btn btn-outline-primary optimize-btn fw-bold" style="border-width: 3px;">Неделя</button>
+      </div>
+    </div>
+    <div class="calendar-weekdays" style="font-weight: 900; text-align: center;"> 
+      <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+</div>
+
+{# Модальные окна с формами и деталями #}
+{% include '/orders_calendar/modals/orders_calendar_menu.html' %}
+{% include '/orders_calendar/modals/orders_calendar_detail.html' %}
+{% include '/orders_calendar/modals/orders_calendar_create.html' %}
+{% include '/orders_calendar/modals/orders_calendar_edit.html' %}
+{% include '/orders_calendar/modals/orders_calendar_delete.html' %}
+{% include '/orders_calendar/modals/control_day_info.html' %}
+
+<script>
+  window.currentCompanyId = {{ company_id }};
+  window.companyCalendarParams = {{ company_calendar_params|tojson }};
+  window.currentUserStatus = "{{status}}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script type="module" src="/static/calendar/orders_calendar/js/orders_calendar_script.js"></script>
+{% endblock %}

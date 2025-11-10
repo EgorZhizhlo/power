@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}
+{{title_name}}
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/verification/css/entry-list.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+<div class="container my-5">
+  <h1 class="text-center my-5">{{title_name}}</h1>
+  <div class="w-100 d-flex justify-content-center my-3">
+    <a href="{{ url_for('entry_list', company_id=company_id).path }}"
+    class="btn btn-outline-dark fs-4 text-align-middle text-center mx-2 fw-bold"
+    style="border: 3px solid black;">На главную 🏠</a>
+  </div>
+  <form style="margin: 1% auto; width: 90%;" method="GET" action="{{url_for("protocols_report", company_id=company_id).path}}">
+    <div class="row fs-5 py-2 px-1"
+      style="border: 2px solid #858181; background: #dddcdcbb; border-radius: 20px;">
+      <div class="col-md-6 mb-3 flex-grow-1">
+        <label for="date_from" class="form-label">Дата с</label>
+        <input
+          type="date"
+          id="date_from"
+          name="date_from"
+          class="form-control fs-5"
+          value="{{ date_from if date_from }}"/>
+      </div>
+      <div class="col-md-6 mb-3 flex-grow-1">
+        <label for="date_to" class="form-label">По</label>
+        <input type="date" id="date_to" name="date_to"
+          class="form-control fs-5"
+          value="{{ date_to if date_to }}"/>
+      </div>
+      <div class="col-md-6 mb-3 flex-grow-1">
+        <label for="series_id" class="form-label">Серия
+          бланка</label>
+        <select
+          id="series_id"
+          name="series_id"
+          class="form-select fs-5">
+          <option value>Выберите серию бланка</option>
+          {% if series %}
+            {% for s in series %}
+              <option value="{{s.id}}" {% if s.id == series_id %}selected{% endif %}>{{s.name}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+      <div class="col-md-6 mb-3 flex-grow-1">
+        <label for="employee_id" class="form-label">Работник</label>
+        <select id="employee_id" name="employee_id" class="form-select fs-5">
+          <option value>Выберите работника</option>
+          {% if employees %}
+            {% for employee in employees %}
+              <option value="{{employee.id}}" {% if employee.id == employee_id %}selected{% endif %}>{{employee.last_name | capitalize}} {{employee.name | capitalize}} {{employee.patronymic | capitalize}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+      <div class="d-flex justify-content-end mt-2 mb-1">
+        <button type="submit" class="btn btn-primary fs-4 me-4"
+          style="border: 2px solid #1d294b;">Отобрать</button>
+        <a class="btn btn-primary fs-4 ms-4" href="{{url_for("protocols_report", company_id=company_id).path}}" style="border: 2px solid #1d294b;">
+          Сбросить фильтр
+        </a>
+      </div>
+    </div>
+  </form>
+  <div class="container container-box mt-5">
+    <div class="row fs-5 py-2 px-1">
+      <form class="col-md-6 flex-grow-1" action="{{url_for("create_protocols_report", company_id=company_id, protocol_status=True).path}}" method="get">
+        <input type="hidden" name="date_from" value="{{ date_from if date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to if date_to }}">
+        <input type="hidden" name="series_id" value="{{ series_id if series_id }}">
+        <input type="hidden" name="employee_id" value="{{ employee_id if employee_id }}">
+        <button type="submit" class="btn btn-primary fs-5 w-100" style="border: 2px solid #1d294b;">Пакет протоколов с Оптосчитывателем</button>
+      </form>
+      <form class="col-md-6 flex-grow-1" action="{{url_for("create_protocols_report", company_id=company_id, protocol_status=False).path}}" method="get">
+        <input type="hidden" name="date_from" value="{{ date_from if date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to if date_to }}">
+        <input type="hidden" name="series_id" value="{{ series_id if series_id }}">
+        <input type="hidden" name="employee_id" value="{{ employee_id if employee_id }}">
+        <button type="submit" class="btn btn-primary fs-5 w-100" style="border: 2px solid #1d294b;">Пакет протоколов без Оптосчитывателя</button>
+      </form>
+    </div>
+  </div>
+</div>
+{%endblock%}

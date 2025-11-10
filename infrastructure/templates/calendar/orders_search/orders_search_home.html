@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{{ title_name }}{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+<link rel="stylesheet" href="/static/calendar/orders_search/css/orders_search_css.css">
+
+<div class="container-fluid">
+  <div class="card search-card">
+    <div class="card-header">
+      <h5 class="mb-0 fs-4"><b>{{ title_name }}</b></h5>
+    </div>
+    <div class="search-input">
+      <div class="input-group">
+        <input
+          id="searchInput"
+          type="text"
+          class="form-control"
+          placeholder="Поиск по адресу, городу, телефону или информации…"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <div id="spinner" class="spinner-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Загрузка...</span>
+        </div>
+      </div>
+      <table id="ordersTable" class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Адрес</th>
+            <th>Город</th>
+            <th>Телефон</th>
+            <th>Доп. инфо</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <nav aria-label="Навигация по страницам">
+      <ul id="pagination-ul" class="pagination"></ul>
+    </nav>
+  </div>
+</div>
+
+{% include '/orders_search/modals/orders_search_detail.html' %}
+{% include '/orders_search/modals/orders_search_edit.html' %}
+{% include '/orders_search/modals/orders_search_delete.html' %}
+
+<script>
+  window.currentCompanyId = {{ company_id | tojson }};
+  window.companyCalendarParams = {{ company_calendar_params | tojson }};
+</script>
+
+<!-- Скрипты -->
+<script type="module" src="/static/calendar/orders_search/js/orders_search_script.js"></script>
+
+{% endblock %}

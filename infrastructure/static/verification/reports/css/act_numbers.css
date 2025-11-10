@@ -1,0 +1,157 @@
+.report-container {
+  width: 100%;
+  margin: 0;
+  padding: 1rem 2rem 3rem;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.report-header h1 {
+  font-weight: 700;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.report-header h1::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #0d6efd;
+  margin: 0.5rem auto 0;
+  border-radius: 2px;
+}
+
+.report-actions {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.report-actions .btn-home {
+  border: 2px solid #000;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #f0f6ff, #c1d9fb);
+  padding: 0.6rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #000;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.report-actions .btn-home:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(145deg, #e3eeff, #bfd8fc);
+  color: #000;
+}
+
+.report-filter {
+  background: linear-gradient(145deg, #eef5ff, #d5e6ff);
+  border: 2px solid #000;
+  border-radius: 1.5rem;
+  padding: 2rem 2.5rem;
+  margin: 0 0 2rem 0;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.report-filter .form-label {
+  font-weight: 600;
+  color: #222;
+  font-size: 1rem;
+}
+
+.report-filter .form-control {
+  border-radius: 0.75rem;
+  border: 1px solid #adb5bd;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-filter .form-control:focus {
+  border-color: #6fa8ff;
+  box-shadow: 0 0 0 3px rgba(111, 168, 255, 0.25);
+}
+
+.report-filter .btn {
+  border: 2px solid #000;
+  border-radius: 1rem;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.report-filter .btn:hover {
+  transform: translateY(-3px);
+}
+
+.report-filter .btn-primary {
+  background: linear-gradient(145deg, #b7d8ff, #82baff);
+  color: #000;
+  border-color: #000;
+}
+
+.report-filter .btn-primary:hover {
+  background: linear-gradient(145deg, #98c8ff, #66a9ff);
+  color: #000;
+}
+
+.report-filter .btn-outline-primary {
+  background: linear-gradient(145deg, #fff, #f0f6ff);
+  color: #000;
+  border-color: #000;
+}
+
+.report-filter .btn-outline-primary:hover {
+  background: linear-gradient(145deg, #f0f6ff, #e3eeff);
+  color: #000;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#loading-indicator {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+#loading-indicator p {
+  color: #495057;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+#error-message {
+  animation: fadeIn 0.3s ease-in-out;
+  border-radius: 1rem;
+  border: 2px solid #dc3545;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .report-container {
+    padding: 1rem;
+  }
+  
+  .report-filter {
+    padding: 1.5rem;
+  }
+  
+  .report-actions .btn {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+}
+

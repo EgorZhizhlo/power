@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} | Оборудование
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/company/equipments/css/view.css" />
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/css/lightgallery-bundle.min.css">
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/lightgallery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
+
+<h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+
+  <div class="btn-group mb-3">
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  Карточки оборудования
+</h1>
+
+<!-- Фильтры -->
+<div class="card p-3 mb-3 filters">
+  <div class="row g-2 align-items-end">
+    <div class="col">
+      <label class="form-label label-text">Наименование</label>
+      <input id="flt-name" type="text" class="form-control input-text" placeholder="Название / полное название">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">Зав №</label>
+      <input id="flt-factory" type="text" class="form-control input-text" placeholder="Заводской номер">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">Инв №</label>
+      <input id="flt-inventory" type="text" class="form-control input-text" placeholder="Инвентарный номер">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">№ Госреестра</label>
+      <input id="flt-register" type="text" class="form-control input-text" placeholder="№ реестра">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">Дата поверки (от)</label>
+      <input id="flt-verif-from" type="date" class="form-control input-text">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">Дата поверки (до)</label>
+      <input id="flt-verif-to" type="date" class="form-control input-text">
+    </div>
+    <div class="col">
+      <label class="form-label label-text">Статус</label>
+      <select id="flt-status" class="form-select input-text">
+        <option value="all" selected>Все</option>
+        <option value="active">Активные</option>
+        <option value="deleted">Удалённые</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button id="btn-reset" class="btn btn-outline-secondary fw-bold" style="border-width: 3px;">Сбросить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Кнопки -->
+<div class="d-flex justify-content-center mb-1">
+  <div class="d-flex gap-2 justify-content-center mb-1 w-100">
+    <a id="create-btn" href="/companies/equipments/create?company_id={{company_id}}"
+      class="btn btn-outline-primary label-text fw-bold d-flex align-items-center justify-content-center"
+      style="flex-basis:50%; border-width: 3px;">
+      ➕ Добавить оборудование
+    </a>
+    <button class="btn btn-outline-info fw-bold d-flex align-items-center justify-content-center"
+      style="flex-basis:25%; border-width: 3px;" data-bs-toggle="modal" data-bs-target="#activitiesModal">
+      📏 Виды измерений
+    </button>
+    <button class="btn btn-outline-success fw-bold d-flex align-items-center justify-content-center"
+      style="flex-basis:25%; border-width: 3px;" data-bs-toggle="modal" data-bs-target="#siTypesModal">
+      🛠️ Типы СИ
+    </button>
+  </div>
+</div>
+<div class="d-flex justify-content-center mb-4">
+  <div class="d-flex gap-2 justify-content-center mb-3 w-100">
+    <a class="btn btn-outline-danger label-text fw-bold d-flex align-items-center justify-content-center"
+      style="flex-basis:50%; border-width: 3px;">
+      📖 Журнал выдачи
+    </a>
+    <a class="btn btn-outline-warning fw-bold d-flex align-items-center justify-content-center"
+      style="flex-basis:50%; border-width: 3px;"
+      href="/companies/api/equipments/form2/export?company_id={{company_id}}">
+      📝 Форма 2
+    </a>
+  </div>
+</div>
+
+{% include 'equipments/modals.html' %}
+
+<div id="equipment-list" class="row mb-5"></div>
+
+<nav aria-label="Навигация страниц">
+  <ul id="pagination" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+  window.companyId = {{ company_id }};
+</script>
+
+<script type="module" src="/static/company/equipments/js/view.js"></script>
+<script type="module" src="/static/company/equipments/js/activity.js"></script>
+<script type="module" src="/static/company/equipments/js/si_type.js"></script>
+
+{% endblock %}

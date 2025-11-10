@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+Серии бланков
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="/static/company/act_series/css/view.css" />
+
+<style>
+  
+</style>
+
+<h1 class="fs-xl text-center d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Логотип {{ company_name }}">
+  </div>
+  {% endif %}
+  <div class="btn-group mb-3">
+    <a href="/companies/company?company_id={{company_id}}" class="btn btn-outline-dark label-text fw-bold"
+      style="border-width: 3px;">🏠 На главную</a>
+  </div>
+  Серии бланков
+</h1>
+
+<div class="mb-3 d-flex justify-content-center">
+  <div class="input-group" style="flex-basis:60%;">
+    <input id="search-input" type="text" style="font-size: var(--font-base);" class="form-control"
+      placeholder="Поиск по серии">
+  </div>
+</div>
+
+<div class="d-flex justify-content-center mb-3">
+  <a id="create-btn" class="btn btn-outline-primary fw-bold label-text" style="flex-basis:50%; border-width: 3px;">➕
+    Добавить новую серию бланка</a>
+</div>
+
+<div id="series-list" class="row mb-5"></div>
+
+<nav aria-label="Навигация страниц">
+  <ul id="pagination" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+  window.companyId = {{ company_id }};
+</script>
+
+<script type="module" src="/static/company/act_series/js/view.js"></script>
+
+{% endblock %}

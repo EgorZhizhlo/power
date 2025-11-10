@@ -1,0 +1,7 @@
+from .act_number_repository import ActNumberRepository
+from .act_series_repository import ActSeriesRepository
+from .calendar_report_repository import CalendarReportRepository
+from .city_repository import CityRepository
+from .company_activity_repository import CompanyActivityRepository
+from .company_si_type_repository import CompanySiTypeRepository
+from .equipment_repository import EquipmentRepository

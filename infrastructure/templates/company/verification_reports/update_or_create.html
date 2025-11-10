@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} отчёта
+{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="/static/company/verification_reports/css/update_or_create.css">
+
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+    {% if company.image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company.image }}"
+             alt="Изображение компании: {{ company.name }}">
+      </div>
+    {% endif %}
+
+    <div class="btn-group mb-3">
+      <a href="/companies/verification-reports?company_id={{company.id}}"
+          class="btn btn-outline-secondary label-text fw-bold"
+        style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company.id}}"
+          class="btn btn-outline-dark label-text fw-bold"
+        style="border-width: 3px;">🏠 На главную</a>
+    </div>
+    {% if is_create %}Добавление{% else %}Редактирование{% endif %} отчёта поверки
+  </h1>
+
+  <div class="card p-4 mb-5">
+    <form id="verification-report-form">
+
+      <!-- Название отчёта -->
+      <div class="mb-4">
+        <label for="name" class="form-label label-text"><b>Название отчёта</b></label>
+        <input type="text"
+               id="name" name="name"
+               class="form-control text-center input-text"
+               required maxlength="100">
+      </div>
+
+      <!-- Базовые параметры вне Sortable -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <label for="for_verifier" class="form-label label-text fw-bold">Доступен поверителю</label>
+          <select id="for_verifier" class="form-select input-text">
+            <option value="false">Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="for_auditor" class="form-label label-text fw-bold">Доступен ревизору</label>
+          <select id="for_auditor" class="form-select input-text">
+            <option value="false">Нет</option>
+            <option value="true">Да</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="mb-4">
+        <h4 class="fs-lg mb-3">Порядок полей в отчёте</h4>
+        <p class="text-muted">Перетащите поля для изменения порядка. Выберите "Да" для включения поля в отчёт.</p>
+        <div id="fields-list" class="list-group"></div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-outline-success label-text fw-bold"
+        style="border-width: 3px;">
+          ✅ Сохранить
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    window.companyId = {{ company.id }};
+    window.isCreate = {{ is_create|tojson }};
+    {% if not is_create %}
+    window.verificationReportId = {{ verification_report_id }};
+    {% endif %}
+    window.additionalCheckboxFields = {{ additional_fields_checkbox|tojson|safe }};
+    window.additionalInputFields = {{ additional_fields_input|tojson|safe }};
+  </script>
+  <script src="/static/company/verification_reports/js/update_or_create.js"></script>
+{% endblock %}

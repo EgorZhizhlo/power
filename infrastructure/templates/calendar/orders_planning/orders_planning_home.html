@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title_name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+/>
+
+<link rel="stylesheet" href="/static/calendar/orders_planning/css/orders_planning_css.css">
+
+<div class="container-fluid position-relative">
+  <h1 class="text-center">{{ title_name }}</h1>
+  <div
+    class="row fs-5 py-3 px-2 mx-auto"
+    style="
+      width: 60%;
+      border: 2px solid #858181;
+      background: #dddcdcbb;
+      border-radius: 20px;
+    "
+  >
+    <div class="col-12 col-md-6 d-flex mb-2 mb-md-0">
+      <a
+        href="/calendar?company_id={{company_id}}"
+        class="btn btn-outline-dark flex-grow-1 fw-bold" style="border-width: 3px;"
+      >
+        🔙 К календарю
+      </a>
+    </div>
+    <div class="col-12 col-md-6 d-flex">
+      <button
+        id="open-filter"
+        class="btn btn-outline-primary flex-grow-1 fw-bold" style="border-width: 3px;"
+        data-bs-toggle="modal"
+        data-bs-target="#filterModal"
+      >
+       📅 Выбрать маршруты и дату
+      </button>
+    </div>
+  </div>
+
+  <div id="routes-container" class="routes-grid"></div>
+
+  <div id="loading" class="spinner-overlay" style="display: none;">
+    <div class="spinner-border"></div>
+  </div>
+</div>
+
+<!-- Фильтр-модалка -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="modal-filter-form" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title">Фильтр заявок</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="modal-routes" class="form-label">Маршруты (1–3)</label>
+            <select
+              id="modal-routes"
+              name="routes"
+              class="form-select"
+              multiple
+            ></select>
+          </div>
+          <div class="mb-3">
+            <label for="modal-date" class="form-label">Дата</label>
+            <input
+              type="date"
+              id="modal-date"
+              name="target_date"
+              class="form-control"
+              required
+            >
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-primary fw-bold" style="border-width: 3px;">📖 Показать</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" style="border-width: 3px;" data-bs-dismiss="modal">✖️ Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.currentCompanyId = {{ company_id }};
+</script>
+
+<!-- Скрипты -->
+<script type="module" src="/static/calendar/orders_planning/js/orders_planning_script.js"></script>
+
+<!-- Библиотеки -->
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+{% endblock %}

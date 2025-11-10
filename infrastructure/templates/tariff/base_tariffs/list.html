@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Управление базовыми тарифами{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Базовые тарифные планы</h2>
+        </div>
+        <div class="col-auto">
+            <a href="/tariff/base-tariffs/create/" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Создать новый тариф
+            </a>
+        </div>
+    </div>
+
+    {% if tariffs %}
+    <div class="row">
+        {% for tariff in tariffs %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ tariff.title }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if tariff.description %}
+                    <p class="card-text text-muted">{{ tariff.description }}</p>
+                    {% endif %}
+
+                    <h6 class="mt-3"><i class="bi bi-speedometer2"></i> Лимиты:</h6>
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="bi bi-people-fill"></i> <strong>Пользователи:</strong> 
+                            {% if tariff.max_employees %}
+                                {{ tariff.max_employees }}
+                            {% else %}
+                                <span class="text-success"><i class="bi bi-infinity"></i> Безлимит</span>
+                            {% endif %}
+                        </li>
+                        <li>
+                            <i class="bi bi-clipboard-check"></i> <strong>Поверки/месяц:</strong> 
+                            {% if tariff.max_verifications_per_month %}
+                                {{ tariff.max_verifications_per_month }}
+                            {% else %}
+                                <span class="text-success"><i class="bi bi-infinity"></i> Безлимит</span>
+                            {% endif %}
+                        </li>
+                        <li>
+                            <i class="bi bi-cart-check"></i> <strong>Заявки/месяц:</strong> 
+                            {% if tariff.max_orders_per_month %}
+                                {{ tariff.max_orders_per_month }}
+                            {% else %}
+                                <span class="text-success"><i class="bi bi-infinity"></i> Безлимит</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+
+                    <h6 class="mt-3"><i class="bi bi-robot"></i> Автоматизации:</h6>
+                    <div class="mb-2">
+                        {% if tariff.auto_manufacture_year %}
+                            <span class="badge bg-success"><i class="bi bi-calendar-event"></i> Год выпуска СИ</span>
+                        {% endif %}
+                        {% if tariff.auto_teams %}
+                            <span class="badge bg-success"><i class="bi bi-people"></i> «Команды»</span>
+                        {% endif %}
+                        {% if tariff.auto_metrolog %}
+                            <span class="badge bg-success"><i class="bi bi-gear"></i> «Метрологические характеристики»</span>
+                        {% endif %}
+                        {% if not tariff.auto_manufacture_year and not tariff.auto_teams and not tariff.auto_metrolog %}
+                            <span class="text-muted"><i class="bi bi-x-circle"></i> Нет</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar-plus"></i> Создан: {{ tariff.created_at.strftime('%d.%m.%Y %H:%M') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex gap-2">
+                        <a href="/tariff/base-tariffs/edit/?tariff_id={{ tariff.id }}" 
+                           class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteTariff({{ tariff.id }}, '{{ tariff.title }}')">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        Базовые тарифы отсутствуют. Создайте первый тариф, чтобы начать работу.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function deleteTariff(tariffId, tariffTitle) {
+    if (!confirm(`Вы уверены, что хотите удалить тариф "${tariffTitle}"?\n\nВнимание: это может повлиять на компании, использующие данный тариф.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/tariff/api/base-tariffs/?tariff_id=${tariffId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert('Тариф успешно удалён');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert(`Ошибка при удалении тарифа: ${error.detail || 'Неизвестная ошибка'}`);
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при удалении тарифа');
+    }
+}
+</script>
+{% endblock %}

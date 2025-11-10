@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} серии бланка
+{% endblock %}
+
+{% block content %}
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+
+    {# 1. Лого компании #}
+    {% if company_image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company_image }}"
+             alt="Изображение компании: {{ company_name }}">
+      </div>
+    {% endif %}
+
+    {# 2. Навигация #}
+    <div class="btn-group mb-3">
+      <a href="/companies/act-series?company_id={{company_id}}"
+         class="btn btn-outline-secondary label-text fw-bold"
+        style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company_id}}"
+         class="btn btn-outline-dark label-text fw-bold"
+        style="border-width: 3px;">🏠 На главную</a>
+    </div>
+
+    {# 3. Заголовок операции #}
+    {% if is_create %}Добавление{% else %}Редактирование{% endif %} серии бланка
+  </h1>
+
+  {# 4. Форма #}
+  <div class="card p-4 mb-5">
+    <form 
+      id="act-series-form"
+      method="{% if is_create %}POST{% else %}PUT{% endif %}"
+      action="
+      {% if is_create %}
+        /companies/api/act-series/create?company_id={{company_id}}
+      {% else %}
+        /companies/api/act-series/update?company_id={{company_id}}&act_series_id={{act_series.id}}
+      {% endif %}">
+
+      <div class="mb-3">
+        <label for="name" class="form-label label-text"><b>Серия</b></label>
+        <input type="text"
+               id="name"
+               name="name"
+               class="form-control text-center input-text"
+               value="{% if not is_create %}{{ act_series.name }}{% endif %}"
+               required>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-outline-success label-text fw-bold"
+        style="border-width: 3px;">
+          ✅ Сохранить
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    window.companyId = {{ company_id }};
+    window.isCreate = {{ is_create|tojson }};
+    {% if not is_create %}
+    window.actSeriesId = {{ act_series.id }};
+    {% endif %}
+  </script>
+  <script type="module" src="/static/company/act_series/js/update_or_create.js"></script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} | Информация об оборудовании
+{% endblock %}
+
+{% block content %}
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+    {% if company_image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company_image }}"
+             alt="Изображение компании: {{ company_name }}">
+      </div>
+    {% endif %}
+    
+    <div class="btn-group mb-3">
+      <a href="/companies/equipments?company_id={{company_id}}"
+         class="btn btn-outline-secondary label-text fw-bold" style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company_id}}"
+         class="btn btn-outline-dark label-text fw-bold" style="border-width: 3px;">🏠 На главную</a>
+    </div>
+
+    Информация об оборудовании: {{ equipment.name }}
+  </h1>
+
+  {% if equipment %}
+    {# --- кнопки добавить --- #}
+    <div class="d-flex justify-content-between mb-4">
+      <a href="/companies/equipment-informations/create?company_id={{company_id}}&equipment_id={{equipment.id}}&type_verif=maintenance"
+         class="btn btn-outline-primary w-50 me-2 label-text fw-bold"
+         style="border-width: 3px;">➕ ТО</a>
+
+      {% if equipment.type != 'auxiliary' %}
+        <a href="/companies/equipment-informations/create?company_id={{company_id}}&equipment_id={{equipment.id}}&type_verif=verification"
+           class="btn btn-outline-primary w-50 ms-2 label-text fw-bold"
+           style="border-width: 3px;">➕ Поверка</a>
+      {% endif %}
+    </div>
+
+    {# --- таблицы --- #}
+    <div class="row g-4 mb-5">
+      <div class="col-xl-6">
+        <div class="card p-3">
+          <h5 class="label-text mb-3"><b>Тех. обслуживание</b></h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped label-text text-center align-middle">
+              <thead class="table-dark">
+                <tr><th>#</th><th>#</th><th>Дата</th><th>До</th><th>Описание</th></tr>
+              </thead>
+              <tbody>
+                {% for rec in equipment.equipment_info if rec.type=='maintenance' %}
+                  <tr>
+                    <td>
+                      <a class="btn btn-outline-warning" style="border-width: 3px;" 
+                      href="/companies/equipment-informations/update?
+                      company_id={{company_id}}&
+                      equipment_id={{equipment_id}}&
+                      type_verif=maintenance&
+                      equipment_info_id={{rec.id}}">🔄</a>
+                    </td>
+                    <td>
+                      <a class="btn btn-outline-danger" style="border-width: 3px;" href=""
+                         onclick="return confirm('Удалить запись ТО id {{ rec.id }}?');">🗑️</a>
+                    </td>
+                    <td>{{ rec.verif_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ rec.verif_limit_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ rec.info }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {# Поверки выводим, только если оборудование не «Вспомогательное» #}
+      {% if equipment.type != 'auxiliary' or equipment.type != 'other' %}
+      <div class="col-xl-6">
+        <div class="card p-3">
+          <h5 class="label-text mb-3"><b>Поверки</b></h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped label-text text-center align-middle">
+              <thead class="table-dark">
+                <tr><th>#</th><th>#</th><th>Дата</th><th>До</th><th>№ св-ва</th></tr>
+              </thead>
+              <tbody>
+                {% for rec in equipment.equipment_info if rec.type=='verification' %}
+                  <tr>
+                    <td>
+                      <a
+                        class="btn btn-outline-warning"
+                        style="border-width: 3px;"
+                        href="/companies/equipment-informations/update?
+                          company_id={{company_id}}&
+                          equipment_id={{equipment_id}}&
+                          type_verif=verification&
+                          equipment_info_id={{rec.id}}">🔄</a>
+                    </td>
+                    <td>
+                      <a class="btn btn-outline-danger" style="border-width: 3px;" href=""
+                         onclick="return confirm('Удалить запись поверки id {{ rec.id }}?');">🗑️</a>
+                    </td>
+                    <td>{{ rec.verif_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ rec.verif_limit_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ rec.info }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

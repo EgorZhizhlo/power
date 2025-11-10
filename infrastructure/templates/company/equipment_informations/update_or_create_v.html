@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% set is_create = (view_type == 'create') %}
+{% block title %}
+  {{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+  {% if is_create %}Добавление{% else %}Редактирование{% endif %} записи о поверке
+{% endblock %}
+
+{% block content %}
+  <h1 class="fs-xl d-flex flex-column align-items-center mb-4">
+
+    {# логотип компании #}
+    {% if company_image %}
+      <div class="photo mb-3">
+        <img src="data:image/jpeg;base64,{{ company_image }}"
+             alt="Изображение компании: {{ company_name }}">
+      </div>
+    {% endif %}
+    <div class="btn-group mb-3">
+      <a href="/companies/equipment-informations?company_id={{company_id}}&equipment_id={{equipment_id}}"
+          class="btn btn-outline-secondary label-text fw-bold"
+        style="border-width: 3px;">🔙 Вернуться назад</a>
+      <a href="/companies/company?company_id={{company_id}}"
+          class="btn btn-outline-dark label-text fw-bold"
+        style="border-width: 3px;">🏠 На главную</a>
+    </div>
+    {% if is_create %}Добавление{% else %}Редактирование{% endif %} записи о поверке
+  </h1>
+
+  <div class="card p-4 mb-5">
+    <form
+      id="equipment-information-form"
+      method="{% if is_create %}POST{% else %}PUT{% endif %}"
+      action="
+      {% if is_create %}
+        /companies/api/equipment-informations/create?company_id={{company_id}}&equipment_id={{equipment_id}}&type_verif=verification
+      {% else %}
+        /companies/api/equipment-informations/update?company_id={{company_id}}&equipment_id={{equipment_id}}&equipment_info_id={{equipment_info.id}}
+      {% endif %}">
+
+      <div class="mb-3">
+        <label for="verif_date" class="form-label label-text"><b>Дата поверки</b></label>
+        <input type="date"
+               id="verif_date"
+               name="verif_date"
+               class="form-control input-text text-center"
+               value="{{ equipment_info.verif_date|strftime('%Y-%m-%d') if not is_create else '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="verif_limit_date" class="form-label label-text"><b>Поверка до</b></label>
+        <input type="date"
+               id="verif_limit_date"
+               name="verif_limit_date"
+               class="form-control input-text text-center"
+               value="{{ equipment_info.verif_limit_date|strftime('%Y-%m-%d') if not is_create else '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="info" class="form-label label-text"><b>№ свидетельства</b></label>
+        <input type="text"
+               id="info"
+               name="info"
+               class="form-control input-text text-center"
+               value="{{ equipment_info.info if not is_create else '' }}"
+               required>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-outline-success label-text fw-bold"
+        style="border-width: 3px;">
+          ✅ Сохранить
+        </button>
+      </div>
+  </form>
+</div>
+
+<script>
+  window.companyId = {{ company_id }};
+  window.equipmentId = {{ equipment_id }};
+  window.isCreate = {{ is_create|tojson }};
+  {% if not is_create %}
+  window.equipmentInfoId = {{ equipment_info.id }};
+  {% endif %}
+</script>
+<script type="module" src="/static/company/equipment_informations/js/update_or_create_v.js"></script>
+
+{% endblock %}

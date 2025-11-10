@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Управление тарифами компаний{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/tariff/company_tariffs/css/list.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="bi bi-receipt"></i> Управление тарифами компаний
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Поиск и фильтры -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group search-box">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию компании...">
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="filter" id="filterAll" value="all" checked>
+                <label class="btn btn-outline-primary" for="filterAll"><i class="bi bi-grid-3x3"></i> Все</label>
+
+                <input type="radio" class="btn-check" name="filter" id="filterActive" value="active">
+                <label class="btn btn-outline-success" for="filterActive"><i class="bi bi-check-circle"></i> С тарифом</label>
+
+                <input type="radio" class="btn-check" name="filter" id="filterNoTariff" value="no-tariff">
+                <label class="btn btn-outline-warning" for="filterNoTariff"><i class="bi bi-exclamation-triangle"></i> Без тарифа</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список компаний -->
+    {% if companies %}
+    <div id="companiesContainer" class="row g-3">
+        {% for company in companies %}
+        <div class="col-md-6 col-lg-4 company-item" data-name="{{ company.name|lower }}"
+            data-has-tariff="{{ company.has_tariff }}" data-is-active="{{ company.is_active }}">
+            <div class="card company-card 
+                        {% if not company.is_active %}inactive
+                        {% elif company.has_tariff %}has-tariff
+                        {% else %}no-tariff{% endif %}"
+                onclick="window.location.href='/tariff/view/?company_id={{ company.id }}'">
+                <div class="card-body">
+                    <!-- Название компании -->
+                    <div class="company-name">
+                        <i class="bi bi-building"></i> {{ company.name }}
+                    </div>
+
+                    <!-- Статус компании -->
+                    {% if not company.is_active %}
+                    <div class="company-status status-inactive">
+                        <i class="bi bi-x-circle"></i> Неактивна
+                    </div>
+                    {% elif not company.has_tariff %}
+                    <div class="company-status status-no-tariff">
+                        <i class="bi bi-exclamation-triangle"></i> Тариф не назначен
+                    </div>
+                    {% else %}
+                    <div class="company-status status-active">
+                        <i class="bi bi-check-circle"></i> Активна
+                    </div>
+                    {% endif %}
+
+                    {% if company.has_tariff and company.state %}
+                    <!-- Название тарифа -->
+                    <div class="tariff-name">
+                        <i class="bi bi-tag"></i> <strong>{{ company.state.title or 'Без названия' }}</strong>
+                    </div>
+                    
+                    <!-- Даты действия -->
+                    <div class="tariff-dates">
+                        <i class="bi bi-calendar-range"></i> Период:
+                        {% if company.state.valid_from %}{{ company.state.valid_from.strftime('%d.%m.%Y') }}{% else
+                        %}—{% endif %} —
+                        {% if company.state.valid_to %}{{ company.state.valid_to.strftime('%d.%m.%Y') }}{% else %}Безлимит{%
+                        endif %}
+                    </div>
+
+                    <!-- Сотрудники -->
+                    <div class="usage-info">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-people-fill"></i> Сотрудники:</span>
+                            <span>
+                                {% if company.state.max_employees is not none %}
+                                <strong>{{ company.state.used_employees }}</strong> / {{ company.state.max_employees }}
+                                {% if company.state.max_employees == 0 %}
+                                <span class="badge bg-danger ms-1">Запрещено</span>
+                                {% endif %}
+                                {% else %}
+                                <i class="bi bi-infinity text-success"></i> Безлимит
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if company.state.max_employees and company.state.max_employees > 0 %}
+                        {% set employee_percent = (company.state.used_employees / company.state.max_employees * 100)|round
+                        %}
+                        <div class="usage-bar">
+                            <div class="usage-progress 
+                                        {% if employee_percent < 50 %}progress-success
+                                        {% elif employee_percent < 80 %}progress-warning
+                                        {% else %}progress-danger{% endif %}" style="width: {{ employee_percent }}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Поверки -->
+                    <div class="usage-info">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-clipboard-check"></i> Поверки/месяц:</span>
+                            <span>
+                                {% if company.state.max_verifications is not none %}
+                                <strong>{{ company.state.used_verifications }}</strong> / {{ company.state.max_verifications }}
+                                {% if company.state.max_verifications == 0 %}
+                                <span class="badge bg-danger ms-1">Запрещено</span>
+                                {% endif %}
+                                {% else %}
+                                <i class="bi bi-infinity text-success"></i> Безлимит
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if company.state.max_verifications and company.state.max_verifications >
+                        0 %}
+                        {% set verif_percent = (company.state.used_verifications /
+                        company.state.max_verifications * 100)|round %}
+                        <div class="usage-bar">
+                            <div class="usage-progress 
+                                        {% if verif_percent < 50 %}progress-success
+                                        {% elif verif_percent < 80 %}progress-warning
+                                        {% else %}progress-danger{% endif %}" style="width: {{ verif_percent }}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Заявки -->
+                    <div class="usage-info">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-cart-check"></i> Заявки/месяц:</span>
+                            <span>
+                                {% if company.state.max_orders is not none %}
+                                <strong>{{ company.state.used_orders }}</strong> / {{ company.state.max_orders }}
+                                {% if company.state.max_orders == 0 %}
+                                <span class="badge bg-danger ms-1">Запрещено</span>
+                                {% endif %}
+                                {% else %}
+                                <i class="bi bi-infinity text-success"></i> Безлимит
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if company.state.max_orders and company.state.max_orders > 0 %}
+                        {% set orders_percent = (company.state.used_orders /
+                        company.state.max_orders * 100)|round %}
+                        <div class="usage-bar">
+                            <div class="usage-progress 
+                                        {% if orders_percent < 50 %}progress-success
+                                        {% elif orders_percent < 80 %}progress-warning
+                                        {% else %}progress-danger{% endif %}" style="width: {{ orders_percent }}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Автофункции -->
+                    <div class="feature-badges mt-2">
+                        {% if company.state.auto_manufacture_year %}
+                        <span class="badge bg-success feature-badge">
+                            <i class="bi bi-calendar-event"></i> Год выпуска СИ
+                        </span>
+                        {% endif %}
+
+                        {% if company.state.auto_teams %}
+                        <span class="badge bg-success feature-badge">
+                            <i class="bi bi-people"></i> «Команды»
+                        </span>
+                        {% endif %}
+
+                        {% if company.state.auto_metrolog %}
+                        <span class="badge bg-success feature-badge">
+                            <i class="bi bi-gear"></i> «Метрологические характеристики»
+                        </span>
+                        {% endif %}
+
+                        {% if company.state.carry_over_verifications %}
+                        <span class="badge bg-info feature-badge">
+                            <i class="bi bi-arrow-right"></i> Перенос неиспользованных слотов заявок поверок
+                        </span>
+                        {% endif %}
+
+                        {% if company.state.carry_over_orders %}
+                        <span class="badge bg-info feature-badge">
+                            <i class="bi bi-arrow-right"></i> Перенос неиспользованных слотов заявок
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Кнопка действия -->
+                    <div class="action-buttons text-center">
+                        <button
+                            class="btn btn-sm {% if company.has_tariff %}btn-outline-primary{% else %}btn-outline-success{% endif %}"
+                            onclick="event.stopPropagation(); window.location.href='/tariff/view/?company_id={{ company.id }}'">
+                            {% if company.has_tariff %}
+                            <i class="bi bi-pencil"></i> Управление тарифом
+                            {% else %}
+                            <i class="bi bi-plus-circle"></i> Назначить тариф
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        Компании не найдены
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/tariff/company_tariffs/js/list.js"></script>
+{% endblock %}

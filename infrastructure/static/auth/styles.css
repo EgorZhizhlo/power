@@ -1,0 +1,105 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  padding: 15px;
+  position: relative;
+  padding-bottom: 60px;
+}
+
+.login-form {
+  background: white;
+  padding: min(5rem, 8vw);
+  border-radius: clamp(10px, 2vw, 20px);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: min(90vw, 600px);
+  transition: all 0.3s ease;
+}
+
+.login-form h2 {
+  text-align: center;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  color: #333;
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 600;
+  transition: font-size 0.3s ease;
+}
+
+.form-label {
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+  margin-bottom: clamp(0.3rem, 1vw, 0.8rem);
+  transition: font-size 0.3s ease;
+}
+
+.form-control {
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  padding: clamp(0.5rem, 2vw, 1rem);
+  height: auto;
+  transition: all 0.3s ease;
+}
+
+.form-check-label {
+  font-size: clamp(0.8rem, 2vw, 1.1rem);
+  transition: font-size 0.3s ease;
+}
+
+.form-check-input {
+  width: clamp(1rem, 2vw, 1.2rem);
+  height: clamp(1rem, 2vw, 1.2rem);
+  margin-top: 0.2rem;
+  transition: all 0.3s ease;
+}
+
+.btn-login {
+  width: 100%;
+  padding: clamp(0.6rem, 2vw, 1rem);
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+  margin-top: clamp(1rem, 3vw, 1.5rem);
+  transition: all 0.3s ease;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: white;
+  color: #333;
+  padding: clamp(0.8rem, 2vw, 1.2rem);
+  text-align: center;
+  font-size: clamp(0.8rem, 1.8vw, 1rem);
+  transition: all 0.3s ease;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .login-form {
+    padding: min(4rem, 6vw);
+    max-width: min(85vw, 500px);
+  }
+}
+
+@media (max-width: 576px) {
+  .login-form {
+    padding: min(3rem, 5vw);
+    max-width: min(90vw, 400px);
+  }
+}
+
+@media (max-width: 320px) {
+  .login-form {
+    padding: min(2rem, 4vw);
+    max-width: 95vw;
+  }
+}
+
+/* Add smooth transitions for viewport changes */
+@media (orientation: landscape) {
+  .login-form {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}

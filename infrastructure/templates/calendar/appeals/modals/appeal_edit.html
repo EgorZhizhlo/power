@@ -1,0 +1,46 @@
+{# templates/modals/appeal-edit.html #}
+<div class="modal fade" id="modal-edit" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🔄 Редактировать обращение</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="form-edit">
+        <div class="modal-body">
+          <input type="hidden" id="edit-id" name="id">
+          {% if customer_field %}
+            <div class="mb-3">
+              <label for="edit-client" class="form-label">Заказчик</label>
+              <input id="edit-client" name="client_full_name" class="form-control" {% if customer_field_required %} required {% endif %}>
+            </div>
+          {% endif %}
+          <div class="mb-3">
+            <label for="edit-address" class="form-label">Адрес</label>
+            <input id="edit-address" name="address" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit-phone" class="form-label">Телефон</label>
+            <input id="edit-phone" name="phone_number" data-phone-input class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit-info" class="form-label">Доп. информация</label>
+            <textarea id="edit-info" name="additional_info" class="form-control"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="edit-status" class="form-label">Статус</label>
+            <select id="edit-status" name="status" class="form-select">
+              {% for key, label in map_of_status.items() %}
+                <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-success fw-bold" style="border-width: 3px;">✅ Сохранить</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold" style="border-width: 3px;" data-bs-dismiss="modal">✖️ Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
