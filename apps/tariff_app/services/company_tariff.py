@@ -4,26 +4,26 @@ from sqlalchemy.orm import selectinload
 from fastapi import Depends
 from typing import Optional, List, Dict, Any
 
-from infrastructure.db.session import async_session, async_db_session_begin
+from infrastructure.db.session import async_db_session, async_db_session_begin
 from models import (
     CompanyTariffHistory,
     CompanyTariffState,
     CompanyModel
 )
-from apps.tariff_app.repositories.company_tariff_history_repository import (
+from apps.tariff_app.repositories.company_tariff_history import (
     CompanyTariffHistoryRepository
 )
-from apps.tariff_app.repositories.company_tariff_state_repository import (
+from apps.tariff_app.repositories.company_tariff_state import (
     CompanyTariffStateRepository
 )
-from apps.tariff_app.repositories.base_tariff_repository import (
+from apps.tariff_app.repositories.base_tariff import (
     BaseTariffRepository
 )
-from apps.tariff_app.services.base_tariff_service import (
+from apps.tariff_app.services.base_tariff import (
     get_base_tariff_repository_read,
     get_base_tariff_repository_write
 )
-from apps.tariff_app.services.tariff_cache_service import tariff_cache
+from apps.tariff_app.services.tariff_cache import tariff_cache
 from apps.tariff_app.schemas.company_tariff import (
     CompanyTariffAssign,
     CompanyTariffUpdate,
@@ -32,7 +32,7 @@ from apps.tariff_app.schemas.company_tariff import (
     CompanyTariffHistoryListResponse,
     CompanyTariffFullResponse
 )
-from core.exceptions import NotFoundException, BadRequestException
+from core.exceptions import NotFoundException
 
 
 class CompanyTariffService:
@@ -557,7 +557,7 @@ class CompanyTariffService:
 
 
 async def get_company_tariff_history_repo_read(
-    session: AsyncSession = Depends(async_session)
+    session: AsyncSession = Depends(async_db_session)
 ) -> CompanyTariffHistoryRepository:
     return CompanyTariffHistoryRepository(session)
 
@@ -569,7 +569,7 @@ async def get_company_tariff_history_repo_write(
 
 
 async def get_company_tariff_state_repo_read(
-    session: AsyncSession = Depends(async_session)
+    session: AsyncSession = Depends(async_db_session)
 ) -> CompanyTariffStateRepository:
     return CompanyTariffStateRepository(session)
 
@@ -591,7 +591,7 @@ async def get_company_tariff_service_read(
     base_tariff_repo: BaseTariffRepository = Depends(
         get_base_tariff_repository_read
     ),
-    session: AsyncSession = Depends(async_session)
+    session: AsyncSession = Depends(async_db_session)
 ) -> CompanyTariffService:
     return CompanyTariffService(
         history_repo, state_repo, base_tariff_repo, session

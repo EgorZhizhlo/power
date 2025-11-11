@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from core.config import settings
-from infrastructure.db import async_db_session_begin, async_session
+from infrastructure.db import async_db_session_begin, async_db_session
 from models import EquipmentModel, VerifierModel
 
 
@@ -32,7 +32,7 @@ class EquipmentRepository:
 
 async def read_equipment_repository(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ) -> EquipmentRepository:
     return EquipmentRepository(session=session, company_id=company_id)
 

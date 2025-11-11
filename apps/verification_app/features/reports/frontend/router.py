@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.templating import Jinja2Templates
 
+from access_control import JwtData, auditor_verifier_exception
+
 from core.config import settings
+from core.exceptions import InternalServerErrorException
+
 from apps.verification_app.repositories import (
     CompanyRepository, read_company_repository,
     ActSeriesRepository, read_act_series_repository,
 )
-
-from core.exceptions import InternalServerErrorException
-
-from access_control import JwtData, auditor_verifier_exception
 
 
 reports_frontend_router = APIRouter(prefix='/reports')

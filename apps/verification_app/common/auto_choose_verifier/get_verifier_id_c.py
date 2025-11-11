@@ -4,7 +4,7 @@ from datetime import date as date_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.utils.time_utils import date_utc_now
-from core.exceptions import HTTPException
+from core.exceptions import CustomHTTPException
 from models import (
     VerificationEntryModel, VerificationLogModel, VerifierModel,
     ActNumberModel, TeamModel
@@ -42,13 +42,13 @@ def check_act_number_limit(
     act_number_entry: ActNumberModel,
 ) -> None:
     if not act_number_entry:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=404,
             detail="Запись номера акта не была найдена."
         )
 
     if act_number_entry.count <= 0:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=409,
             detail=(
                 f"Лимит записей по номеру акта: "
@@ -480,7 +480,7 @@ async def get_verifier_id_create(
                     await session.flush()
                     return verifier_id_in_teams
 
-    raise HTTPException(
+    raise CustomHTTPException(
         status_code=404,
         detail="Лимит записей поверок на данную дату превышен."
     )

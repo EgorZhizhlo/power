@@ -23,7 +23,7 @@ from access_control import (
     check_include_in_not_active_company,
     check_include_in_active_company
 )
-from apps.company_app.features.equipments.schemas import EquipmentOut
+from apps.company_app.schemas.equipments import EquipmentOut
 
 from apps.company_app.common import make_context
 

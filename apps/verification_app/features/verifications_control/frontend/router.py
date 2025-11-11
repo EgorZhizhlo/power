@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from infrastructure.db import async_session
+from infrastructure.db import async_db_session
+
 from models import (
     ActSeriesModel, EmployeeModel, CompanyModel, CityModel, VerifierModel,
     VerificationEntryModel, ActNumberModel,
@@ -15,13 +16,16 @@ from models import (
 
 from access_control import (
     JwtData,
-    check_access_verification, check_active_access_verification)
+    check_access_verification,
+    check_active_access_verification
+)
 
 from core.config import settings, format_date
 from core.exceptions import (
     check_is_none,
     CustomCreateVerifDefaultVerifierException
 )
+
 from apps.verification_app.common import (
     check_equip_conditions,
 )
@@ -65,7 +69,7 @@ async def get_any_from_models(
 async def verifications_entry_page(
     request: Request,
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
     employee_data: JwtData = Depends(check_access_verification),
     company_repo: CompanyRepository = Depends(
         read_company_repository
@@ -217,7 +221,7 @@ async def update_verification_entry_page(
     request: Request,
     company_id: int = Query(..., ge=1, le=settings.max_int),
     verification_entry_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
     employee_data: JwtData = Depends(
         check_active_access_verification),
     employee_cities_repo: EmployeeCitiesRepository = Depends(

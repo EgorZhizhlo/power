@@ -27,6 +27,7 @@ from core.reports import create_report_route_orders_list
 from core.exceptions import CustomHTTPException
 
 from infrastructure.db import async_db_session, async_db_session_begin
+
 from models import (
     EmployeeModel,
     CounterAssignmentModel,

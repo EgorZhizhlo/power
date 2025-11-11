@@ -1,5 +1,5 @@
 from core.config import settings
-from core.redis_client import redis
+from infrastructure.cache.redis_client import redis
 
 
 jwt_token_exp = settings.jwt_token_expiration

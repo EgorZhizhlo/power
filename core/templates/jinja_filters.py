@@ -2,7 +2,7 @@ from datetime import datetime, date
 from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
-from core.config.timezones import get_timezone_name
+from core.timezones import get_timezone_name
 
 
 def to_company_tz(

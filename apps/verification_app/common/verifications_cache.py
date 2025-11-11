@@ -1,4 +1,4 @@
-from core.redis_client import redis
+from infrastructure.cache.redis_client import redis
 
 
 async def clear_verification_cache(company_id: int):

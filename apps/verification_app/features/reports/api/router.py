@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, Depends, File, Query
 from fastapi.responses import StreamingResponse
 from collections import defaultdict, Counter
+from io import BytesIO
 import pandas as pd
 from datetime import datetime, date as Date
 from urllib.parse import quote
@@ -9,28 +10,23 @@ from sqlalchemy import select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, load_only
 
+from access_control import (
+    JwtData,
+    auditor_verifier_exception,
+    verifier_exception,
+    check_access_verification,
+)
+
+from infrastructure.db import async_db_session
+
 from core.config import settings
-from core.time_utils import date_utc_now
-from core.excel.excel_utils import autofit_columns
+from core.reports import autofit_columns, create_report_route_orders_list
+from core.utils.time_utils import date_utc_now
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
 from core.exceptions import (
     InternalServerErrorException, CustomHTTPException
 )
-from core.reports.route_orders_report import (
-    create_report_route_orders_list
-)
-from apps.verification_app.repositories import (
-    EmployeeRepository, read_employee_repository,
-    CityRepository, read_city_repository,
-    ReportRepository, read_report_repository, action_report_repository,
-    ActNumberRepository, read_act_number_repository,
-    ActSeriesRepository, read_act_series_repository,
-)
-from apps.verification_app.common import (
-    generate_ra_xml, generate_fund_xml
-)
 
-from infrastructure.db import async_session
 from models import (
     CompanyModel, RegistryNumberModel,
     VerificationEntryModel,
@@ -43,21 +39,24 @@ from models.enums import (
     VerificationLegalEntity,
     EmployeeStatus,
     map_verification_water_type_to_label,
-    enum_label,
 )
 
-from access_control import (
-    JwtData,
-    auditor_verifier_exception, verifier_exception,
-    check_access_verification
+from apps.verification_app.repositories import (
+    EmployeeRepository, read_employee_repository,
+    CityRepository, read_city_repository,
+    ReportRepository, read_report_repository, action_report_repository,
+    ActNumberRepository, read_act_number_repository,
+    ActSeriesRepository, read_act_series_repository,
 )
-from .schemas import (
+from apps.verification_app.common import (
+    generate_ra_xml, generate_fund_xml
+)
+from apps.verification_app.schemas.reports import (
     StatisticsForm,
     FullReportForm,
     ReportActNumberForm,
     StatisticsResponse
 )
-from io import BytesIO
 
 
 reports_api_router = APIRouter(prefix='/api/reports')
@@ -1099,7 +1098,7 @@ async def xml_ra_report(
 async def xlsx_upload_fund_report(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     file: UploadFile = File(...),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
     employee_data: JwtData = Depends(auditor_verifier_exception),
 ):
     try:
@@ -1298,7 +1297,7 @@ async def xlsx_act_number_report(
 @reports_api_router.get("/orders-sheet/")
 async def xlsx_orders_sheet_report(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
     order_date: Date = Query(...),
     employee_data: JwtData = Depends(
         check_access_verification

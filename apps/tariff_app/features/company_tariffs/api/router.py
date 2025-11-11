@@ -10,7 +10,7 @@ from apps.tariff_app.schemas.company_tariff import (
     CompanyTariffFullResponse,
     CompanyTariffHistoryListResponse
 )
-from apps.tariff_app.services.company_tariff_service import (
+from apps.tariff_app.services.company_tariff import (
     CompanyTariffService,
     get_company_tariff_service_read,
     get_company_tariff_service_write

@@ -19,25 +19,11 @@ async def check_employee_limit_available(
 
     Использует атомарную проверку с блокировкой FOR UPDATE для защиты
     от race conditions при конкурентных запросах.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-        required_slots: Количество требуемых мест (по умолчанию 1)
-
-    Raises:
-        CustomHTTPException: Если лимит исчерпан
-
-    Business Logic:
-        - max_employees = None → безлимит (проверка пропускается)
-        - max_employees = 0 → запрещено создание (ошибка)
-        - max_employees > 0 → проверка лимита (used + required <= max)
-        - FOR UPDATE блокирует строку до конца транзакции
     """
     stmt = (
         select(CompanyTariffState)
         .where(CompanyTariffState.company_id == company_id)
-        .with_for_update()  # Блокируем строку до конца транзакции
+        .with_for_update()
     )
     result = await session.execute(stmt)
     state = result.scalar_one_or_none()
@@ -86,16 +72,6 @@ async def increment_employee_count(
 ) -> None:
     """
     Увеличить счётчик использованных сотрудников.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-        delta: Количество добавляемых сотрудников
-
-    Business Logic:
-        - Увеличивает used_employees на delta
-        - Инвалидирует кеш в Redis для обновления UI
-        - Должна вызываться ПОСЛЕ успешного создания/добавления сотрудника
     """
     stmt = (
         update(CompanyTariffState)
@@ -111,7 +87,7 @@ async def increment_employee_count(
     if result.rowcount == 0:
         return
 
-    from apps.tariff_app.services.tariff_cache_service import tariff_cache
+    from apps.tariff_app.services import tariff_cache
     await tariff_cache.invalidate_cache(company_id)
 
 
@@ -122,17 +98,6 @@ async def decrement_employee_count(
 ) -> None:
     """
     Уменьшить счётчик использованных сотрудников.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-        delta: Количество удаляемых сотрудников
-
-    Business Logic:
-        - Уменьшает used_employees на delta
-        - Гарантирует, что счётчик не станет отрицательным (min = 0)
-        - Инвалидирует кеш в Redis
-        - Должна вызываться ПОСЛЕ успешного удаления сотрудника
     """
     stmt = (
         update(CompanyTariffState)
@@ -149,7 +114,7 @@ async def decrement_employee_count(
     if result.rowcount == 0:
         return
 
-    from apps.tariff_app.services.tariff_cache_service import tariff_cache
+    from apps.tariff_app.services import tariff_cache
     await tariff_cache.invalidate_cache(company_id)
 
 
@@ -159,19 +124,6 @@ async def recalculate_employee_count(
 ) -> int:
     """
     Пересчитать фактическое количество сотрудников в компании.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-
-    Returns:
-        Количество активных сотрудников (не удалённых)
-
-    Business Logic:
-        - Считает сотрудников WHERE is_deleted IS NOT TRUE
-        - Обновляет used_employees в state
-        - Используется для синхронизации после массовых операций
-        - FOR UPDATE держится до конца транзакции для защиты от race conditions
     """
     stmt = (
         select(CompanyTariffState)
@@ -197,7 +149,7 @@ async def recalculate_employee_count(
     state.used_employees = actual_count
     await session.flush()
 
-    from apps.tariff_app.services.tariff_cache_service import tariff_cache
+    from apps.tariff_app.services import tariff_cache
     await tariff_cache.invalidate_cache(company_id)
 
     return actual_count
@@ -209,13 +161,6 @@ async def calculate_actual_usage(
 ) -> tuple[int, int, int]:
     """
     Подсчитать фактическое использование лимитов компании.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-
-    Returns:
-        tuple: (employees_count, verifications_count, orders_count)
     """
     employees_stmt = (
         select(func.count(EmployeeModel.id))
@@ -256,16 +201,6 @@ async def validate_and_sync_limits(
 ) -> None:
     """
     Валидировать лимиты против фактического использования.
-
-    Args:
-        session: Асинхронная сессия БД
-        company_id: ID компании
-        max_employees: Максимум сотрудников (None = безлимит)
-        max_verifications: Максимум поверок (None = безлимит)
-        max_orders: Максимум заявок (None = безлимит)
-
-    Raises:
-        CustomHTTPException: Если фактическое использование превышает лимиты
     """
     actual_employees, actual_verifications, actual_orders = (
         await calculate_actual_usage(session, company_id)

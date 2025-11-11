@@ -17,7 +17,7 @@ from access_control import (
     JwtData,
     check_include_in_active_company
 )
-from apps.company_app.features.equipment_informations.schemas import (
+from apps.company_app.schemas.equipment_informations import (
     EquipmentInfoCreate
 )
 

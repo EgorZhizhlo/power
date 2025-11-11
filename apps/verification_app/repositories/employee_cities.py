@@ -3,7 +3,7 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.db import async_session
+from infrastructure.db import async_db_session
 from models.associations import employees_cities
 
 
@@ -24,6 +24,6 @@ class EmployeeCitiesRepository:
 
 
 async def read_employee_cities_repository(
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ) -> EmployeeCitiesRepository:
     return EmployeeCitiesRepository(session=session)

@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from infrastructure.db import async_db_session_begin, async_session
+from infrastructure.db import async_db_session_begin, async_db_session
 from models import (
     OrderModel,
     CounterAssignmentModel,
@@ -27,11 +27,11 @@ from core.exceptions import (
     CustomHTTPException
 )
 
-from .schemas import (
+from apps.verification_app.schemas.orders_control import (
     LowOrderItemResponse, OrderFilter, OrderListResponse,
     CounterAssignmentResponse, CounterAssignmentCreateRequest
 )
-from apps.verification_app.features.verifications_control.api.schemas import (
+from apps.verification_app.schemas.verifications_control import (
     CreateVerificationEntryForm, MetrologInfoForm
 )
 from apps.verification_app.repositories import (
@@ -72,7 +72,7 @@ async def get_orders(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     order_filter: OrderFilter = Depends(),
     employee_data: JwtData = Depends(check_access_verification),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ):
     employee_id = employee_data.id
 

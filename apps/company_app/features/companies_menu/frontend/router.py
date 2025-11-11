@@ -13,9 +13,9 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import CustomHTTPException, check_is_none
-from core.redis_client import redis
+from infrastructure.cache.redis_client import redis
 from core.config import settings
-from core.config.timezones import ALL_TIMEZONES
+from core.timezones import ALL_TIMEZONES
 from core.templates.template_manager import templates
 
 from infrastructure.db import async_db_session

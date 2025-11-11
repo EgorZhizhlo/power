@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import CustomHTTPException
 from models import CompanyTariffState
-from apps.tariff_app.services.tariff_cache_service import tariff_cache
+from apps.tariff_app.services.tariff_cache import tariff_cache
 
 
 async def check_verification_limit_available(
@@ -13,20 +13,8 @@ async def check_verification_limit_available(
 ) -> None:
     """
     Проверить доступность лимита верификаций перед созданием
-
-    Двухшаговая проверка:
-    1. Быстрая проверка по кешу для очевидных случаев
-    2. Финальная проверка с FOR UPDATE для атомарности
-
-    Args:
-        session: Активная транзакция БД
-        company_id: ID компании
-        required_slots: Количество требуемых слотов (по умолчанию 1)
-
-    Raises:
-        CustomHTTPException: Если лимит превышен или нет тарифа
     """
-    # Шаг 1: Быстрая проверка по кешу
+    # Быстрая проверка по кешу
     cached_limits = await tariff_cache.get_cached_limits(company_id)
 
     if cached_limits and cached_limits.get('has_tariff'):
@@ -61,7 +49,7 @@ async def check_verification_limit_available(
                 )
             )
 
-    # Шаг 2: Финальная проверка с блокировкой для атомарности
+    # Финальная проверка с блокировкой для атомарности
     stmt = (
         select(CompanyTariffState)
         .where(CompanyTariffState.company_id == company_id)
@@ -113,8 +101,6 @@ async def check_verification_limit_available(
             )
         )
 
-    # Всё ок - пропускаем
-
 
 async def increment_verification_count(
     session: AsyncSession,
@@ -123,16 +109,8 @@ async def increment_verification_count(
 ) -> None:
     """
     Увеличить счётчик использованных верификаций
-
-    Атомарная операция в рамках транзакции.
-    После commit автоматически обновляет кеш.
-
-    Args:
-        session: Активная транзакция БД
-        company_id: ID компании
-        delta: Количество верификаций для добавления (по умолчанию 1)
     """
-    from apps.tariff_app.repositories.company_tariff_state_repository import (
+    from apps.tariff_app.repositories.company_tariff_state import (
         CompanyTariffStateRepository
     )
 
@@ -150,15 +128,6 @@ async def decrement_verification_count(
 ) -> None:
     """
     Уменьшить счётчик использованных верификаций
-
-    Атомарная операция в рамках транзакции.
-    Значение не может стать меньше 0.
-    После commit автоматически обновляет кеш.
-
-    Args:
-        session: Активная транзакция БД
-        company_id: ID компании
-        delta: Количество верификаций для удаления (по умолчанию 1)
     """
     # Блокируем state для обновления
     stmt = (

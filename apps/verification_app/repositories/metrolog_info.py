@@ -3,7 +3,7 @@ from sqlalchemy import select, delete, exists
 from sqlalchemy.orm import selectinload, joinedload, load_only, contains_eager
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.db import async_db_session_begin, async_session
+from infrastructure.db import async_db_session_begin, async_db_session
 from models import (
     VerificationEntryModel,
     MetrologInfoModel,
@@ -237,7 +237,7 @@ class MetrologInfoRepository:
 
 async def read_metrolog_info_repository(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ) -> MetrologInfoRepository:
     return MetrologInfoRepository(session=session, company_id=company_id)
 

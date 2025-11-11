@@ -112,14 +112,9 @@ class TariffMiddleware(BaseHTTPMiddleware):
     ) -> dict:
         """
         Проверить тариф компании
-
-        Returns:
-            dict с ключами:
-                - allowed: bool - разрешён ли доступ
-                - reason: str - причина отказа (если allowed=False)
         """
         # Lazy import для избежания циклических зависимостей
-        from apps.tariff_app.services.tariff_cache_service import (
+        from apps.tariff_app.services.tariff_cache import (
             tariff_cache
         )
 
@@ -162,7 +157,7 @@ class TariffMiddleware(BaseHTTPMiddleware):
             maker = async_session_maker()
             async with maker() as session:
                 from apps.tariff_app.repositories.\
-                    company_tariff_history_repository import (
+                    company_tariff_history import (
                         CompanyTariffHistoryRepository
                     )
                 history_repo = CompanyTariffHistoryRepository(session)

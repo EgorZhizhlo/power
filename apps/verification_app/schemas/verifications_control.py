@@ -6,7 +6,7 @@ from pydantic import (
 from typing import Optional, List
 
 from core.config import settings
-from core.time_utils import date_utc_now
+from core.utils.time_utils import date_utc_now
 
 from models.enums import (
     VerificationLegalEntity, VerificationSeal, VerificationWaterType

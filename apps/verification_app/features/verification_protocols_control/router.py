@@ -8,9 +8,16 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
+from access_control import (
+    JwtData,
+    check_access_verification,
+    auditor_verifier_exception
+)
+
 from core.config import settings
-from core.time_utils import date_utc_now
+from core.utils.time_utils import date_utc_now
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
+
 from apps.verification_app.common import (
     check_equip_conditions, generate_protocol, get_protocol_info
 )
@@ -21,11 +28,9 @@ from apps.verification_app.exceptions import (
     VerificationProtocolAccessException,
     CustomVerificationVerifierException
 )
-from access_control import (
-    JwtData, check_access_verification,
-    auditor_verifier_exception
+from apps.verification_app.schemas.verification_protocols_control import (
+    ReportProtocolsForm
 )
-from .schemas import ReportProtocolsForm
 
 
 verification_protocols_router = APIRouter(

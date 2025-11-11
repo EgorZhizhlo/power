@@ -9,8 +9,9 @@ from core.config import settings
 from core.exceptions import CustomHTTPException, check_is_none
 from infrastructure.db import async_db_session_begin
 from apps.company_app.repositories import CompanySiTypeRepository
-from apps.company_app.features.equipments.schemas import (
-    ItemCreate, ItemUpdate, ItemOut, OkResponse)
+from apps.company_app.schemas.equipments import (
+    ItemCreate, ItemUpdate, ItemOut, OkResponse
+)
 
 
 si_types_router = APIRouter(prefix="/api/equipments/si-types")

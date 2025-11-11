@@ -2,9 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from typing import List
 
-from infrastructure.db.session import async_session, async_db_session_begin
+from infrastructure.db.session import async_db_session, async_db_session_begin
 from models import BaseTariff
-from apps.tariff_app.repositories.base_tariff_repository import BaseTariffRepository
+from apps.tariff_app.repositories import BaseTariffRepository
 from apps.tariff_app.schemas.base_tariff import (
     BaseTariffCreate,
     BaseTariffUpdate,
@@ -100,7 +100,7 @@ class BaseTariffService:
 
 # Dependency для получения репозитория (чтение)
 async def get_base_tariff_repository_read(
-    session: AsyncSession = Depends(async_session)
+    session: AsyncSession = Depends(async_db_session)
 ) -> BaseTariffRepository:
     """Получить репозиторий для чтения базовых тарифов"""
     return BaseTariffRepository(session)

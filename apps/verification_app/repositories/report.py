@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload, load_only
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.db import async_session, async_db_session_begin
+from infrastructure.db import async_db_session, async_db_session_begin
 from models import (
     VerificationEntryModel,
     ActNumberModel,
@@ -423,7 +423,7 @@ class ReportRepository:
 
 async def read_report_repository(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ) -> ReportRepository:
     return ReportRepository(session=session, company_id=company_id)
 

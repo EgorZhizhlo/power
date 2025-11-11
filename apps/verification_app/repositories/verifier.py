@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from infrastructure.db import async_db_session_begin, async_session
+from infrastructure.db import async_db_session_begin, async_db_session
 from models import (
     EquipmentModel, VerifierModel, EmployeeModel, TeamModel)
 from core.config import settings
@@ -171,7 +171,7 @@ class VerifierRepository:
 
 async def read_verifier_repository(
         company_id: int = Query(..., ge=1, le=settings.max_int),
-        session: AsyncSession = Depends(async_session),
+        session: AsyncSession = Depends(async_db_session),
 ) -> VerifierRepository:
     return VerifierRepository(session=session, company_id=company_id)
 

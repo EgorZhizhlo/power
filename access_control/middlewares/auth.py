@@ -4,8 +4,11 @@ from itsdangerous import URLSafeTimedSerializer, URLSafeSerializer
 
 from sqlalchemy import select
 
-from access_control.tokens import verify_token, verify_untimed_token
-from access_control.token_versioning import get_token_version
+from access_control.tokens import (
+    verify_token,
+    verify_untimed_token,
+    get_jwt_token_version
+)
 
 from infrastructure.db.session import async_session_maker
 from models import EmployeeModel, CompanyModel
@@ -14,9 +17,9 @@ from core.config import settings
 from core.exceptions import InvalidTokenException, TokenExpiredException
 
 
-SECRET_KEY = settings.SECRET_KEY
-SALT = settings.SALT
-TOKEN_EXPIRATION = settings.TOKEN_EXPIRATION
+SECRET_KEY = settings.secret_key
+SALT = settings.salt
+TOKEN_EXPIRATION = settings.jwt_token_expiration
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -62,7 +65,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if user_data:
             user_id = u_user_id
             token_ver = user_data.get("ver", 0)
-            current_ver = await get_token_version(
+            current_ver = await get_jwt_token_version(
                 f"user:{user_id}:auth_version")
 
             if token_ver != current_ver:
@@ -100,7 +103,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if comp_data:
             user_id = u_user_id
             token_ver = comp_data.get("ver", 0)
-            current_ver = await get_token_version(
+            current_ver = await get_jwt_token_version(
                 f"user:{user_id}:company_version")
 
             if token_ver != current_ver:

@@ -6,11 +6,11 @@ from access_control import JwtData, check_tariff_access
 
 from core.config import settings
 
-from apps.tariff_app.services.company_tariff_service import (
+from apps.tariff_app.services.company_tariff import (
     CompanyTariffService,
     get_company_tariff_service_read
 )
-from apps.tariff_app.services.base_tariff_service import (
+from apps.tariff_app.services.base_tariff import (
     BaseTariffService,
     get_base_tariff_service_read
 )

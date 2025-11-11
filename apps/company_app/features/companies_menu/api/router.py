@@ -35,7 +35,7 @@ from apps.company_app.common import (
     recalculate_employee_count
 )
 
-from apps.company_app.features.companies_menu.schemas import (
+from apps.company_app.schemas.companies_menu import (
     EditCompanyFormDirector, EditCompanyFormAdmin
 )
 
@@ -315,7 +315,7 @@ async def api_delete_company(
         await _clear_delete_votes(company_id)
 
         # Инвалидируем кеш тарифов и timezone
-        from apps.tariff_app.services.tariff_cache_service import tariff_cache
+        from apps.tariff_app.services.tariff_cache import tariff_cache
         await tariff_cache.invalidate_cache(company_id)
         await company_tz_cache.invalidate_timezone(company_id)
 

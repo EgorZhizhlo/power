@@ -5,7 +5,7 @@ from sqlalchemy import select, update, func
 from sqlalchemy.orm import load_only, noload
 
 from core.config import settings
-from infrastructure.db import async_db_session_begin, async_session
+from infrastructure.db import async_db_session_begin, async_db_session
 from models import LocationModel
 
 
@@ -64,7 +64,7 @@ class LocationRepository:
 
 async def read_location_repository(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    session: AsyncSession = Depends(async_session),
+    session: AsyncSession = Depends(async_db_session),
 ) -> LocationRepository:
     return LocationRepository(session=session, company_id=company_id)
 

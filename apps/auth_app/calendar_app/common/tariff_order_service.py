@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import CustomHTTPException
 from models import CompanyTariffState
-from apps.tariff_app.services.tariff_cache_service import tariff_cache
+from apps.tariff_app.services import tariff_cache
 
 
 async def check_order_limit_available(
@@ -107,7 +107,7 @@ async def increment_order_count(
     company_id: int,
     delta: int = 1
 ) -> None:
-    from apps.tariff_app.repositories.company_tariff_state_repository import (
+    from apps.tariff_app.repositories.company_tariff_state import (
         CompanyTariffStateRepository
     )
 

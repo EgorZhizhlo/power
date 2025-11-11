@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.exceptions import HTTPException
+from core.exceptions import CustomHTTPException
 from models import (
     VerificationLogModel, ActNumberModel)
 
@@ -93,13 +93,13 @@ async def check_act_number_limit(
     act_number_entry: ActNumberModel,
 ) -> None:
     if not act_number_entry:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=404,
             detail="Запись номера акта не была найдена."
         )
 
     if act_number_entry.count <= 0:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=409,
             detail=(
                 f"Лимит записей по номеру акта: "
@@ -187,7 +187,7 @@ async def apply_verifier_log_delta(
 
     if delta < 0 and not override_limit_check:
         if not await true_false_access_to_create_entry_with_this_verifier(log):
-            raise HTTPException(
+            raise CustomHTTPException(
                 status_code=409,
                 detail="Лимит поверок у выбранного поверителя на указанную дату исчерпан.",
             )

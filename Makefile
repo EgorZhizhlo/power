@@ -19,77 +19,77 @@ help: ## Показать это сообщение помощи
 
 prod-build: ## Собрать Docker образ
 	@echo "$(GREEN)Сборка Docker образа...$(NC)"
-	docker-compose -f docker/docker-compose.prod.yml build
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml build
 
 prod-up: ## Запустить все сервисы в prod режиме
 	@echo "$(GREEN)Запуск сервисов в продакшене...$(NC)"
-	docker-compose -f docker/docker-compose.prod.yml up -d
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml up -d
 
 prod-down: ## Остановить и удалить все контейнеры
 	@echo "$(YELLOW)Остановка всех сервисов...$(NC)"
-	docker-compose -f docker/docker-compose.prod.yml down
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml down
 
 prod-restart: prod-down prod-up ## Перезапустить все сервисы
 
 prod-stop: ## Остановить сервисы без удаления контейнеров
 	@echo "$(YELLOW)Остановка сервисов...$(NC)"
-	docker-compose -f docker/docker-compose.prod.yml stop
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml stop
 
 prod-logs: ## Показать логи всех сервисов
-	docker-compose -f docker/docker-compose.prod.yml logs -f
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml logs -f
 
 prod-logs-app: ## Показать логи приложения
-	docker-compose -f docker/docker-compose.prod.yml logs -f app
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml logs -f app
 
 prod-logs-db: ## Показать логи базы данных
-	docker-compose -f docker/docker-compose.prod.yml logs -f db
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml logs -f db
 
 prod-logs-redis: ## Показать логи Redis
-	docker-compose -f docker/docker-compose.prod.yml logs -f redis
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml logs -f redis
 
 prod-logs-nginx: ## Показать логи Nginx
-	docker-compose -f docker/docker-compose.prod.yml logs -f nginx
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml logs -f nginx
 
 prod-ps: ## Показать статус контейнеров
-	docker-compose -f docker/docker-compose.prod.yml ps
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml ps
 
 # === Docker команды для тестирования ===
 
 test-build: ## Собрать Docker образ
 	@echo "$(GREEN)Сборка Docker образа...$(NC)"
-	docker-compose -f docker/docker-compose.test.yml build
+	docker-compose --env-file .env -f docker/docker-compose.test.yml build
 
 test-up: ## Запустить все сервисы в prod режиме
 	@echo "$(GREEN)Запуск сервисов в продакшене...$(NC)"
-	docker-compose -f docker/docker-compose.test.yml up -d
+	docker-compose --env-file .env -f docker/docker-compose.test.yml up -d
 
 test-down: ## Остановить и удалить все контейнеры
 	@echo "$(YELLOW)Остановка всех сервисов...$(NC)"
-	docker-compose -f docker/docker-compose.test.yml down
+	docker-compose --env-file .env -f docker/docker-compose.test.yml down
 
 test-restart: test-down test-up ## Перезапустить тестовое окружение
 
 test-stop: ## Остановить сервисы без удаления контейнеров
 	@echo "$(YELLOW)Остановка сервисов...$(NC)"
-	docker-compose -f docker/docker-compose.test.yml stop
+	docker-compose --env-file .env -f docker/docker-compose.test.yml stop
 
 test-logs: ## Показать логи всех сервисов
-	docker-compose -f docker/docker-compose.test.yml logs -f
+	docker-compose --env-file .env -f docker/docker-compose.test.yml logs -f
 
 test-logs-app: ## Показать логи приложения
-	docker-compose -f docker/docker-compose.test.yml logs -f test-app
+	docker-compose --env-file .env -f docker/docker-compose.test.yml logs -f test-app
 
 test-logs-db: ## Показать логи базы данных
-	docker-compose -f docker/docker-compose.test.yml logs -f test-db
+	docker-compose --env-file .env -f docker/docker-compose.test.yml logs -f test-db
 
 test-logs-redis: ## Показать логи Redis
-	docker-compose -f docker/docker-compose.test.yml logs -f test-redis
+	docker-compose --env-file .env -f docker/docker-compose.test.yml logs -f test-redis
 
 test-logs-nginx: ## Показать логи Nginx
-	docker-compose -f docker/docker-compose.test.yml logs -f test-nginx
+	docker-compose --env-file .env -f docker/docker-compose.test.yml logs -f test-nginx
 
 test-ps: ## Показать статус контейнеров
-	docker-compose -f docker/docker-compose.test.yml ps
+	docker-compose --env-file .env -f docker/docker-compose.test.yml ps
 # === Миграции базы данных ===
 
 migrate: ## Применить миграции базы данных
@@ -120,16 +120,16 @@ migrate-heads: ## Показать головные миграции
 # === Shell доступ ===
 
 shell: ## Войти в shell контейнера приложения
-	docker-compose -f docker/docker-compose.prod.yml exec app /bin/bash
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml exec app /bin/bash
 
 shell-test: ## Войти в shell тестового контейнера
-	docker-compose -f docker/docker-compose.test.yml exec app /bin/bash
+	docker-compose --env-file .env -f docker/docker-compose.test.yml exec app /bin/bash
 
 db-shell: ## Войти в PostgreSQL shell
-	docker-compose -f docker/docker-compose.prod.yml exec postgres psql -U ${DB_USER} -d ${DB_NAME}
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml exec postgres psql -U ${DB_USER} -d ${DB_NAME}
 
 redis-shell: ## Войти в Redis CLI
-	docker-compose -f docker/docker-compose.prod.yml exec redis redis-cli
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml exec redis redis-cli
 
 # === Volumes и очистка ===
 
@@ -148,7 +148,7 @@ volumes-list: ## Показать список volumes
 backup-db: ## Создать бэкап базы данных
 	@echo "$(GREEN)Создание бэкапа базы данных...$(NC)"
 	mkdir -p dumps
-	docker-compose -f docker/docker-compose.prod.yml exec -T postgres pg_dump -U ${DB_USER} ${DB_NAME} > dumps/backup_$$(date +%Y%m%d_%H%M%S).sql
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml exec -T postgres pg_dump -U ${DB_USER} ${DB_NAME} > dumps/backup_$$(date +%Y%m%d_%H%M%S).sql
 	@echo "$(GREEN)Бэкап создан в dumps/$(NC)"
 
 restore-db: ## Восстановить базу данных из бэкапа (использование: make restore-db FILE=dumps/backup.sql)
@@ -157,7 +157,7 @@ restore-db: ## Восстановить базу данных из бэкапа 
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Восстановление базы данных из $(FILE)...$(NC)"
-	docker-compose -f docker/docker-compose.prod.yml exec -T postgres psql -U ${DB_USER} ${DB_NAME} < $(FILE)
+	docker-compose --env-file .env -f docker/docker-compose.prod.yml exec -T postgres psql -U ${DB_USER} ${DB_NAME} < $(FILE)
 	@echo "$(GREEN)База данных восстановлена!$(NC)"
 
 # === Мониторинг ===
@@ -167,9 +167,9 @@ stats: ## Показать статистику использования ре�
 
 health: ## Проверить здоровье сервисов
 	@echo "$(GREEN)Проверка состояния сервисов...$(NC)"
-	@docker-compose -f docker/docker-compose.prod.yml ps
+	@docker-compose --env-file .env -f docker/docker-compose.prod.yml ps
 	@echo "\n$(GREEN)Проверка подключения к PostgreSQL...$(NC)"
-	@docker-compose -f docker/docker-compose.prod.yml exec postgres pg_isready -U ${DB_USER} || echo "$(RED)PostgreSQL недоступен$(NC)"
+	@docker-compose --env-file .env -f docker/docker-compose.prod.yml exec postgres pg_isready -U ${DB_USER} || echo "$(RED)PostgreSQL недоступен$(NC)"
 	@echo "\n$(GREEN)Проверка Redis...$(NC)"
-	@docker-compose -f docker/docker-compose.prod.yml exec redis redis-cli ping || echo "$(RED)Redis недоступен$(NC)"
+	@docker-compose --env-file .env -f docker/docker-compose.prod.yml exec redis redis-cli ping || echo "$(RED)Redis недоступен$(NC)"
 

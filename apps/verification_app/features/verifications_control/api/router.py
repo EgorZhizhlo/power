@@ -19,7 +19,8 @@ from models.enums import ReasonType
 
 from access_control import (
     JwtData,
-    check_access_verification, check_active_access_verification
+    check_access_verification,
+    check_active_access_verification
 )
 
 from core.config import settings
@@ -27,7 +28,7 @@ from core.exceptions import (
     CompanyVerificationLimitException,
     YandexTokenException
 )
-from core.redis_client import redis
+from infrastructure.cache.redis_client import redis
 
 from apps.verification_app.exceptions import (
     VerificationEntryException,
@@ -64,7 +65,7 @@ from apps.verification_app.repositories import (
     LocationRepository, action_location_repository,
     VerificationLogRepository, action_verification_log_repository,
 )
-from .schemas import (
+from apps.verification_app.schemas.verifications_control import (
     VerificationEntryFilter, VerificationEntryListOut, VerificationEntryOut,
     CreateVerificationEntryForm, UpdateVerificationEntryForm,
     MetrologInfoForm

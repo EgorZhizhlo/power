@@ -17,7 +17,7 @@ from core.templates.jinja_filters import format_datetime_tz
 from infrastructure.db import async_db_session, async_db_session_begin
 
 from apps.company_app.repositories import CalendarReportRepository
-from apps.company_app.features.calendar_reports.schemas import (
+from apps.company_app.schemas.calendar_reports import (
     CalendarReportsPage, CalendarReportForm,
     CalendarReportDetail, CalendarReportListItem
 )
