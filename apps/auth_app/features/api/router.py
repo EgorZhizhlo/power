@@ -9,6 +9,9 @@ from access_control.tokens import (
     get_jwt_token_version, reset_jwt_token_version,
     create_token, create_untimed_token,
 )
+from access_control.roles import (
+    access_company
+)
 
 from apps.auth_app.repositories import EmployeeRepository, CompanyRepository
 from infrastructure.db import async_db_session
@@ -58,7 +61,7 @@ async def login_user(
     company_info_token = await create_untimed_token(companies_dir)
 
     status = user.status
-    if status in settings.ACCESS_COMPANY:
+    if status in access_company:
         redirect_url = settings.url_path_map[status]
     else:
         if not all_ids:
@@ -69,7 +72,7 @@ async def login_user(
         redirect_url = f"{settings.url_path_map[status]}?company_id={min(all_ids)}"
 
     cookie_params = dict(
-        max_age=settings.TOKEN_EXPIRATION,
+        max_age=settings.jwt_token_expiration,
         httponly=True,
         samesite="lax",
         path="/",

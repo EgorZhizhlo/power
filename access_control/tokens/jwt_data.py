@@ -50,7 +50,9 @@ def check_jwt_data(
     if user_id and comp_id and user_id != comp_id:
         raise RedirectException(redirect_to_url=settings.logout_url)
 
-    if user_status not in settings.EMPLOYEE_STATUSES:
+    from access_control.roles.definitions import employee_status
+
+    if user_status not in employee_status:
         raise RedirectException(redirect_to_url=settings.logout_url)
 
     return user_data, company_data

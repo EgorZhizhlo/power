@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload, with_loader_criteria
 from access_control import (
     JwtData,
     dispatchers_exception,
+    access_calendar
 )
 
 from infrastructure.db import async_db_session
@@ -140,7 +141,7 @@ async def api_dispatcher_statistic(
             EmployeeModel.username,
         )
         .where(
-            EmployeeModel.status.in_(settings.ACCESS_CALENDAR),
+            EmployeeModel.status.in_(access_calendar),
             EmployeeModel.companies.any(
                 employees_companies.c.company_id == company_id),
         )

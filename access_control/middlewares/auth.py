@@ -69,8 +69,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 f"user:{user_id}:auth_version")
 
             if token_ver != current_ver:
-                maker = async_session_maker()
-                async with maker() as session:
+                async with async_session_maker() as session:
                     stmt = (
                         select(EmployeeModel)
                         .where(
@@ -108,8 +107,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
             if token_ver != current_ver:
                 # Обновляем список компаний из БД
-                maker = async_session_maker()
-                async with maker() as session:
+                async with async_session_maker() as session:
                     stmt = (
                         select(
                             CompanyModel.id,

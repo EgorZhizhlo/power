@@ -8,6 +8,8 @@ from infrastructure.db import async_db_session_begin, async_db_session
 from models import CompanyModel, EmployeeModel
 from core.config import settings
 
+from access_control import director_auditor_verifier
+
 
 class CompanyRepository:
     def __init__(self, session: AsyncSession, company_id: int):
@@ -116,7 +118,7 @@ class CompanyRepository:
             .order_by(CompanyModel.name)
         )
 
-        if status in settings.DIRECTOR_AUDITOR_VERIFIER:
+        if status in director_auditor_verifier:
             stmt = (
                 stmt.join(CompanyModel.employees)
                 .where(EmployeeModel.id == employee_id)

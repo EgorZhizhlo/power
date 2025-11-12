@@ -1,7 +1,15 @@
+import { 
+    getTodayInCompanyTz,
+    formatDateInTz,
+    getYearsDifference,
+    addYearsInTz,
+    getCurrentYearInTz 
+} from '/static/verification/_utils/date_utils.js';
+
 document.getElementById('verification_images')
     .addEventListener('change', function () {
         if (this.files.length > window.photoLimit) {
-            alert(`Выбрано более ${window.photoLimit} файлов. Пожалуйста, загрузите не более ${window.photoLimit} изображений.`);
+            alert(`Выбрано более ${window.photoLimit} файлов. Пожалуйста, загрузите не более ${window.photoLimit} изображений.`);
             this.value = '';
         }
     });
@@ -9,7 +17,7 @@ document.getElementById('verification_images')
 function getFullYearFromRegistryNumber(registryNumber) {
     const parts = registryNumber.split('-');
     const lastTwoDigits = parseInt(parts[1], 10);
-    const currentYear = new Date().getFullYear();
+    const currentYear = getCurrentYearInTz();
     return lastTwoDigits <= (currentYear % 100) ? 2000 + lastTwoDigits : 1900 + lastTwoDigits;
 }
 
@@ -34,9 +42,9 @@ function updateEndVerificationDate() {
     const verificationDate = new Date(inputDateValue);
     const yearsToAdd = parseInt(intervalSelect.value) || 0;
     if (!isNaN(verificationDate.getTime()) && !isNaN(yearsToAdd)) {
-        verificationDate.setFullYear(verificationDate.getFullYear() + yearsToAdd);
-        verificationDate.setDate(verificationDate.getDate() - 1);
-        endVerificationDateInput.value = verificationDate.toISOString().split('T')[0];
+        const newDate = addYearsInTz(verificationDate, yearsToAdd);
+        newDate.setDate(newDate.getDate() - 1);
+        endVerificationDateInput.value = formatDateInTz(newDate);
     } else {
         endVerificationDateInput.value = '';
     }
@@ -50,7 +58,7 @@ function calculateNextVerification() {
     const verificationDate = new Date(verificationDateInput.value);
     const endVerificationDate = new Date(endVerificationDateInput.value);
     if (!isNaN(verificationDate.getTime()) && !isNaN(endVerificationDate.getTime())) {
-        intervalSelect.value = endVerificationDate.getFullYear() - verificationDate.getFullYear();
+        intervalSelect.value = getYearsDifference(verificationDate, endVerificationDate);
     } else {
         intervalSelect.value = '';
     }
@@ -79,11 +87,11 @@ function resetClientFieldsToDefaults() {
     const cityOptions = Array.from(citySelect.options).filter(o => o.value);
     if (window.defaultCityId && cityOptions.some(o => o.value == window.defaultCityId)) {
         citySelect.value = window.defaultCityId;
-    } else if (cityOptions.length > 0) {
-        citySelect.value = cityOptions[0].value;
+    } else {
+        citySelect.value = cityOptions.length ? cityOptions[0].value : "";
     }
 
-    verificationDateInput.value = new Date().toISOString().split("T")[0];
+    verificationDateInput.value = getTodayInCompanyTz();
 }
 
 function applyActNumberData(data) {
@@ -113,7 +121,7 @@ function applyActNumberData(data) {
     if (data.verification_date) {
         verificationDateInput.value = String(data.verification_date);
     } else if (!verificationDateInput.value) {
-        verificationDateInput.value = new Date().toISOString().split("T")[0];
+        verificationDateInput.value = getTodayInCompanyTz();
     }
 }
 
@@ -173,7 +181,7 @@ function rebuildManufactureYears(rYearFromReg) {
     const manufactureYearSelect = document.getElementById('manufacture_year');
     manufactureYearSelect.innerHTML = '<option value="" disabled selected>Выберите год выпуска</option>';
 
-    const currentYear = new Date().getFullYear();
+    const currentYear = getCurrentYearInTz();
 
     let startYear = (typeof rYearFromReg === 'number' && !Number.isNaN(rYearFromReg))
         ? rYearFromReg
@@ -307,14 +315,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const endVerificationDateInput = document.getElementById('end_verification_date');
     const registryNumberIdInput = document.getElementById('registry_number_id');
     const waterTypeInput = document.getElementById('water_type');
+
+    if (!verificationDateInput.value) {
+        verificationDateInput.value = getTodayInCompanyTz();
+    }
+    
     waterTypeInput.addEventListener('change', applyMPI);
-    verificationDateInput.setAttribute('max', new Date().toISOString().split('T')[0]);
+    verificationDateInput.setAttribute('max', getTodayInCompanyTz());
     verificationResult.addEventListener('change', toggleAdditionalInput);
 
     verificationDateInput.addEventListener('blur', function () {
         if (!verificationDateInput.value) return;
 
-        const currentYear = new Date().getFullYear();
+        const currentYear = getCurrentYearInTz();
         const parts = verificationDateInput.value.split('-');
         if (parts.length !== 3) return;
 
@@ -517,7 +530,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayInCompanyTz();
         if (verificationDateInput.value && verificationDateInput.value > today) {
             alert('Дата поверки не может быть позже сегодняшнего дня.');
             return;
@@ -552,6 +565,8 @@ document.addEventListener("DOMContentLoaded", function () {
             else if (v === 'False') obj[k] = false;
             else obj[k] = v;
         });
+
+        obj.company_tz = window.companyTz || 'Europe/Moscow';
 
         const params = new URLSearchParams({
             company_id: String(window.companyId),

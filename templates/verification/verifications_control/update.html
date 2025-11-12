@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% block title %}
+{{ title_name }}
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/verification/verifications_control/css/update.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+<div class="update-page container px-3">
+  <h1 class="text-center mb-5">{{ title_name }}</h1>
+
+  <div class="back-btn-wrapper text-center my-3">
+    <a href="/verification/?company_id={{company_id}}" class="btn btn-home fw-bold">
+      🏠 На главную
+    </a>
+  </div>
+
+  <div class="update-form-wrapper">
+    <form id="edit-entry-form" method="post">
+      <h2 class="form-title mb-4">Редактирование записи поверки</h2>
+      <div class="form-content row rounded-section">
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="employee_full_name" class="form-label text-truncate">ФИО работника</label>
+          <input type="text" id="employee_full_name" class="form-control"
+            value="{{ verification_entry.employee.last_name }} {{ verification_entry.employee.name }} {{ verification_entry.employee.patronymic }}"
+            disabled />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="series_id" class="form-label text-truncate">Серия бланка</label>
+          {% if status in ["admin", "director"] %}
+          <select id="series_id" name="series_id" class="form-select">
+            {% for s in series %}
+            <option value="{{ s.id }}" {% if verification_entry and verification_entry.series_id==s.id %} selected {%
+              endif %}>
+              {{ s.name }}
+            </option>
+            {% endfor %}
+          </select>
+          {% else %}
+          {% if employee_series %}
+          <input type="hidden" name="series_id" value="{{ employee_series.id }}">
+          <select id="series_id" name="series_id" class="form-select" disabled>
+            <option value="{{ employee_series.id }}" selected>{{ employee_series.name }}</option>
+          </select>
+          {% else %}
+          <select id="series_id" name="series_id" class="form-select" required>
+            <option selected>Выберите серию</option>
+            {% for s in series %}
+            <option value="{{ s.id }}" {% if verification_entry and verification_entry.series_id==s.id %} selected {%
+              endif %}>
+              {{ s.name }}
+            </option>
+            {% endfor %}
+          </select>
+          {% endif %}
+          {% endif %}
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="act_number" class="form-label text-truncate">Номер бланка</label>
+          <input type="text" id="act_number" name="act_number" class="form-control"
+            value="{{ verification_entry.act_number.act_number }}" placeholder="Введите номер бланка" required
+            inputmode="numeric" pattern="[0-9]*" />
+        </div>
+
+        <div class="col-md-3 mb-3 d-flex flex-column">
+          <label for="registry_number_id" class="form-label text-truncate">Номер госреестра</label>
+          <select id="registry_number_id" name="registry_number_id" class="form-select select2" required>
+            <option value="" disabled selected>Выберите номер госреестра</option>
+            {% for reg in registry_numbers %}
+            <option value="{{ reg.id }}" {% if verification_entry and reg.id==verification_entry.registry_number_id %}
+              selected {% endif %}>
+              {{ reg.registry_number }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="modification_id" class="form-label text-truncate">Модификация СИ</label>
+          <select id="modification_id" name="modification_id" class="form-select">
+            <option value="" disabled selected>Выберите модификацию</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="manufacture_year" class="form-label text-truncate">Год выпуска поверяемого СИ</label>
+          <select id="manufacture_year" name="manufacture_year" class="form-select" required
+            data-current="{{ verification_entry.manufacture_year }}">
+            <option disabled>Выберите год выпуска</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="si_type" class="form-label text-truncate">Тип СИ</label>
+          <input type="text" id="si_type" class="form-control" value="" disabled />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="water_type" class="form-label text-truncate">Тип воды</label>
+          <select id="water_type" name="water_type" class="form-select" required>
+            <option value="cold" {% if verification_entry.water_type == "cold" %} selected {% endif %}>Холодная</option>
+            <option value="hot" {% if verification_entry.water_type == "hot" %} selected {% endif %}>Горячая</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="verification_date" class="form-label text-truncate">Дата поверки</label>
+          <input type="date" id="verification_date" name="verification_date" class="form-control"
+            value="{{ verification_entry.verification_date }}" required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="next_verification" class="form-label text-truncate">Следующая поверка через</label>
+          <select id="next_verification" name="interval" class="form-select" onchange="updateEndVerificationDate();"
+            required data-current="{{ verification_entry.next_verification_year }}">
+            {% for year in range(0, 16) %}
+            <option value="{{ year }}" {% if year==verification_entry.next_verification_year %} selected {% endif %}>
+              {{ year }} {{ "год" if year in [1, 2, 3, 4] else "лет" }}{{ "a" if year in [2, 3, 4] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="end_verification_date" class="form-label text-truncate">Срок окончания поверки</label>
+          <input type="date" id="end_verification_date" name="end_verification_date" class="form-control"
+            value="{{ verification_entry.end_verification_date }}" required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="location_id" class="form-label text-truncate">Расположение счетчика</label>
+          <select id="location_id" name="location_id" class="form-select" required>
+            <option value="" disabled selected>Выберите расположение</option>
+            {% for location in locations %}
+            <option value="{{ location.id }}" {% if verification_entry and location.id==verification_entry.location_id
+              %} selected {% endif %}>
+              {{ location.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="factory_number" class="form-label text-truncate">Заводской номер</label>
+          <input type="text" id="factory_number" name="factory_number" class="form-control"
+            value="{{ verification_entry.factory_number }}" placeholder="Введите заводской номер" required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="seal" class="form-label text-truncate">Пломба РСО</label>
+          <select id="seal" name="seal" class="form-select" required>
+            <option value="present" {% if verification_entry.seal=='present' %} selected {% endif %}>Есть</option>
+            <option value="damaged" {% if verification_entry.seal=='damaged' %} selected {% endif %}>Повреждена</option>
+            <option value="missing" {% if verification_entry.seal=='missing' %} selected {% endif %}>Отсутствует</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="meter_info" class="form-label text-truncate">Показания счетчика</label>
+          <input type="number" id="meter_info" name="meter_info" class="form-control"
+            value="{{ verification_entry.meter_info }}" placeholder="Введите показания счетчика" required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="city_id" class="form-label text-truncate">Населенный пункт</label>
+          <select id="city_id" name="city_id" class="form-select" required>
+            <option value="" disabled selected>Выберите населенный пункт</option>
+            {% for city in cities %}
+            <option value="{{ city.id }}" {% if verification_entry and city.id==verification_entry.city_id %} selected
+              {% endif %}>
+              {{ city.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="address" class="form-label text-truncate">Адрес</label>
+          <input type="text" id="address" name="address" class="form-control" value="" placeholder="Введите адрес"
+            required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="client_full_name" class="form-label text-truncate">Владелец СИ</label>
+          <input type="text" id="client_full_name" name="client_full_name" class="form-control" value=""
+            placeholder="Введите ФИО" required />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="legal_entity" class="form-label text-truncate">Физ./Юр. лицо</label>
+          <select id="legal_entity" name="legal_entity" class="form-select" required>
+            <option value="individual" selected>Физ. лицо</option>
+            <option value="legal">Юр. лицо</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="client_phone" class="form-label text-truncate">Номер телефона</label>
+          <input type="tel" class="form-control" id="client_phone" name="client_phone" value=""
+            placeholder="+7 (___) ___-__-__" />
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="method_id" class="form-label text-truncate">Методика</label>
+          <select id="method_id" name="method_id" class="form-select" required>
+            <option value="" disabled selected>Выберите методику</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="verification_result" class="form-label text-truncate">Результат поверки</label>
+          <select id="verification_result" name="verification_result" class="form-select" required>
+            <option value="True" {% if verification_entry.verification_result %} selected {% endif %}>Пригодно</option>
+            <option value="False" {% if not verification_entry.verification_result %} selected {% endif %}>Непригодно
+            </option>
+          </select>
+        </div>
+
+        <div id="additional_input" class="col-md-3 mb-3" style="display: none;">
+          <label for="reason_id" class="form-label text-truncate">Причина непригодности</label>
+          <select id="reason_id" name="reason_id" class="form-select">
+            <option value="" disabled selected>Выберите причину</option>
+            {% for reason in reasons %}
+            <option value="{{ reason.id }}" {% if reason.id==verification_entry.reason_id %} selected {% endif %}>
+              {{ reason.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3 flex-grow-1 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="legal_entity_status">
+            Передать наименование
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="legal_entity_status" name="legal_entity_status"
+              value="True" style="transform: scale(2);" {% if verification_entry.legal_entity_status %} checked {% endif
+              %}>
+          </div>
+        </div>
+
+        {% if additional_checkbox_1 %}
+        <div class="col-md-3 mb-3 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="additional_checkbox_1">
+            {{ additional_checkbox_1 }}
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="additional_checkbox_1" name="additional_checkbox_1"
+              value="True" {% if verification_entry.additional_checkbox_1 %} checked {% endif %}
+              style="transform: scale(2);">
+          </div>
+        </div>
+        {% endif %}
+        {% if additional_checkbox_2 %}
+        <div class="col-md-3 mb-3 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="additional_checkbox_2">
+            {{ additional_checkbox_2 }}
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="additional_checkbox_2" name="additional_checkbox_2"
+              value="True" {% if verification_entry.additional_checkbox_2 %} checked {% endif %}
+              style="transform: scale(2);">
+          </div>
+        </div>
+        {% endif %}
+        {% if additional_checkbox_3 %}
+        <div class="col-md-3 mb-3 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="additional_checkbox_3">
+            {{ additional_checkbox_3 }}
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="additional_checkbox_3" name="additional_checkbox_3"
+              value="True" {% if verification_entry.additional_checkbox_3 %} checked {% endif %}
+              style="transform: scale(2);">
+          </div>
+        </div>
+        {% endif %}
+        {% if additional_checkbox_4 %}
+        <div class="col-md-3 mb-3 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="additional_checkbox_4">
+            {{ additional_checkbox_4 }}
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="additional_checkbox_4" name="additional_checkbox_4"
+              value="True" {% if verification_entry.additional_checkbox_4 %} checked {% endif %}
+              style="transform: scale(2);">
+          </div>
+        </div>
+        {% endif %}
+        {% if additional_checkbox_5 %}
+        <div class="col-md-3 mb-3 d-flex justify-content-center align-items-center flex-column">
+          <label class="form-check-label text-start w-100 mb-3 text-truncate" for="additional_checkbox_5">
+            {{ additional_checkbox_5 }}
+          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="additional_checkbox_5" name="additional_checkbox_5"
+              value="True" {% if verification_entry.additional_checkbox_5 %} checked {% endif %}
+              style="transform: scale(2);">
+          </div>
+        </div>
+        {% endif %}
+
+        {% if additional_input_1 %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="additional_input_1" class="form-label text-truncate">{{ additional_input_1 }}</label>
+          <input type="text" class="form-control" id="additional_input_1" name="additional_input_1"
+            value="{{ verification_entry.additional_input_1 if verification_entry.additional_input_1 else '' }}" />
+        </div>
+        {% endif %}
+        {% if additional_input_2 %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="additional_input_2" class="form-label text-truncate">{{ additional_input_2 }}</label>
+          <input type="text" class="form-control" id="additional_input_2" name="additional_input_2"
+            value="{{ verification_entry.additional_input_2 if verification_entry.additional_input_2 else '' }}" />
+        </div>
+        {% endif %}
+        {% if additional_input_3 %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="additional_input_3" class="form-label text-truncate">{{ additional_input_3 }}</label>
+          <input type="text" class="form-control" id="additional_input_3" name="additional_input_3"
+            value="{{ verification_entry.additional_input_3 if verification_entry.additional_input_3 else '' }}" />
+        </div>
+        {% endif %}
+        {% if additional_input_4 %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="additional_input_4" class="form-label text-truncate">{{ additional_input_4 }}</label>
+          <input type="text" class="form-control" id="additional_input_4" name="additional_input_4"
+            value="{{ verification_entry.additional_input_4 if verification_entry.additional_input_4 else '' }}" />
+        </div>
+        {% endif %}
+        {% if additional_input_5 %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="additional_input_5" class="form-label text-truncate">{{ additional_input_5 }}</label>
+          <input type="text" class="form-control" id="additional_input_5" name="additional_input_5"
+            value="{{ verification_entry.additional_input_5 if verification_entry.additional_input_5 else '' }}" />
+        </div>
+        {% endif %}
+
+        {% if status in ["admin", "director"] %}
+        <div class="col-md-3 mb-3 flex-grow-1">
+          <label for="verifier_id" class="form-label text-truncate">Поверители</label>
+          <select id="verifier_id" name="verifier_id" class="form-select" required>
+            {% for verifier in verifiers %}
+            <option value="{{ verifier.id }}" {% if verifier.id==verification_entry.verifier_id %} selected {% endif %}>
+              {{ verifier.last_name }} {{ verifier.name }} {{ verifier.patronymic }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div class="col-md-6 mb-3">
+          <label for="new_verification_images" class="form-label text-truncate">
+            Загрузить новые фото (до {{ verification_photo_limit }})
+          </label>
+          <input
+            type="file"
+            id="new_verification_images"
+            name="new_verification_images"
+            class="form-control form-control-sm"
+            accept="image/*"
+            multiple
+          >
+          <div class="form-text">
+            Максимум {{ verification_photo_limit }} файлов (jpeg, png, heic, webp и т.д.)
+          </div>
+        </div>
+
+        {% if verification_entry_photos %}
+        <ol id="photo-list" class="photo-list mt-3">
+          {% for photo in verification_entry_photos %}
+          <li data-photo-id="{{ photo.id }}">
+            <a href="{{ photo.url | safe }}" target="_blank" rel="noopener">Фото {{ loop.index }}</a>
+            <button type="button" class="btn-delete-photo" data-photo-id="{{ photo.id }}">×</button>
+          </li>
+          {% endfor %}
+        </ol>
+        <div id="photos-to-delete"></div>
+        {% else %}
+        <p class="text-muted text-center mt-2 mb-0 small">Фотографий ещё нет.</p>
+        {% endif %}
+
+        <div class="form-actions d-flex justify-content-end mt-4">
+          <button id="edit-entry" type="submit" class="btn btn-save fw-bold">✅ Сохранить</button>
+          <button id="edit-entry-and-metrolog" type="submit" class="btn btn-protocol fw-bold">📄 Протокол
+            поверки</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/imask@7.6.0/dist/imask.min.js"></script>
+
+<script>
+  window.userStatus = {{ status | default (None) | tojson | safe }};
+  window.verifModif = {{ verification_entry.modification_id | default (None) | tojson | safe }};
+  window.verifEntryId = {{ verification_entry.id | default (None) | tojson | safe }};
+  window.defaultCityId = {{ default_city_id | default (None) | tojson | safe }};
+  window.photoLimit = {{ verification_photo_limit | default (None) | tojson | safe }};
+  window.autoManufYear = {{ auto_manufacture_year | default (None) | tojson | safe }};
+  window.companyId = {{ company_id | default (None) | tojson | safe }};
+  window.companyTz = {{ company_tz | default('Europe/Moscow') | tojson | safe }};
+</script>
+
+<script type="module" src="/static/verification/verifications_control/js/update.js"></script>
+
+{% endblock %}

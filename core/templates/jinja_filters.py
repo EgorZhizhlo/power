@@ -5,6 +5,17 @@ from zoneinfo import ZoneInfo
 from core.timezones import get_timezone_name
 
 
+def get_current_date_in_tz(tz_name: str = "Europe/Moscow") -> date:
+    """
+    Возвращает текущую дату в указанном часовом поясе.
+    """
+    try:
+        tz = ZoneInfo(tz_name)
+        return datetime.now(tz=tz).date()
+    except Exception:
+        return datetime.now(tz=ZoneInfo("Europe/Moscow")).date()
+
+
 def to_company_tz(
     dt: Optional[datetime],
     company_tz: str
@@ -15,11 +26,9 @@ def to_company_tz(
     if dt is None:
         return None
 
-    # Если naive - считаем UTC
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
 
-    # Конвертируем в timezone компании
     tz = ZoneInfo(company_tz)
     return dt.astimezone(tz)
 

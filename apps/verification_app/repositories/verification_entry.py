@@ -26,7 +26,10 @@ from models import (
     EmployeeModel,
     ActSeriesModel
 )
+
 from core.config import settings
+
+from access_control import admin_director, verifier
 
 
 class VerificationEntryRepository:
@@ -159,6 +162,8 @@ class VerificationEntryRepository:
                     VerificationEntryModel.water_type,
                     VerificationEntryModel.seal,
                     VerificationEntryModel.manufacture_year,
+                    VerificationEntryModel.created_at,
+                    VerificationEntryModel.updated_at,
                 ),
                 joinedload(VerificationEntryModel.employee).load_only(
                     EmployeeModel.id,
@@ -303,7 +308,7 @@ class VerificationEntryRepository:
             .with_for_update(of=VerificationEntryModel)
         )
 
-        if status not in settings.ADMIN_DIRECTOR:
+        if status not in admin_director:
             stmt = stmt.where(
                 VerificationEntryModel.employee_id == employee_id,
                 CompanyModel.verification_date_block
@@ -362,7 +367,7 @@ class VerificationEntryRepository:
             .with_for_update(of=VerificationEntryModel)
         )
 
-        if status not in settings.ADMIN_DIRECTOR:
+        if status not in admin_director:
             stmt = stmt.where(
                 VerificationEntryModel.employee_id == employee_id,
                 CompanyModel.verification_date_block
@@ -483,7 +488,7 @@ class VerificationEntryRepository:
             )
         )
 
-        if status in settings.VERIFIER:
+        if status in verifier:
             stmt = stmt.where(
                 VerificationEntryModel.employee_id == employee_id)
 

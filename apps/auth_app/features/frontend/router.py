@@ -2,6 +2,9 @@ from fastapi import APIRouter, Request, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from access_control.tokens import verify_token, verify_untimed_token
+from access_control.roles import (
+    access_company
+)
 
 from core.config import settings
 from core.templates.template_manager import templates
@@ -40,7 +43,7 @@ async def authorization_home(
             status = user_data["status"]
 
             # Если у пользователя роль DIRECTOR–style — сразу редиректим
-            if status in settings.ACCESS_COMPANY:
+            if status in access_company:
                 return RedirectResponse(
                     url=settings.url_path_map[status], status_code=303)
 

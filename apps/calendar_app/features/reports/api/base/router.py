@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control import (
-    dispatchers_exception
+    dispatchers_exception,
+    access_calendar
 )
 
 from infrastructure.db import async_db_session
@@ -37,7 +38,7 @@ async def api_report_dispatchers_list(
             EmployeeModel.id, EmployeeModel.last_name, EmployeeModel.name,
             EmployeeModel.patronymic, EmployeeModel.username)
         .where(
-            EmployeeModel.status.in_(settings.ACCESS_CALENDAR),
+            EmployeeModel.status.in_(access_calendar),
             EmployeeModel.companies.any(CompanyModel.id == company_id)
         )
         .order_by(

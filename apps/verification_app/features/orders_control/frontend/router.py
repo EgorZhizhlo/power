@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from core.config import settings
+from core.db.dependencies import get_company_timezone
 from core.exceptions import (
     CustomHTTPException,
     CustomCreateVerifDefaultVerifierException,
@@ -10,7 +11,8 @@ from core.exceptions import (
 
 from access_control import (
     JwtData,
-    check_access_verification
+    check_access_verification,
+    admin_director
 )
 
 from apps.verification_app.common import (
@@ -69,6 +71,7 @@ async def create_verification_entry_by_order_page(
     request: Request,
     company_id: int = Query(..., ge=1, le=settings.max_int),
     order_id: int = Query(..., ge=1, le=settings.max_int),
+    company_tz: str = Depends(get_company_timezone),
     employee_data: JwtData = Depends(check_access_verification),
     employee_cities_repo: EmployeeCitiesRepository = Depends(
         read_employee_cities_repository
@@ -104,7 +107,7 @@ async def create_verification_entry_by_order_page(
     status = employee_data.status
     employee_id = employee_data.id
 
-    if status not in settings.ADMIN_DIRECTOR:
+    if status not in admin_director:
         await order_repo.check_verification_date_block(
             order_id=order_id
         )
@@ -118,7 +121,7 @@ async def create_verification_entry_by_order_page(
             company_id=company_id
         )
 
-    check_equip_conditions(
+    await check_equip_conditions(
         default_verifier.equipments, for_view=True,
         company_id=company_id
     )
@@ -158,6 +161,7 @@ async def create_verification_entry_by_order_page(
     context = {
         "request": request,
         "company_id": company_id,
+        "company_tz": company_tz,
         "title_name": "Добавление записи поверки по заявке",
         "companies": await company_repo.get_companies_for_user(
             employee_id=employee_id,
@@ -175,7 +179,8 @@ async def create_verification_entry_by_order_page(
         "default_city_id": default_city_id,
         "default_series_id": default_series_id,
         "prefill": prefill,
-        "order_id": order.id
+        "order_id": order.id,
+        "verification_photo_limit": settings.verification_photo_limit,
     }
     context.update(employee_data.__dict__)
     context.update(c_field)

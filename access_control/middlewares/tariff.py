@@ -8,8 +8,8 @@ from sqlalchemy import select, update
 from infrastructure.db.session import async_session_maker
 from models import CompanyTariffState, CompanyModel
 from models.enums import EmployeeStatus
-from access_control.token_versioning import bump_token_version
-from core.time_utils import date_utc_now
+from access_control import bump_jwt_token_version
+from core.utils.time_utils import date_utc_now
 
 
 class TariffMiddleware(BaseHTTPMiddleware):
@@ -154,8 +154,7 @@ class TariffMiddleware(BaseHTTPMiddleware):
                 }
 
             # Кешируем найденный state
-            maker = async_session_maker()
-            async with maker() as session:
+            async with async_session_maker() as session:
                 from apps.tariff_app.repositories.\
                     company_tariff_history import (
                         CompanyTariffHistoryRepository
@@ -209,8 +208,7 @@ class TariffMiddleware(BaseHTTPMiddleware):
         self, company_id: int
     ) -> Optional[CompanyTariffState]:
         """Получить state из БД"""
-        maker = async_session_maker()
-        async with maker() as session:
+        async with async_session_maker() as session:
             stmt = select(CompanyTariffState).where(
                 CompanyTariffState.company_id == company_id
             )
@@ -224,8 +222,7 @@ class TariffMiddleware(BaseHTTPMiddleware):
         Обновить статус активности компании и инвалидировать
         кеш сотрудников
         """
-        maker = async_session_maker()
-        async with maker() as session:
+        async with async_session_maker() as session:
             # Обновляем is_active
             stmt = (
                 update(CompanyModel)
@@ -259,7 +256,7 @@ class TariffMiddleware(BaseHTTPMiddleware):
                 # Обновляем версию токенов для всех сотрудников
                 # (включая админов - они тоже должны обновиться)
                 for emp_id in employee_ids:
-                    await bump_token_version(
+                    await bump_jwt_token_version(
                         f"user:{emp_id}:company_version"
                     )
 

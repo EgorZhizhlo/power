@@ -2,14 +2,13 @@ from pydantic import BaseModel, field_validator, Field, ConfigDict
 from typing import Optional, List
 from datetime import date as date_
 
-from core.utils.time_utils import date_utc_now
 from models.enums import (
     VerificationLegalEntity, OrderWaterType
 )
 
 
 class OrderFilter(BaseModel):
-    date: date_ = Field(default_factory=date_utc_now)
+    date: date_ = Field()
     page: int = Field(default=1, ge=1)
     limit: int = Field(default=30)
 
@@ -17,7 +16,8 @@ class OrderFilter(BaseModel):
     def validator_limit(cls, values):
         if values not in {30, 50, 100}:
             raise ValueError(
-                'Некорректное колличества записей на странице')
+                'Некорректное колличества записей на странице'
+            )
         return values
 
 

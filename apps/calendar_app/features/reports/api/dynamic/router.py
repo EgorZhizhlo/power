@@ -4,7 +4,10 @@ from io import BytesIO
 from urllib.parse import quote
 from fastapi.responses import StreamingResponse
 
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import (
+    get_current_date_in_tz, format_datetime_tz
+)
+from core.db.dependencies import get_company_timezone
 from core.config import settings
 from core.reports.excel_utils import autofit_columns
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
@@ -19,6 +22,7 @@ from models.enums import (
 from access_control import (
     JwtData,
     check_calendar_access,
+    auditor_dispatchers
 )
 
 from apps.calendar_app.repositories import (
@@ -178,6 +182,7 @@ def create_calendar_df(order_entries, field_list, include_no_date):
 async def get_available_reports(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     employee_data: JwtData = Depends(check_calendar_access),
+    company_tz: str = Depends(get_company_timezone),
     report_repo: CalendarReportRepository = Depends(
         read_calendar_report_repository
     )
@@ -199,10 +204,12 @@ async def get_available_reports(
             "for_dispatcher2": report.for_dispatcher2,
             "no_date": report.no_date,
             "created_at": (
-                report.created_at.isoformat() if report.created_at else None
+                format_datetime_tz(report.created_at, company_tz, "%d.%m.%Y %H:%M")
+                if report.created_at else None
             ),
             "updated_at": (
-                report.updated_at.isoformat() if report.updated_at else None
+                format_datetime_tz(report.updated_at, company_tz, "%d.%m.%Y %H:%M")
+                if report.updated_at else None
             ),
         })
 
@@ -215,6 +222,7 @@ async def xlsx_dynamic_calendar_report(
     report_id: int = Query(..., ge=1, le=settings.max_int),
     filters: DynamicReportFilters = Depends(),
     employee_data: JwtData = Depends(check_calendar_access),
+    company_tz: str = Depends(get_company_timezone),
     report_repo: CalendarReportRepository = Depends(
         read_calendar_report_repository
     )
@@ -228,7 +236,7 @@ async def xlsx_dynamic_calendar_report(
             detail="Выбранный отчет не найден."
         )
 
-    if status in settings.AUDITOR_DISPATCHERS:
+    if status in auditor_dispatchers:
         has_access = False
         if status == EmployeeStatus.auditor and calendar_report.for_auditor:
             has_access = True
@@ -306,9 +314,10 @@ async def xlsx_dynamic_calendar_report(
     writer.close()
     buffer.seek(0)
 
+    current_date = get_current_date_in_tz(company_tz)
     filename = (
         f"Календарный отчет {calendar_report.name} "
-        f"от {date_utc_now().strftime('%d-%m-%Y')}.xlsx"
+        f"от {current_date.strftime('%d-%m-%Y')}.xlsx"
     )
     encoded_filename = quote(filename)
 

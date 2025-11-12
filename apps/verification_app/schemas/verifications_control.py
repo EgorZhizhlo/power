@@ -6,7 +6,7 @@ from pydantic import (
 from typing import Optional, List
 
 from core.config import settings
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import get_current_date_in_tz
 
 from models.enums import (
     VerificationLegalEntity, VerificationSeal, VerificationWaterType
@@ -50,9 +50,11 @@ class CreateVerificationEntryForm(BaseModel):
     additional_input_4: str = Field("", max_length=100)
     additional_input_5: str = Field("", max_length=100)
 
+    company_tz: str = Field(default="Europe/Moscow", max_length=50)
+
     @model_validator(mode="after")
     def validate_verification_period(self):
-        current_date = date_utc_now()
+        current_date = get_current_date_in_tz(self.company_tz)
         if self.verification_date > current_date:
             raise ValueError("Дата поверки не может быть позже текущей даты.")
 
@@ -248,6 +250,9 @@ class VerificationEntryOut(BaseModel):
     series: Optional[SeriesOut] = None
     metrolog: Optional[MetrologOut] = None
     city: Optional[CityOut] = None
+
+    created_at_formatted: Optional[str] = None
+    updated_at_formatted: Optional[str] = None
 
 
 class VerificationEntryListOut(BaseModel):

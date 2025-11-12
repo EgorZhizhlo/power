@@ -372,6 +372,8 @@ function renderVerificationTable(items = []) {
             `
       }
         </td>
+        <td class="text-center align-middle col-120">${e.created_at_formatted || ''}</td>
+        <td class="text-center align-middle col-120">${e.updated_at_formatted || ''}</td>
       </tr>
     `;
   });

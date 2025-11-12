@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control import (
     JwtData,
-    check_calendar_access
+    check_calendar_access,
+    dispatcher2
 )
 
 from core.config import settings
@@ -74,7 +75,7 @@ async def api_search_list(
         )
     )
 
-    if employee_data.status in settings.DISPATCHER2:
+    if employee_data.status == dispatcher2:
         stmt = stmt.where(OrderModel.is_active.is_(True))
 
     if employee_route_ids:

@@ -15,7 +15,8 @@ from access_control import (
 )
 
 from core.config import settings
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import get_current_date_in_tz
+from core.db.dependencies import get_company_timezone
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
 
 from apps.verification_app.common import (
@@ -44,11 +45,15 @@ _zip_generation_lock = asyncio.Lock()
 BATCH_SIZE = 50
 
 
-def build_filename(verification_number: str) -> str:
+def build_filename(
+    verification_number: str,
+    company_tz: str = "Europe/Moscow"
+) -> str:
     ver_number = verification_number or ""
     ver_number = ver_number.rsplit(
         "/", 1)[-1] if "/" in ver_number else ver_number
-    date_str = date_utc_now().strftime("%Y-%m-%d")
+    current_date = get_current_date_in_tz(company_tz)
+    date_str = current_date.strftime("%Y-%m-%d")
     return f"Протокол поверки №{ver_number} от {date_str}.pdf"
 
 
@@ -60,6 +65,7 @@ async def pdf_verification_protocol(
     employee_data: JwtData = Depends(
         check_access_verification
     ),
+    company_tz: str = Depends(get_company_timezone),
     verification_entry_repo: VerificationEntryRepository = Depends(
         read_verification_entry_repository
     )
@@ -79,9 +85,13 @@ async def pdf_verification_protocol(
     if not verification_entry.verifier_id:
         raise CustomVerificationVerifierException(company_id=company_id)
 
-    check_equip_conditions(verification_entry.equipments)
+    await check_equip_conditions(
+        verification_entry.equipments, company_id=company_id
+    )
 
-    filename = build_filename(verification_entry.verification_number)
+    filename = build_filename(
+        verification_entry.verification_number, company_tz
+    )
 
     protocol_info = get_protocol_info(verification_entry)
     buffer: BytesIO = await run_cpu_bounds_task(
@@ -103,6 +113,7 @@ async def zip_pdf_verifications_protocol(
     protocols_form: ReportProtocolsForm = Depends(),
     company_id: int = Query(..., ge=1, le=settings.max_int),
     employee_data: JwtData = Depends(auditor_verifier_exception),
+    company_tz: str = Depends(get_company_timezone),
     verification_entry_repo: VerificationEntryRepository = Depends(
         read_verification_entry_repository
     )
@@ -167,12 +178,17 @@ async def zip_pdf_verifications_protocol(
 
                 def writer():
                     try:
-                        with zipfile.ZipFile(w_file, mode="w", compression=zipfile.ZIP_STORED) as zipf:
+                        with zipfile.ZipFile(
+                            w_file, mode="w", compression=zipfile.ZIP_STORED
+                        ) as zipf:
                             folder_name = "Протоколы_поверки"
                             seen = set()
                             for info, buffer in pdf_results:
-                                filename = build_filename(info.get("verification_number", ""))
-                                base, ext = (filename.rsplit(".", 1) + [""])[:2]
+                                ver_num = info.get("verification_number", "")
+                                filename = build_filename(ver_num, company_tz)
+                                base, ext = (
+                                    filename.rsplit(".", 1) + [""]
+                                )[:2]
                                 ext = f".{ext}" if ext else ""
                                 name = filename
                                 k = 1

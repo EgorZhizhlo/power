@@ -1,4 +1,11 @@
-// Получаем данные из глобального объекта window
+import {
+  getTodayInCompanyTz,
+  formatDateInTz,
+  getYearsDifference,
+  addYearsInTz,
+  getCurrentYearInTz
+} from '/static/verification/_utils/date_utils.js';
+
 const companyId = window.companyId;
 const userStatus = window.userStatus;
 const autoManufactureYear = window.autoManufactureYear;
@@ -20,10 +27,8 @@ const siTypeInput = document.getElementById('si_type');
 const seriesSelect = document.getElementById('series_id');
 const actInput = document.getElementById('act_number');
 
-// === Ограничения и обработка act_number ===
 const INT_MAX = 2147483647;
 
-// keydown — разрешаем только цифры и ctrl/cmd-команды
 actInput.addEventListener('keydown', (e) => {
   const allowedCtrl =
     e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' ||
@@ -32,11 +37,10 @@ actInput.addEventListener('keydown', (e) => {
     ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase()));
   if (allowedCtrl) return;
 
-  if (/^[0-9]$/.test(e.key)) return; // цифры 0–9
+  if (/^[0-9]$/.test(e.key)) return;
   e.preventDefault();
 });
 
-// paste — обрабатываем буфер обмена
 actInput.addEventListener('paste', (e) => {
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData('text');
@@ -48,18 +52,15 @@ actInput.addEventListener('paste', (e) => {
   actInput.setSelectionRange(start + digits.length, start + digits.length);
 });
 
-// input — страховка, вдруг обошли keydown/paste
 actInput.addEventListener('input', () => {
   actInput.value = (actInput.value || '').replace(/\D/g, '');
 });
 
-// blur — можно запускать автозаполнение
 actInput.addEventListener('blur', queryActNumber);
 
 let lastRegistryData = null;
-let isInitialRegistryLoad = false; // Флаг для предотвращения двойной загрузки
+let isInitialRegistryLoad = false;
 
-// === Select2 init + правильные события ===
 document.addEventListener('DOMContentLoaded', function () {
   $('#registry_number_id').select2({
     width: '100%',
@@ -68,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   const onRegistryChanged = async (e) => {
-    // Пропускаем обработчик, если идёт начальная загрузка
     if (isInitialRegistryLoad) {
       console.log('[onRegistryChanged] Пропуск - идёт начальная загрузка');
       console.log('[onRegistryChanged] Пропуск - идёт начальная загрузка');
@@ -90,12 +90,10 @@ document.addEventListener('DOMContentLoaded', function () {
     await loadRegistryData(selectedId, { isInitial: false });
   };
 
-  // Используем только специфичные события Select2, без 'change' чтобы избежать дублирования
   $('#registry_number_id').on('select2:select', onRegistryChanged);
   $('#registry_number_id').on('select2:clear', onRegistryChanged);
 });
 
-// === Маска телефона ===
 const phoneInput = document.getElementById('client_phone');
 const phoneMask = IMask(phoneInput, {
   mask: '+{7} (000) 000-00-00',
@@ -104,7 +102,6 @@ const phoneMask = IMask(phoneInput, {
 });
 phoneMask.updateValue();
 
-// ===== helpers =====
 function resetRegistryDependentFields() {
   lastRegistryData = null;
   modificationSelect.innerHTML = '<option value="" disabled selected>Выберите модификацию СИ</option>';
@@ -124,9 +121,9 @@ function updateEndVerificationDate() {
   const d = new Date(v);
   const addYears = parseInt(nextVerificationSelect.value, 10) || 0;
   if (!isNaN(d.getTime())) {
-    d.setFullYear(d.getFullYear() + addYears);
-    d.setDate(d.getDate() - 1);
-    endVerificationDateInput.value = d.toISOString().split('T')[0];
+    const newDate = addYearsInTz(d, addYears);
+    newDate.setDate(newDate.getDate() - 1);
+    endVerificationDateInput.value = formatDateInTz(newDate);
   } else {
     endVerificationDateInput.value = '';
   }
@@ -136,7 +133,7 @@ function calculateNextVerification() {
   const start = new Date(verificationDateInput.value);
   const end = new Date(endVerificationDateInput.value);
   if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-    nextVerificationSelect.value = String(end.getFullYear() - start.getFullYear());
+    nextVerificationSelect.value = String(getYearsDifference(start, end));
   } else {
     nextVerificationSelect.value = '';
   }
@@ -145,7 +142,7 @@ function calculateNextVerification() {
 function getFullYearFromRegistryNumber(regNum) {
   const parts = String(regNum || '').split('-');
   const lastTwo = parseInt(parts[1], 10);
-  const currentYear = new Date().getFullYear();
+  const currentYear = getCurrentYearInTz();
   if (Number.isNaN(lastTwo)) return currentYear;
   return lastTwo <= (currentYear % 100) ? 2000 + lastTwo : 1900 + lastTwo;
 }
@@ -197,7 +194,6 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
     const data = await resp.json();
     lastRegistryData = data;
 
-    // Модификации
     modificationSelect.innerHTML = '<option value="" disabled selected>Выберите модификацию СИ</option>';
     const mods = Array.isArray(data.modifications) ? data.modifications : [];
     mods.forEach(m => {
@@ -210,7 +206,6 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
       modificationSelect.value = String(mods[0].id);
     }
 
-    // Методика
     methodSelect.innerHTML = '<option value="" disabled selected>Выберите методику</option>';
     if (data.method) {
       const opt = document.createElement('option');
@@ -220,14 +215,13 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
       methodSelect.appendChild(opt);
     }
 
-    // Тип СИ
     siTypeInput.value = data.si_type || '';
 
-    // Годы выпуска
     const regText = data.registry_number;
     const startYear = getFullYearFromRegistryNumber(regText);
     const isAdminDir = (userStatus === 'admin' || userStatus === 'director');
-    const endYear = isAdminDir ? new Date().getFullYear() : Math.min(startYear + 10, new Date().getFullYear());
+    const currentYear = getCurrentYearInTz();
+    const endYear = isAdminDir ? currentYear : Math.min(startYear + 10, currentYear);
 
     manufactureYearSelect.innerHTML = '<option value="" disabled selected>Выберите год выпуска поверяемого СИ</option>';
     const years = [];
@@ -239,11 +233,9 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
       manufactureYearSelect.appendChild(opt);
     }
 
-    // Устанавливаем год выпуска ОДИН РАЗ
     console.log('[loadRegistryData] Установка года выпуска:', { isInitial, hasPrefillData: !!prefillData, prefillYear: prefillData?.manufacture_year });
     
     if (isInitial && prefillData && prefillData.manufacture_year) {
-      // При начальной загрузке с префиллом - используем prefill
       if ([...manufactureYearSelect.options].some(o => o.value == String(prefillData.manufacture_year))) {
         manufactureYearSelect.value = String(prefillData.manufacture_year);
         console.log('[loadRegistryData] Год выпуска установлен из prefill:', prefillData.manufacture_year);
@@ -252,7 +244,6 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
         console.log('[loadRegistryData] Год выпуска из prefill не найден, установлен первый доступный:', years[0]);
       }
     } else if (!isInitial) {
-      // При последующих изменениях реестра (не initial) - применяем автоматику
       if (autoManufactureYear && years.length > 0) {
         const rnd = years[Math.floor(Math.random() * years.length)];
         manufactureYearSelect.value = String(rnd);
@@ -264,9 +255,6 @@ async function loadRegistryData(registryNumberId, { isInitial = false } = {}) {
     } else {
       console.log('[loadRegistryData] Год выпуска НЕ установлен (isInitial=true, но нет prefillData)');
     }
-    // Если isInitial=true но нет prefillData - вообще не трогаем значение
-
-    // Интервал / MPI
     applyMPI();
 
   } catch (e) {
@@ -278,8 +266,7 @@ function fillFromOrder(prefill) {
   if (!prefill) return;
   Object.entries(prefill).forEach(([key, value]) => {
     if (value === null || value === undefined) return;
-    
-    // Пропускаем manufacture_year - он будет установлен через loadRegistryData
+
     if (key === 'manufacture_year') return;
     
     const el = document.querySelector(`[name="${key}"]`);
@@ -300,7 +287,6 @@ function fillFromOrder(prefill) {
   calculateNextVerification();
 }
 
-// ===== Запрос по номеру акта (и серии) =====
 let lastActQueryKey = null;
 
 async function queryActNumber() {
@@ -315,7 +301,6 @@ async function queryActNumber() {
     return;
   }
 
-  // Дедупликация
   const queryKey = `${seriesId}:${num}`;
   lastActQueryKey = queryKey;
 
@@ -335,10 +320,9 @@ async function queryActNumber() {
     let data = null;
     if (resp.ok) {
       try { data = await resp.json(); } catch { data = null; }
-      if (lastActQueryKey !== queryKey) return; // пришёл старый ответ — игнорим
+      if (lastActQueryKey !== queryKey) return;
       
       if (data && data.found !== false) {
-        // ====== Заполняем, если акт найден ======
         const setIf = (id, val) => {
           const el = document.getElementById(id);
           if (el != null && val !== undefined && val !== null) el.value = val;
@@ -378,15 +362,12 @@ async function queryActNumber() {
         updateEndVerificationDate();
         calculateNextVerification();
       } else {
-        // Акт не найден — сбрасываем обратно данные формы (префилл)
         fillFromOrder(prefillData);
       }
     } else if (resp.status === 404) {
-      // 404 — акт не найден, сбрасываем на префилл
       if (lastActQueryKey !== queryKey) return;
       fillFromOrder(prefillData);
     } else {
-      // Другие ошибки — сбрасываем на префилл
       if (lastActQueryKey !== queryKey) return;
       fillFromOrder(prefillData);
     }
@@ -395,15 +376,15 @@ async function queryActNumber() {
   }
 }
 
-// === Первичная инициализация ===
 document.addEventListener('DOMContentLoaded', function () {
-  // ограничим дату «не позже сегодня»
-  verificationDateInput.setAttribute('max', new Date().toISOString().split('T')[0]);
+  verificationDateInput.setAttribute('max', getTodayInCompanyTz());
 
-  // 1) Префилл из order
+  if (!verificationDateInput.value) {
+    verificationDateInput.value = getTodayInCompanyTz();
+  }
+
   fillFromOrder(prefillData);
 
-  // 2) Серия по умолчанию
   if (seriesSelect && !seriesSelect.disabled && !seriesSelect.value) {
     const firstOption = Array.from(seriesSelect.options)
       .find(o => !o.disabled && String(o.value).trim() !== '');
@@ -413,36 +394,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // 3) Если в prefill есть реестр — подтянуть детали (isInitial=true)
   if (prefillData && prefillData.registry_number_id) {
-    // Устанавливаем флаг ДО trigger('change'), чтобы предотвратить двойную загрузку
     isInitialRegistryLoad = true;
     
-    // Выставим значение на select2
     $('#registry_number_id').val(String(prefillData.registry_number_id));
     
-    // Загружаем данные реестра с флагом isInitial
     loadRegistryData(prefillData.registry_number_id, { isInitial: true }).finally(() => {
-      // Снимаем флаг после загрузки
       isInitialRegistryLoad = false;
     });
   }
 
-  // handlers
   verificationResult.addEventListener('change', toggleAdditionalInput);
 
-  // << ВАЖНО: эти 2 обработчика — запрос по номеру акта при смене акт/серии >>
   seriesSelect.addEventListener('change', queryActNumber);
 
-  // MPI пересчёт при смене типа воды
   waterTypeInput.addEventListener('change', applyMPI);
 
   endVerificationDateInput.addEventListener('change', calculateNextVerification);
 
-  // Валидация вручную введённой даты, с учётом lastRegistryData
   verificationDateInput.addEventListener('blur', function () {
     if (!verificationDateInput.value) return;
-    const currentYear = new Date().getFullYear();
+    const currentYear = getCurrentYearInTz();
     const parts = verificationDateInput.value.split('-');
     if (parts.length !== 3) return;
     const vYear = parseInt(parts[0], 10);
@@ -460,7 +432,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// === Отправка формы ===
 (function () {
   const buttons = form.querySelectorAll('button[type=submit]');
   let isSubmitting = false;
@@ -481,7 +452,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   window.addEventListener('pageshow', () => setBusyState(false));
 
-  // Функция загрузки фотографий
   async function uploadPhotos(verificationEntryId) {
     const photosInput = document.getElementById('verification_images');
     if (!photosInput || !photosInput.files || photosInput.files.length === 0) {
@@ -526,7 +496,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const submitter = e.submitter || null;
     const redirectFlag = (submitter && submitter.id === 'submit-order-and-metrolog') ? '1' : '0';
 
-    // валидируем телефон
     const raw = phoneMask.unmaskedValue;
     const allowShort = raw.length <= 2;
     const allowFull = phoneMask.masked.isComplete;
@@ -535,8 +504,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // дата не в будущем
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayInCompanyTz();
     if (verificationDateInput.value && verificationDateInput.value > today) {
       alert('Дата поверки не может быть позже сегодняшнего дня.');
       return;
@@ -547,7 +515,6 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // номер бланка — очищаем и валидируем
     const rawAct = (actInput.value || '').replace(/\D/g, '');
     const cleaned = rawAct.replace(/^0+/, '');
     const actNum = cleaned === '' ? null : parseInt(cleaned, 10);
@@ -565,17 +532,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const fd = new FormData(form);
     fd.set('act_number', String(actNum));
-    
-    // Удаляем файлы из FormData, загрузим их отдельно после создания записи
+
     fd.delete('verification_images');
 
-    // Конвертируем FormData в объект с правильными типами
     const obj = {};
     fd.forEach((v, k) => {
       if (v === 'True') obj[k] = true;
       else if (v === 'False') obj[k] = false;
       else obj[k] = v;
     });
+
+    obj.company_tz = window.companyTz || 'Europe/Moscow';
 
     const params = new URLSearchParams({
       company_id: companyId,
@@ -605,9 +572,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const ve = data.verification_entry_id;
         const mi = data.metrolog_info_id;
-        const r = data.redirect_to; // 'p' | 'm' | 'v'
+        const r = data.redirect_to;
 
-        // Загружаем фотографии, если они есть
         const photosInput = document.getElementById('verification_images');
         if (photosInput && photosInput.files && photosInput.files.length > 0) {
           const uploadResult = await uploadPhotos(ve);
@@ -616,7 +582,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        // Редиректы
         if (r === 'p') {
           if (ve != null && mi != null) {
             const protocolParams = new URLSearchParams({
@@ -654,7 +619,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      // Ошибка от сервера
       console.error('Ошибка сервера:', {
         status: resp.status,
         statusText: resp.statusText,

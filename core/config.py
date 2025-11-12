@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import ClassVar, Final
 from datetime import datetime as Datetime, timezone, timedelta
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from models.enums import EmployeeStatus
 
 
 _ROOT = Path(__file__).parent.parent
@@ -31,6 +30,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / '.env',
         env_file_encoding='utf-8',
+        extra='allow',
     )
 
     database_url: str
@@ -65,121 +65,19 @@ class Settings(BaseSettings):
     verification_url: str = "/verification"
     calendar_url: str = "/calendar"
 
-    # === Группы ролей ===
-
-    EMPLOYEE_STATUSES: set[EmployeeStatus] = set(EmployeeStatus)
-
-    ACCESS_COMPANY: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-        EmployeeStatus.director,
-    }
-    ACCESS_COMPANY_NO_ADMIN: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-    }
-    NO_ACCESS_COMPANY: set[EmployeeStatus] = (
-        set(EmployeeStatus) - ACCESS_COMPANY
-    )
-
-    ACCESS_VERIFICATION: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.verifier,
-    }
-    ACCESS_VERIFICATION_NO_ADMIN: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.verifier,
-    }
-    NO_ACCESS_VERIFICATION: set[EmployeeStatus] = (
-        set(EmployeeStatus) - ACCESS_VERIFICATION
-    )
-
-    ACCESS_CALENDAR: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.dispatcher1,
-        EmployeeStatus.dispatcher2,
-    }
-    ACCESS_CALENDAR_NO_ADMIN: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.dispatcher1,
-        EmployeeStatus.dispatcher2,
-    }
-    NO_ACCESS_CALENDAR: set[EmployeeStatus] = (
-        set(EmployeeStatus) - ACCESS_CALENDAR
-    )
-
-    DISPATCHER2: set[EmployeeStatus] = {
-        EmployeeStatus.dispatcher2
-    }
-    DISPATCHERS: set[EmployeeStatus] = {
-        EmployeeStatus.dispatcher1,
-        EmployeeStatus.dispatcher2
-    }
-
-    ADMIN_DIRECTOR: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-        EmployeeStatus.director
-    }
-
-    AUDITOR_VERIFIER: set[EmployeeStatus] = {
-        EmployeeStatus.auditor,
-        EmployeeStatus.verifier
-    }
-    VERIFIER: set[EmployeeStatus] = {
-        EmployeeStatus.verifier
-    }
-
-    ADMIN_DIRECTOR_AUDITOR: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-    }
-
-    DIRECTOR_AUDITOR: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-    }
-
-    # === Доступ к управлению тарифами ===
-    ACCESS_TARIFF: set[EmployeeStatus] = {
-        EmployeeStatus.admin,
-    }
-
-    DIRECTOR_AUDITOR_VERIFIER: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.verifier,
-    }
-
-    DIRECTOR_AUDITOR_DISPATCHERS: set[EmployeeStatus] = {
-        EmployeeStatus.director,
-        EmployeeStatus.auditor,
-        EmployeeStatus.dispatcher1,
-        EmployeeStatus.dispatcher2
-    }
-    AUDITOR_DISPATCHERS: set[EmployeeStatus] = {
-        EmployeeStatus.auditor,
-        EmployeeStatus.dispatcher1,
-        EmployeeStatus.dispatcher2
-    }
-
     max_int: int = 2147483647
 
-    ALLOWED_VERIFICATION_PHOTO_EXT: set[str] = {
+    allowed_photo_ext: set[str] = {
         "jpeg", "jpg", "png", "heic", "heif", "webp"
     }
 
-    url_path_map: ClassVar[dict[EmployeeStatus, str]] = {
-        EmployeeStatus.admin: "/companies",
-        EmployeeStatus.director: "/companies",
-        EmployeeStatus.auditor: "/verification",
-        EmployeeStatus.dispatcher1: "/calendar",
-        EmployeeStatus.dispatcher2: "/calendar",
-        EmployeeStatus.verifier: "/verification",
+    url_path_map: ClassVar[dict[str, str]] = {
+        "admin": company_url,
+        "director": company_url,
+        "auditor": verification_url,
+        "dispatcher1": calendar_url,
+        "dispatcher2": calendar_url,
+        "verifier": verification_url,
     }
 
 

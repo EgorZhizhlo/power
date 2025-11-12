@@ -14,6 +14,8 @@ from models import (
 )
 from core.config import settings
 
+from access_control import admin_director, auditor_verifier
+
 
 class MetrologInfoRepository:
     def __init__(self, session: AsyncSession, company_id: int):
@@ -75,7 +77,7 @@ class MetrologInfoRepository:
             .with_for_update(of=VerificationEntryModel)
         )
 
-        if status in settings.AUDITOR_VERIFIER:
+        if status in auditor_verifier:
             stmt = stmt.where(
                 VerificationEntryModel.company.has(
                     CompanyModel.verification_date_block <
@@ -135,7 +137,7 @@ class MetrologInfoRepository:
             )
         )
 
-        if status in settings.AUDITOR_VERIFIER:
+        if status in auditor_verifier:
             stmt = stmt.where(
                 VerificationEntryModel.company.has(
                     CompanyModel.verification_date_block <
@@ -195,7 +197,7 @@ class MetrologInfoRepository:
             .with_for_update(of=MetrologInfoModel)
         )
 
-        if status in settings.AUDITOR_VERIFIER:
+        if status in auditor_verifier:
             stmt = stmt.where(
                 VerificationEntryModel.company.has(
                     CompanyModel.verification_date_block <
@@ -219,7 +221,7 @@ class MetrologInfoRepository:
             MetrologInfoModel.verification_id == verification_entry_id,
         ]
 
-        if status not in settings.ADMIN_DIRECTOR:
+        if status not in admin_director:
             conds.append(
                 MetrologInfoModel.verification.has(
                     VerificationEntryModel.employee_id == employee_id,

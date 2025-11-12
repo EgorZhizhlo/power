@@ -8,8 +8,9 @@ from access_control import (
 from infrastructure.db import async_db_session_begin
 from core.config import settings
 from apps.company_app.repositories import CompanyActivityRepository
-from apps.company_app.features.equipments.schemas import (
-    ItemCreate, ItemUpdate, ItemOut, OkResponse)
+from apps.company_app.schemas.equipments import (
+    ItemCreate, ItemUpdate, ItemOut, OkResponse
+)
 
 
 activities_router = APIRouter(prefix="/api/equipments/activities")

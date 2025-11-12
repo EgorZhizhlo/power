@@ -31,7 +31,7 @@ from apps.verification_app.schemas.metrologs_control_a import MetrologInfoForm
 
 
 metrologs_control_api_router = APIRouter(prefix='/api/metrologs-control')
-VER_PHOTO_LIMIT = settings.VERIFICATION_PHOTO_LIMIT
+VER_PHOTO_LIMIT = settings.verification_photo_limit
 
 
 @metrologs_control_api_router.post("/create")
@@ -69,7 +69,9 @@ async def create_metrolog_info(
     if not verification_entry.verifier_id:
         raise VerificationVerifierException
 
-    check_equip_conditions(verification_entry.equipments)
+    await check_equip_conditions(
+        verification_entry.equipments, company_id=company_id
+    )
 
     if metrolog_info_data.high_error_rate:
         reason_id = await reason_repo.get_reason_id_by_type(
@@ -124,7 +126,9 @@ async def update_metrolog_info(
     if not metrolog_info.verification.verifier_id:
         raise VerificationVerifierException
 
-    check_equip_conditions(metrolog_info.verification.equipments)
+    await check_equip_conditions(
+        metrolog_info.verification.equipments, company_id=company_id
+    )
 
     if metrolog_info_data.high_error_rate:
         reason_id = await reason_repo.get_reason_id_by_type(

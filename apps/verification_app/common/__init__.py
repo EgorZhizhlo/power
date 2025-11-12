@@ -44,4 +44,3 @@ __all__ = [
     "increment_verification_count",
     "decrement_verification_count"
 ]
-

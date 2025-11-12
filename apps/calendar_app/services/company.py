@@ -8,6 +8,8 @@ from apps.calendar_app.repositories import (
     CompanyRepository, CompanyCalendarRepository
 )
 
+from access_control import director_auditor_dispatchers
+
 
 DEFAULT_CALENDAR_PARAMS = {
     "customer_field": False,
@@ -27,7 +29,7 @@ class CompanyService:
         self.calendar_repo = CompanyCalendarRepository(session)
 
     async def get_companies(self, employee_id: int, status: str):
-        if status in settings.DIRECTOR_AUDITOR_DISPATCHERS:
+        if status in director_auditor_dispatchers:
             return await self.company_repo.get_for_employee(employee_id)
         return await self.company_repo.get_all()
 

@@ -18,10 +18,14 @@ from models.enums import ReasonType
 
 from access_control import (
     JwtData,
-    check_access_verification, check_active_access_verification
+    check_access_verification,
+    check_active_access_verification,
+    admin_director
 )
 
 from core.config import settings
+from core.db.dependencies import get_company_timezone
+from core.utils.time_utils import validate_company_timezone
 from core.exceptions import (
     CompanyVerificationLimitException,
     CustomHTTPException
@@ -253,6 +257,7 @@ async def create_verification_entry_by_order(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     order_id: int = Query(..., ge=1, le=settings.max_int),
     redirect_to_metrolog_info: bool = Query(...),
+    company_tz: str = Depends(get_company_timezone),
     session: AsyncSession = Depends(async_db_session_begin),
     employee_data: JwtData = Depends(
         check_active_access_verification
@@ -282,6 +287,12 @@ async def create_verification_entry_by_order(
     status = employee_data.status
     employee_id = employee_data.id
 
+    validate_company_timezone(
+        verification_entry_data.company_tz,
+        company_tz,
+        company_id
+    )
+
     await check_verification_limit_available(
         session=session,
         company_id=company_id,
@@ -302,7 +313,7 @@ async def create_verification_entry_by_order(
 
     company_params = await company_repo.get_company_params()
 
-    if status not in settings.ADMIN_DIRECTOR:
+    if status not in admin_director:
         verif_date_block = company_params.verification_date_block
         if verif_date_block and verif_date_block >= \
                 verification_entry_data.verification_date:
@@ -324,14 +335,16 @@ async def create_verification_entry_by_order(
     if not default_verifier:
         raise CreateVerificationDefaultVerifierException
 
-    check_equip_conditions(default_verifier.equipments)
+    await check_equip_conditions(
+        default_verifier.equipments, company_id=company_id
+    )
 
     act_number_entry = await act_number_for_create(
         company_id=company_id,
         entry_data=verification_entry_data,
         session=session
     )
-    await check_act_number_limit(
+    check_act_number_limit(
         act_number_entry=act_number_entry)
     act_number_entry.count -= 1
 
@@ -350,6 +363,7 @@ async def create_verification_entry_by_order(
             act_number_entry=act_number_entry,
             verification_limit=verification_limit,
             company_id=company_id,
+            company_tz=company_tz,
             session=session
         )
 
@@ -360,7 +374,7 @@ async def create_verification_entry_by_order(
     )
 
     for field, value in verification_entry_data.model_dump(
-            exclude={"act_number"}).items():
+            exclude={"act_number", "company_tz"}).items():
         setattr(verification_entry, field, value)
 
     if verification_entry.verification_result:

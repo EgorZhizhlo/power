@@ -28,7 +28,8 @@ from infrastructure.db import async_db_session, async_db_session_begin
 from access_control import (
     JwtData,
     check_calendar_access,
-    check_active_access_calendar
+    check_active_access_calendar,
+    dispatcher2
 )
 
 from apps.calendar_app.common import (
@@ -556,7 +557,7 @@ async def reweight_order(
     ).scalars().all()
 
     allowed = employee_route_ids[:]
-    if employee_data.status not in settings.DISPATCHER2:
+    if employee_data.status != dispatcher2:
         allowed.append(None)
 
     base_q = select(OrderModel).where(

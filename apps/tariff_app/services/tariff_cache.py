@@ -4,6 +4,7 @@ from datetime import date
 
 from infrastructure.cache.redis_client import redis
 from core.config import settings
+from core.utils.time_utils import date_utc_now
 
 
 class TariffCacheService:
@@ -27,12 +28,12 @@ class TariffCacheService:
         if not state:
             return {
                 'has_tariff': False,
-                'cached_at': date.today().isoformat()
+                'cached_at': date_utc_now().isoformat()
             }
 
         data = {
             'has_tariff': True,
-            'cached_at': date.today().isoformat(),
+            'cached_at': date_utc_now().isoformat(),
             'title': state.title,
             'valid_from': (
                 state.valid_from.isoformat() if state.valid_from else None
@@ -41,10 +42,9 @@ class TariffCacheService:
                 state.valid_to.isoformat() if state.valid_to else None
             ),
             'is_expired': (
-                state.valid_to and state.valid_to < date.today()
+                state.valid_to and state.valid_to < date_utc_now()
             ),
             'limits': {
-                # None = безлимит, 0 = запрещено, >0 = фактический лимит
                 'max_employees': state.max_employees,
                 'used_employees': state.used_employees,
                 'max_verifications': state.max_verifications,
@@ -53,7 +53,6 @@ class TariffCacheService:
                 'used_orders': state.used_orders,
             },
             'percentages': {
-                # Процент заполнения (только если max не None и не 0)
                 'employees': round(
                     (state.used_employees / state.max_employees * 100)
                     if (state.max_employees and state.max_employees > 0)

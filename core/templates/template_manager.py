@@ -7,15 +7,22 @@ class TemplateManager:
     """Менеджер шаблонов с автоматической регистрацией фильтров"""
 
     def __init__(self):
-        # Создаем экземпляры Jinja2Templates для каждого модуля
-        self._auth = Jinja2Templates(directory="templates/auth")
-        self._company = Jinja2Templates(directory="templates/company")
-        self._calendar = Jinja2Templates(directory="templates/calendar")
+        self._auth = Jinja2Templates(
+            directory="templates/auth"
+        )
+        self._company = Jinja2Templates(
+            directory="templates/company"
+        )
+        self._calendar = Jinja2Templates(
+            directory="templates/calendar"
+        )
         self._verification = Jinja2Templates(
-            directory="templates/verification")
-        self._tariff = Jinja2Templates(directory="templates/tariff")
+            directory="templates/verification"
+        )
+        self._tariff = Jinja2Templates(
+            directory="templates/tariff"
+        )
 
-        # Регистрируем timezone-aware фильтры для всех модулей
         register_jinja_filters(self._auth)
         register_jinja_filters(self._company)
         register_jinja_filters(self._calendar)

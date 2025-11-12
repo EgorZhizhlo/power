@@ -17,10 +17,14 @@ from models import (
 from access_control import (
     JwtData,
     check_access_verification,
-    check_active_access_verification
+    check_active_access_verification,
+    access_verification,
+    admin_director,
+    verifier
 )
 
 from core.config import settings, format_date
+from core.db.dependencies import get_company_timezone
 from core.exceptions import (
     check_is_none,
     CustomCreateVerifDefaultVerifierException
@@ -46,7 +50,6 @@ verifications_control_frontend_router = APIRouter(prefix='')
 templates = Jinja2Templates(
     directory="templates/verification")
 templates.env.filters['strftime'] = format_date
-VERIFICATION_PHOTO_LIMIT = 5
 
 
 async def get_any_from_models(
@@ -76,7 +79,7 @@ async def verifications_entry_page(
     )
 ):
     employees = None
-    if employee_data.status in settings.ADMIN_DIRECTOR_AUDITOR:
+    if employee_data.status in admin_director:
         employees = (
             await session.execute(
                 select(
@@ -84,7 +87,7 @@ async def verifications_entry_page(
                     EmployeeModel.name, EmployeeModel.patronymic
                 ).where(
                     EmployeeModel.companies.any(CompanyModel.id == company_id),
-                    EmployeeModel.status.in_(settings.ACCESS_VERIFICATION)
+                    EmployeeModel.status.in_(access_verification)
                 )
                 .order_by(
                     EmployeeModel.last_name, EmployeeModel.name,
@@ -129,6 +132,7 @@ async def verifications_entry_page(
 async def create_verification_entry_page(
     request: Request,
     company_id: int = Query(..., ge=1, le=settings.max_int),
+    company_tz: str = Depends(get_company_timezone),
     employee_data: JwtData = Depends(
         check_active_access_verification),
     employee_cities_repo: EmployeeCitiesRepository = Depends(
@@ -169,7 +173,7 @@ async def create_verification_entry_page(
         raise CustomCreateVerifDefaultVerifierException(
             company_id=company_id)
 
-    check_equip_conditions(
+    await check_equip_conditions(
         default_verifier.equipments, for_view=True,
         company_id=company_id)
 
@@ -187,6 +191,7 @@ async def create_verification_entry_page(
     context = {
         "request": request,
         "company_id": company_id,
+        "company_tz": company_tz,
         "title_name": "Добавление записи поверки",
         "registry_numbers": (
             await registry_number_repo.get_registry_number_for_company()
@@ -200,7 +205,7 @@ async def create_verification_entry_page(
         "locations": await location_repo.get_locations_for_company(),
         "series": await act_series_repo.get_act_series_for_company(),
         "reasons": await reason_repo.get_reasons_for_company(),
-        "VERIFICATION_PHOTO_LIMIT": VERIFICATION_PHOTO_LIMIT,
+        "verification_photo_limit": settings.verification_photo_limit,
         "default_city_id": default_city_id,
         "default_series_id": default_series_id,
     }
@@ -221,6 +226,7 @@ async def update_verification_entry_page(
     request: Request,
     company_id: int = Query(..., ge=1, le=settings.max_int),
     verification_entry_id: int = Query(..., ge=1, le=settings.max_int),
+    company_tz: str = Depends(get_company_timezone),
     session: AsyncSession = Depends(async_db_session),
     employee_data: JwtData = Depends(
         check_active_access_verification),
@@ -269,7 +275,7 @@ async def update_verification_entry_page(
         )
     )
 
-    if status in settings.VERIFIER:
+    if status in verifier:
         verification_entry_query = (
             verification_entry_query
             .where(VerificationEntryModel.employee_id == employee_id)
@@ -299,7 +305,7 @@ async def update_verification_entry_page(
 
     verifiers = None
 
-    if status in settings.ADMIN_DIRECTOR:
+    if status in admin_director:
         verifiers = (
             await session.execute(
                 select(VerifierModel)
@@ -312,12 +318,13 @@ async def update_verification_entry_page(
     context = {
         "request": request,
         "company_id": company_id,
+        "company_tz": company_tz,
         "companies": await company_repo.get_companies_for_user(
             employee_id=employee_id,
             status=status
         ),
         "verifiers": verifiers,
-        "VERIFICATION_PHOTO_LIMIT": VERIFICATION_PHOTO_LIMIT,
+        "verification_photo_limit": settings.verification_photo_limit,
         "verification_entry": verification_entry,
         "verification_entry_photos": verification_entry_photos,
         "title_name": "Редактирование записи поверки",

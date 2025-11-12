@@ -3,6 +3,20 @@ from access_control.tokens import (
     bump_jwt_token_version
 )
 
+from access_control.roles import (
+    access_verification,
+    access_calendar,
+    dispatcher2,
+    dispatcher1,
+    dispatchers,
+    admin_director,
+    auditor_verifier,
+    verifier,
+    director_auditor_verifier,
+    director_auditor_dispatchers,
+    auditor_dispatchers
+)
+
 from access_control.policies import (
     check_calendar_access,
     check_active_access_calendar,

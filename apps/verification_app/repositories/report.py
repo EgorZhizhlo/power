@@ -149,6 +149,8 @@ class ReportRepository:
                     VerificationEntryModel.verification_number,
                     VerificationEntryModel.ra_status,
                     VerificationEntryModel.interval,
+                    VerificationEntryModel.created_at,
+                    VerificationEntryModel.updated_at,
                     VerificationEntryModel.city_id,  # Нужен для relationship
                     VerificationEntryModel.employee_id,  # Нужен для relationship
                     VerificationEntryModel.act_number_id,  # Нужен для relationship

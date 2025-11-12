@@ -1,3 +1,11 @@
+import { 
+    getTodayInCompanyTz,
+    formatDateInTz,
+    getYearsDifference, 
+    addYearsInTz,
+    getCurrentYearInTz 
+} from '/static/verification/_utils/date_utils.js';
+
 let lastRegistryData = null;
 let originalEntry = {};
 
@@ -85,7 +93,8 @@ async function loadRegistryData(registryNumberId, isInitial = false) {
         const startYear = getFullYearFromRegistryNumber(regText);
 
         const isAdmin = ['admin', 'director'].includes(window.userStatus);
-        const endYear = isAdmin ? new Date().getFullYear() : Math.min(startYear + 10, new Date().getFullYear());
+        const currentYear = getCurrentYearInTz();
+        const endYear = isAdmin ? currentYear : Math.min(startYear + 10, currentYear);
 
         manufSelect.innerHTML = '<option value="" disabled>Выберите год выпуска</option>';
 
@@ -119,8 +128,8 @@ async function loadRegistryData(registryNumberId, isInitial = false) {
 function getFullYearFromRegistryNumber(regNum) {
     const parts = String(regNum || '').split('-');
     const lastTwo = parseInt(parts[1], 10);
-    if (Number.isNaN(lastTwo)) return new Date().getFullYear();
-    const currentYear = new Date().getFullYear();
+    const currentYear = getCurrentYearInTz();
+    if (Number.isNaN(lastTwo)) return currentYear;
     return lastTwo <= (currentYear % 100) ? 2000 + lastTwo : 1900 + lastTwo;
 }
 
@@ -132,9 +141,9 @@ function updateEndVerificationDate() {
     const verDate = new Date(verDateInput.value);
     const yearsToAdd = parseInt(nextSelect.value, 10) || 0;
     if (!isNaN(verDate.getTime()) && !isNaN(yearsToAdd)) {
-        verDate.setFullYear(verDate.getFullYear() + yearsToAdd);
-        verDate.setDate(verDate.getDate() - 1);
-        endInput.value = verDate.toISOString().split('T')[0];
+        const newDate = addYearsInTz(verDate, yearsToAdd);
+        newDate.setDate(newDate.getDate() - 1);
+        endInput.value = formatDateInTz(newDate);
     }
 }
 
@@ -143,7 +152,7 @@ function calculateNextVerification() {
     const endDate = new Date(document.getElementById('end_verification_date').value);
     const nextSelect = document.getElementById('next_verification');
     if (!isNaN(verDate.getTime()) && !isNaN(endDate.getTime())) {
-        nextSelect.value = String(endDate.getFullYear() - verDate.getFullYear());
+        nextSelect.value = String(getYearsDifference(verDate, endDate));
     }
 }
 
@@ -163,11 +172,11 @@ function resetClientFieldsToDefaults() {
     const cityOptions = Array.from(citySelect.options).filter(o => o.value);
     if (window.defaultCityId && cityOptions.some(o => o.value == window.defaultCityId)) {
         citySelect.value = window.defaultCityId;
-    } else if (cityOptions.length > 0) {
-        citySelect.value = cityOptions[0].value;
+    } else {
+        citySelect.value = cityOptions.length ? cityOptions[0].value : "";
     }
 
-    verificationDateInput.value = new Date().toISOString().split("T")[0];
+    verificationDateInput.value = getTodayInCompanyTz();
 }
 
 function toggleAdditionalInput() {
@@ -231,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (id) loadRegistryData(id);
         })
         .on('select2:clear', () => {
-            // очищаем связанные поля, если надо
             lastRegistryData = null;
             document.getElementById('modification_id').innerHTML =
                 '<option value="" disabled selected>Выберите модификацию</option>';
@@ -240,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('si_type').value = '';
             document.getElementById('manufacture_year').innerHTML =
                 '<option disabled>Выберите год выпуска</option>';
-            // сброс интервала/дат по желанию
             populateVerificationOptions(15);
             updateEndVerificationDate();
         })
@@ -254,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
     phoneMask.updateValue();
 
     const verificationDateInput = document.getElementById('verification_date');
-    verificationDateInput.setAttribute('max', new Date().toISOString().split('T')[0]);
+    verificationDateInput.setAttribute('max', getTodayInCompanyTz());
 
     document.getElementById('water_type').addEventListener('change', applyMPI);
     document.getElementById('verification_result').addEventListener('change', toggleAdditionalInput);
@@ -336,19 +343,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     applyMPI();
     toggleAdditionalInput();
-    // если обе даты заполнены — пересчитать интервал (на случай, если списки пересобрались)
     calculateNextVerification();
 
-    // --- Ограничения и поведение для #act_number (edit) ---
     const INT_MAX = 2147483647;
     let lastActQuery = null;
 
     actInput.addEventListener('blur', async () => {
-        // Берём только цифры (визуально нули не трогаем)
         const digits = (actInput.value || '').replace(/\D/g, '');
         if (!digits) return;
 
-        // Для логики убираем ведущие нули
         const cleaned = digits.replace(/^0+/, '');
         if (!cleaned) return;
 
@@ -357,14 +360,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (num > INT_MAX) {
             alert(`Номер бланка превышает допустимый максимум (${INT_MAX}).`);
-            return; // НИЧЕГО не меняем в форме
+            return;
         }
 
-        // Серия (даже если select disabled, value читается)
         const seriesSelect = document.getElementById('series_id');
         const seriesId = seriesSelect ? seriesSelect.value : '';
 
-        // Фиксируем запрос, чтобы отбрасывать устаревшие ответы
         const queryKey = `${seriesId}:${num}:${Date.now()}`;
         lastActQuery = queryKey;
 
@@ -481,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()));
         if (allowedCtrl) return;
 
-        if (/^[0-9]$/.test(e.key)) return; // только 0–9
+        if (/^[0-9]$/.test(e.key)) return;
         e.preventDefault();
     });
 
@@ -491,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     verificationDateInput.addEventListener('blur', function () {
         if (!this.value) return;
-        const currYear = new Date().getFullYear();
+        const currYear = getCurrentYearInTz();
         const parts = this.value.split('-');
         if (parts.length !== 3) return;
         const y = parseInt(parts[0], 10);
@@ -590,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (allowShort) phoneInput.value = '';
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayInCompanyTz();
         if (verificationDateInput.value && verificationDateInput.value > today) {
             alert('Дата поверки не может быть позже сегодняшнего дня.');
             return;
@@ -627,6 +628,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const obj = Object.fromEntries(new FormData(form).entries());
         obj.act_number = String(actNum);
+
+        obj.company_tz = window.companyTz || 'Europe/Moscow';
 
         const params = new URLSearchParams({
             company_id: String(window.companyId),

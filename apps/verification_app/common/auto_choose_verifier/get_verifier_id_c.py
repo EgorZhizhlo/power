@@ -3,7 +3,7 @@ from typing import Iterable, List
 from datetime import date as date_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import get_current_date_in_tz
 from core.exceptions import CustomHTTPException
 from models import (
     VerificationEntryModel, VerificationLogModel, VerifierModel,
@@ -59,12 +59,15 @@ def check_act_number_limit(
 
 def check_verifier_equipment(
         verifier,
+        company_tz: str = "Europe/Moscow"
 ) -> bool:
     if not verifier:
         return False
 
     if not verifier.equipments:
         return False
+
+    today = get_current_date_in_tz(company_tz)
 
     for equipment in verifier.equipments:
         if equipment.equipment_info:
@@ -82,7 +85,7 @@ def check_verifier_equipment(
             latest_equipment_info = max(
                 info, key=lambda x: x.verif_limit_date
             )
-            if latest_equipment_info.verif_limit_date < date_utc_now():
+            if latest_equipment_info.verif_limit_date < today:
                 return False
 
     return True
@@ -227,6 +230,7 @@ async def get_verifier_id_create(
     act_number_entry: ActNumberModel,
     verification_limit: int,
     company_id: int,
+    company_tz: str,
     session: AsyncSession
 ) -> int:
     verification_entries = act_number_entry.verification
@@ -250,7 +254,7 @@ async def get_verifier_id_create(
     team_id = employee_verifier.team_id
 
     # Проверка поверителя по умолчанию
-    if check_verifier_equipment(employee_verifier):
+    if check_verifier_equipment(employee_verifier, company_tz):
         verification_logs_of_employee_verifier = await get_verification_logs_of_verifier(
             verification_dates=verification_entries_statistics_with_new.keys(),
             verification_limit=verification_limit,
@@ -310,7 +314,9 @@ async def get_verifier_id_create(
         )
 
         for verifier_in_employee_verifier_team in verifiers_in_employee_verifier_team:
-            if not check_verifier_equipment(verifier_in_employee_verifier_team):
+            if not check_verifier_equipment(
+                verifier_in_employee_verifier_team, company_tz
+            ):
                 continue
 
             verifier_id_in_employee_verifier_team: int = verifier_in_employee_verifier_team.id
@@ -368,7 +374,7 @@ async def get_verifier_id_create(
         session=session
     )
     for verifier_without_team in verifiers_without_team:
-        if not check_verifier_equipment(verifier_without_team):
+        if not check_verifier_equipment(verifier_without_team, company_tz):
             continue
 
         verifier_id_without_team: int = verifier_without_team.id
@@ -429,7 +435,7 @@ async def get_verifier_id_create(
 
     for team in teams:
         for verifier_in_teams in team.verifiers:
-            if not check_verifier_equipment(verifier_in_teams):
+            if not check_verifier_equipment(verifier_in_teams, company_tz):
                 continue
 
             verifier_id_in_teams: int = verifier_in_teams.id

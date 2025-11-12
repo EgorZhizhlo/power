@@ -21,7 +21,8 @@ from infrastructure.db import async_db_session
 
 from core.config import settings
 from core.reports import autofit_columns, create_report_route_orders_list
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import get_current_date_in_tz
+from core.cache.company_timezone_cache import company_tz_cache
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
 from core.exceptions import (
     InternalServerErrorException, CustomHTTPException
@@ -34,11 +35,10 @@ from models import (
     RouteModel
 )
 from models.enums import (
-    VerificationWaterType,
-    VerificationSeal,
-    VerificationLegalEntity,
     EmployeeStatus,
     map_verification_water_type_to_label,
+    map_verification_seal_to_label,
+    map_verification_legal_entity_to_label,
 )
 
 from apps.verification_app.repositories import (
@@ -92,29 +92,35 @@ COLUMN_NAME_MAP = {
     'reference': 'Используемый эталон',
     'ra_status': 'Информация об отчетности в РА',
     'phone_number': 'Номер телефона',
+    'created_at': 'Дата создания',
+    'updated_at': 'Дата обновления',
 }
 
 
 def apply_common_transformations(df):
-    # Преобразование enum полей
+    """
+    Применяет преобразования для enum и boolean полей.
+    Использует map функции для преобразования enum значений.
+    """
     if "seal" in df:
-        df["seal"] = df["seal"].apply(
-            lambda x: enum_label(x, VerificationSeal))
+        df["seal"] = df["seal"].map(
+            lambda x: map_verification_seal_to_label.get(x, x or "")
+        )
 
     if "water_type" in df:
-        df["water_type"] = df["water_type"].apply(
-            lambda x: enum_label(x, VerificationWaterType))
+        df["water_type"] = df["water_type"].map(
+            lambda x: map_verification_water_type_to_label.get(x, x or "")
+        )
 
     if "legal_entity" in df:
-        df["legal_entity"] = df["legal_entity"].apply(
-            lambda x: enum_label(x, VerificationLegalEntity))
+        df["legal_entity"] = df["legal_entity"].map(
+            lambda x: map_verification_legal_entity_to_label.get(x, x or "")
+        )
 
-    # Преобразование булевых значений
     if "verification_result" in df:
         df["verification_result"] = df["verification_result"].replace(
             {True: "Да", False: "Нет"})
 
-    # Обработка дополнительных checkbox полей
     for n in range(1, 6):
         cb_key = f"additional_checkbox_{n}"
         if cb_key in df:
@@ -130,7 +136,6 @@ def apply_date_transformations(df):
     - Сортирует по датам
     - Форматирует даты обратно в строки
     """
-    # Преобразование в datetime для сортировки
     date_columns = []
     if "verification_date" in df.columns:
         df["verification_date"] = pd.to_datetime(
@@ -142,11 +147,9 @@ def apply_date_transformations(df):
             df["end_verification_date"], errors="coerce", dayfirst=True)
         date_columns.append("end_verification_date")
 
-    # Сортировка по датам если они есть
     if date_columns:
         df.sort_values(by=date_columns, inplace=True)
 
-    # Форматирование дат обратно в строки
     for col in date_columns:
         df[col] = df[col].dt.strftime("%d.%m.%Y")
 
@@ -172,6 +175,8 @@ async def serialize_full_report_entries(entries):
             "verification_number": entry.verification_number,
             "ra_status": entry.ra_status,
             "interval": entry.interval,
+            "created_at": entry.created_at,
+            "updated_at": entry.updated_at,
         }
 
         if entry.employee:
@@ -226,11 +231,13 @@ async def serialize_full_report_entries(entries):
     return serialized
 
 
-def create_full_df(serialized_entries, company_additional):
+def create_full_df(serialized_entries, company_additional, company_tz):
     """
     Создает DataFrame из сериализованных данных.
     Выполняется в ProcessPool (CPU-bound операция).
     """
+    from core.utils.time_utils import format_timestamp_with_tz
+
     rows = []
     for entry in serialized_entries:
         row = {
@@ -245,6 +252,12 @@ def create_full_df(serialized_entries, company_additional):
             "verification_number": entry.get("verification_number"),
             "ra_status": entry.get("ra_status"),
             "interval": entry.get("interval"),
+            "created_at": format_timestamp_with_tz(
+                entry.get("created_at"), company_tz
+            ),
+            "updated_at": format_timestamp_with_tz(
+                entry.get("updated_at"), company_tz
+            ),
         }
 
         if "employee" in entry:
@@ -314,7 +327,10 @@ def create_full_df(serialized_entries, company_additional):
         "verification_number", "verifier_name", "si_type", "method_name",
         "manufacture_year", "legal_entity", "ra_status", "reason_name",
     ]
-    field_list_full = base_fields + additional_fields + extended_fields
+    timestamp_fields = ["created_at", "updated_at"]
+    field_list_full = (
+        base_fields + additional_fields + extended_fields + timestamp_fields
+    )
 
     for n in range(1, 6):
         key_cb = f"additional_checkbox_{n}"
@@ -326,10 +342,8 @@ def create_full_df(serialized_entries, company_additional):
         if not company_additional.get(key_in) and key_in in df.columns:
             df.drop(columns=[key_in], inplace=True)
 
-    # Применяем общие преобразования (включая verification_result)
     df = apply_common_transformations(df)
 
-    # Применяем преобразования дат
     df = apply_date_transformations(df)
 
     for col in field_list_full:
@@ -361,7 +375,8 @@ async def xlsx_full_report(
     Генерирует полный отчет по поверкам в формате Excel.
     Все операции с БД инкапсулированы в репозиторий.
     """
-    # Получаем записи поверок через репозиторий
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     verification_entries = await report_repo.get_full_report_entries(
         full_report_data
     )
@@ -374,24 +389,20 @@ async def xlsx_full_report(
                    "Проверьте параметры фильтрации."
         )
 
-    # Получаем дополнительные поля компании
     company_additional = await report_repo.get_company_additional_fields()
 
-    # Сериализуем ORM объекты (async функция, вызываем напрямую)
     serialized_entries = await serialize_full_report_entries(
         verification_entries
     )
 
-    # Преобразуем company_additional в dict для передачи в процесс
     company_additional_dict = {
         k: getattr(company_additional, k, None)
         for k in dir(company_additional)
         if not k.startswith('_')
     }
 
-    # Выполняем CPU-bound операцию в ProcessPool
     full_df = await run_cpu_bounds_task(
-        create_full_df, serialized_entries, company_additional_dict
+        create_full_df, serialized_entries, company_additional_dict, company_tz
     )
 
     buffer = BytesIO()
@@ -404,8 +415,9 @@ async def xlsx_full_report(
 
     writer.close()
     buffer.seek(0)
+    current_date = get_current_date_in_tz(company_tz)
     filename = f"Общий отчет компании от {
-        date_utc_now().strftime('%d-%m-%Y')}.xlsx"
+        current_date.strftime('%d-%m-%Y')}.xlsx"
     encoded_filename = quote(filename)
     return StreamingResponse(
         buffer,
@@ -545,7 +557,6 @@ def create_dynamic_df(
                     row_info["reference"] = equipment.get("list_number")
                     break
 
-        # дополнительные поля
         for n in range(1, 6):
             cb_key = f"additional_checkbox_{n}"
             in_key = f"additional_input_{n}"
@@ -558,15 +569,10 @@ def create_dynamic_df(
         df = df._append({k: v for k, v in row_info.items() if k in field_set},
                         ignore_index=True)
 
-    # Применяем общие преобразования
     df = apply_common_transformations(df)
-
-    # Применяем преобразования дат
     df = apply_date_transformations(df)
-
     df = df.replace({None: '', '': ''})
 
-    # переименовываем
     allowed_keys = {f"additional_input_{i}" for i in range(
         1, 6)} | {f"additional_checkbox_{i}" for i in range(1, 6)}
     rename_map = {k: v for k, v in company_additional.items()
@@ -593,10 +599,11 @@ async def xlsx_dynamic_report(
     Генерирует динамический (настраиваемый) отчет.
     Загружает только те поля из БД, которые указаны в конфигурации отчета.
     """
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     status = employee_data.status
     empl_id = employee_data.id
 
-    # Получаем конфигурацию отчета
     verification_report = await report_repo.get_dynamic_report_config(report_id)
     if not verification_report:
         raise CustomHTTPException(
@@ -605,7 +612,6 @@ async def xlsx_dynamic_report(
             detail="Выбранный отчет отсутствует в компании."
         )
 
-    # Проверка доступа
     if status == EmployeeStatus.verifier:
         if not verification_report.for_verifier:
             raise CustomHTTPException(
@@ -682,8 +688,9 @@ async def xlsx_dynamic_report(
 
     writer.close()
     buffer.seek(0)
+    current_date = get_current_date_in_tz(company_tz)
     filename = f"Отчет {verification_report.name} от {
-        date_utc_now().strftime('%d-%m-%Y')}.xlsx"
+        current_date.strftime('%d-%m-%Y')}.xlsx"
     encoded_filename = quote(filename)
     return StreamingResponse(
         buffer,
@@ -747,7 +754,6 @@ def create_standart_equipment_statistic_df(serialized_entries):
 
     sorted_dates = sorted(by_date.keys())
 
-    # Подготовка строк и всех возможных колонок
     date_strs = [d.strftime('%d.%m.%Y') for d in sorted_dates]
     all_columns = sorted({col for counter in by_date.values()
                          for col in counter})
@@ -757,7 +763,6 @@ def create_standart_equipment_statistic_df(serialized_entries):
         row = {col: by_date[d].get(col, 0) for col in all_columns}
         rows.append(row)
 
-    # Формируем DataFrame
     df = pd.DataFrame(
         rows,
         index=pd.Index(date_strs, name='Дата поверки'),
@@ -785,18 +790,16 @@ async def xslx_standart_equipment_statistic_report(
     Генерирует статистику по эталонам.
     Использует оптимизированный запрос через репозиторий.
     """
+    company_tz = await company_tz_cache.get_timezone(company_id)
     try:
-        # Получаем записи с минимальным набором полей
         verification_entries = await report_repo.get_equipment_statistics_entries(
             standart_report_data
         )
 
-        # Сериализуем ORM объекты (async функция, вызываем напрямую)
         serialized_entries = await serialize_equipment_statistics_entries(
             verification_entries
         )
 
-        # Выполняем CPU-bound операцию в ProcessPool
         counter_df = await run_cpu_bounds_task(
             create_standart_equipment_statistic_df, serialized_entries
         )
@@ -815,8 +818,9 @@ async def xslx_standart_equipment_statistic_report(
 
         writer.close()
         buffer.seek(0)
+        current_date = get_current_date_in_tz(company_tz)
         filename = f"Статистика по эталонам от {
-            date_utc_now().strftime('%d-%m-%Y')}.xlsx"
+            current_date.strftime('%d-%m-%Y')}.xlsx"
         encoded_filename = quote(filename)
         return StreamingResponse(
             buffer,
@@ -851,7 +855,6 @@ def prepare_fund_report_data(entries):
             ),
         }
 
-        # Метрологические условия
         if entry.metrolog:
             info.update({
                 "after_air_temperature": (
@@ -864,7 +867,6 @@ def prepare_fund_report_data(entries):
                 ),
             })
 
-        # Основная информация о СИ
         if entry.registry_number:
             info["registry_number"] = entry.registry_number.registry_number
 
@@ -882,7 +884,6 @@ def prepare_fund_report_data(entries):
         if entry.act_number:
             info["client_full_name"] = entry.act_number.client_full_name
 
-        # Средства поверки
         info["equipments"] = []
         info["reference"] = None
 
@@ -911,22 +912,21 @@ async def xml_fund_report(
     Генерирует XML отчет для ФИФ (Федеральный информационный фонд).
     Оптимизирован: прямая работа с ORM, без ProcessPool.
     """
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     try:
-        # Получаем записи с eager loading всех связанных данных
         entries = await report_repo.get_fund_report_entries(fund_report_data)
 
-        # Получаем код организации
         organization_code = await report_repo.get_organization_code() or ""
 
-        # Подготавливаем данные для шаблона
         result = prepare_fund_report_data(entries)
 
         xml_bytes = await run_cpu_bounds_task(
             generate_fund_xml, result, organization_code)
 
-        # Формируем ответ
+        current_date = get_current_date_in_tz(company_tz)
         filename = f"Отчет в ФИФ от {
-            date_utc_now().strftime('%d-%m-%Y')}.xml"
+            current_date.strftime('%d-%m-%Y')}.xml"
         encoded = quote(filename)
 
         return StreamingResponse(
@@ -985,13 +985,18 @@ async def serialize_ra_report_entries(entries):
     """
     Преобразует ORM объекты в словари для отчета в РА.
     ВАЖНО: async функция для корректной работы lazy loading.
+    Форматирует даты сразу в строки для XML.
     """
     serialized = []
     for entry in entries:
         row = {
             "verification_number": entry.verification_number or "",
-            "verification_date": entry.verification_date,
-            "end_verification_date": entry.end_verification_date,
+            "verification_date": entry.verification_date.strftime(
+                '%Y-%m-%d'
+            ),
+            "end_verification_date": entry.end_verification_date.strftime(
+                '%Y-%m-%d'
+            ),
             "verification_result": entry.verification_result
         }
 
@@ -1057,28 +1062,26 @@ async def xml_ra_report(
 ):
     """
     Генерирует XML отчет для РА (Росаккредитация).
-    Оптимизирован: прямая работа с ORM, без ProcessPool.
     """
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     try:
-        # Получаем записи с eager loading
         entries = await report_repo.get_ra_report_entries(ra_report_data)
 
-        # Обновляем ra_status для всех записей
+        current_date = get_current_date_in_tz(company_tz)
         status_text = f"Отчет в РА от {
-            date_utc_now().strftime('%d-%m-%Y')}.xml"
+            current_date.strftime('%d-%m-%Y')}.xml"
         entry_ids = [entry.id for entry in entries]
         await report_repo.update_ra_status(entry_ids, status_text)
 
-        # Подготавливаем данные для шаблона
-        result = prepare_ra_report_data(entries)
+        serialized_entries = await serialize_ra_report_entries(entries)
 
-        # Рендерим XML
         xml_bytes = await run_cpu_bounds_task(
-            generate_ra_xml, result)
+            generate_ra_xml, serialized_entries
+        )
 
-        # Формируем ответ
         filename = f"Отчет в РА от {
-            date_utc_now().strftime('%d-%m-%Y')}.xml"
+            current_date.strftime('%d-%m-%Y')}.xml"
         encoded = quote(filename)
 
         return StreamingResponse(
@@ -1225,6 +1228,8 @@ async def xlsx_act_number_report(
     Генерирует отчет по отсутствующим номерам актов в диапазоне.
     Использует оптимизированные репозитории.
     """
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     try:
         if (not report_act_number_data.act_number_from or
                 not report_act_number_data.act_number_to):
@@ -1234,24 +1239,20 @@ async def xlsx_act_number_report(
                 detail="Диапазон был указан неверно!"
             )
 
-        # Получаем номера актов через репозиторий
         act_numbers = await act_number_repo.get_act_numbers_in_range(
             series_id=report_act_number_data.series_id,
             act_number_from=report_act_number_data.act_number_from,
             act_number_to=report_act_number_data.act_number_to
         )
 
-        # Получаем серии актов через репозиторий
         act_series = await act_series_repo.get_series_for_report(
             series_id=report_act_number_data.series_id
         )
 
-        # Сериализуем ORM объекты (async для lazy loading)
         act_numbers_data, act_series_data = await serialize_act_numbers_data(
             act_numbers, act_series
         )
 
-        # Выполняем CPU-bound операцию в ProcessPool
         act_numbers_df = await run_cpu_bounds_task(
             get_act_numbers_not_in_range,
             act_numbers_data, act_series_data,
@@ -1273,9 +1274,10 @@ async def xlsx_act_number_report(
 
         writer.close()
         buffer.seek(0)
+        current_date = get_current_date_in_tz(company_tz)
         filename = (
             f"Статистика по номерам актов от "
-            f"{date_utc_now().strftime('%d-%m-%Y')}.xlsx"
+            f"{current_date.strftime('%d-%m-%Y')}.xlsx"
         )
         encoded_filename = quote(filename)
         return StreamingResponse(
@@ -1376,7 +1378,6 @@ async def xlsx_orders_sheet_report(
         "route_additional_info": route_additional_info,
     }
 
-    # Выполняем CPU-bound операцию создания Excel отчета
     buf = await run_cpu_bounds_task(
         create_report_route_orders_list, rows, metadata)
     filename = f"Путевой (заявочный) лист на {order_date:%Y-%m-%d}.xlsx"

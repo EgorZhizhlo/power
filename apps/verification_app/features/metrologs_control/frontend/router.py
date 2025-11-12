@@ -64,7 +64,7 @@ async def create_metrolog_info_page(
         raise CustomCreateMetrologInfoAccessException(company_id=company_id)
     if not verification_entry.verifier_id:
         raise CustomVerificationVerifierException(company_id=company_id)
-    check_equip_conditions(
+    await check_equip_conditions(
         verification_entry.equipments, for_view=True,
         company_id=company_id)
 
@@ -120,7 +120,7 @@ async def update_metrolog_info_page(
     if not metrolog_info.verification.verifier_id:
         raise CustomVerificationVerifierException(company_id=company_id)
 
-    check_equip_conditions(
+    await check_equip_conditions(
         metrolog_info.verification.equipments, for_view=True,
         company_id=company_id)
 

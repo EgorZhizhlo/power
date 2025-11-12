@@ -17,7 +17,8 @@ from .schemas import (
 from access_control import (
     JwtData,
     check_calendar_access,
-    check_active_access_calendar
+    check_active_access_calendar,
+    dispatcher2
 )
 
 from infrastructure.db.session import async_db_session, async_db_session_begin
@@ -83,7 +84,7 @@ async def list_orders_without_date(
             OrderModel.city_id.in_(employee_city_ids)
         )
 
-    if employee_data.status in settings.DISPATCHER2:
+    if employee_data.status == dispatcher2:
         q = q.where(
             OrderModel.dispatcher_id == employee_data.id
         )

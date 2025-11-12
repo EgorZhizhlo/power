@@ -1,5 +1,4 @@
-from sqlalchemy import DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, Column
 from core.utils.time_utils import datetime_utc_now
 
 
@@ -9,13 +8,13 @@ class TimeMixin:
      создания и обновления.
     """
 
-    created_at: Mapped = mapped_column(
+    created_at = Column(
         DateTime(timezone=True),
         default=datetime_utc_now,
         nullable=False,
     )
 
-    updated_at: Mapped = mapped_column(
+    updated_at = Column(
         DateTime(timezone=True),
         default=datetime_utc_now,
         onupdate=datetime_utc_now,

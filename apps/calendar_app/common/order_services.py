@@ -6,7 +6,7 @@ from datetime import date as date_
 from models.associations import employees_cities, employees_routes
 from models import OrderModel
 
-from core.config import settings
+from access_control import dispatcher2
 
 
 async def get_calendar_order(
@@ -74,7 +74,7 @@ async def get_calendar_order(
         user_orders_query = user_orders_query.where(
             OrderModel.id == order_id
         )
-    if user_status in settings.DISPATCHER2:
+    if user_status == dispatcher2:
         user_orders_query = user_orders_query.where(
             OrderModel.dispatcher_id == dispatcher_id)
 

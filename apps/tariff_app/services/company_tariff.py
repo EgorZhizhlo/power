@@ -264,7 +264,7 @@ class CompanyTariffService:
                     and new_max_verifications is not None):
                 existing_max = state.max_verifications or 0
                 state_max_verifications = new_max_verifications + existing_max
-            
+
             if data.carry_over_orders and new_max_orders is not None:
                 existing_max = state.max_orders or 0
                 state_max_orders = new_max_orders + existing_max
@@ -526,7 +526,7 @@ class CompanyTariffService:
         """
         from sqlalchemy import select
         from models import EmployeeModel
-        from access_control.token_versioning import bump_jwt_token_version
+        from access_control import bump_jwt_token_version
 
         stmt = (
             update(CompanyModel)

@@ -20,10 +20,13 @@ from models.enums import ReasonType
 from access_control import (
     JwtData,
     check_access_verification,
-    check_active_access_verification
+    check_active_access_verification,
+    admin_director
 )
 
 from core.config import settings
+from core.db.dependencies import get_company_timezone
+from core.utils.time_utils import validate_company_timezone
 from core.exceptions import (
     CompanyVerificationLimitException,
     YandexTokenException
@@ -74,17 +77,18 @@ from apps.verification_app.schemas.verifications_control import (
 
 verifications_control_api_router = APIRouter(
     prefix='/api/verifications-control')
-VER_PHOTO_LIMIT: int = settings.VERIFICATION_PHOTO_LIMIT
-ALLOWED_PHOTO_EXT: set[str] = settings.ALLOWED_VERIFICATION_PHOTO_EXT
+VER_PHOTO_LIMIT: int = settings.verification_photo_limit
+ALLOWED_PHOTO_EXT: set[str] = settings.allowed_photo_ext
 
 
 @verifications_control_api_router.get(
-        "/", response_model=VerificationEntryListOut
+    "/", response_model=VerificationEntryListOut
 )
 async def get_verification_entries(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     verif_entry_filter: VerificationEntryFilter = Depends(),
     employee_data: JwtData = Depends(check_access_verification),
+    company_tz: str = Depends(get_company_timezone),
     verification_entry_repo: VerificationEntryRepository = Depends(
         read_verification_entry_repository),
 ):
@@ -113,9 +117,22 @@ async def get_verification_entries(
     )
     entries, page, limit, total_pages, total_entries, verified_entries = result
 
+    from core.templates.jinja_filters import format_datetime_tz
+
+    items = []
+    for entry in entries:
+        item = VerificationEntryOut.model_validate(entry)
+        item.created_at_formatted = format_datetime_tz(
+            entry.created_at, company_tz, "%d.%m.%Y %H:%M"
+        )
+        item.updated_at_formatted = format_datetime_tz(
+            entry.updated_at, company_tz, "%d.%m.%Y %H:%M"
+        )
+        items.append(item)
+
     data = VerificationEntryListOut(
         company_id=company_id,
-        items=[VerificationEntryOut.model_validate(e) for e in entries],
+        items=items,
         page=page,
         limit=limit,
         total_pages=total_pages,
@@ -134,6 +151,7 @@ async def create_verification_entry(
     verification_entry_data: CreateVerificationEntryForm = Body(...),
     company_id: int = Query(..., ge=1, le=settings.max_int),
     redirect_to_metrolog_info: bool = Query(...),
+    company_tz: str = Depends(get_company_timezone),
     session: AsyncSession = Depends(async_db_session_begin),
     employee_data: JwtData = Depends(
         check_active_access_verification),
@@ -159,6 +177,12 @@ async def create_verification_entry(
     status = employee_data.status
     employee_id = employee_data.id
 
+    validate_company_timezone(
+        verification_entry_data.company_tz,
+        company_tz,
+        company_id
+    )
+
     await check_verification_limit_available(
         session=session,
         company_id=company_id,
@@ -172,7 +196,7 @@ async def create_verification_entry(
 
     company_params = await company_repo.get_company_params()
 
-    if status not in settings.ADMIN_DIRECTOR:
+    if status not in admin_director:
         verif_date_block = company_params.verification_date_block
         if verif_date_block and verif_date_block >= \
                 verification_entry_data.verification_date:
@@ -194,15 +218,18 @@ async def create_verification_entry(
     if not default_verifier:
         raise CreateVerificationDefaultVerifierException
 
-    check_equip_conditions(default_verifier.equipments)
+    await check_equip_conditions(
+        default_verifier.equipments, company_id=company_id
+    )
 
     act_number_entry = await act_number_for_create(
         company_id=company_id,
         entry_data=verification_entry_data,
         session=session
     )
-    await check_act_number_limit(
-        act_number_entry=act_number_entry)
+    check_act_number_limit(
+        act_number_entry=act_number_entry
+    )
     act_number_entry.count -= 1
 
     verifier_id = default_verifier.id
@@ -220,6 +247,7 @@ async def create_verification_entry(
             act_number_entry=act_number_entry,
             verification_limit=verification_limit,
             company_id=company_id,
+            company_tz=company_tz,
             session=session
         )
 
@@ -229,7 +257,9 @@ async def create_verification_entry(
         equipments=await equipment_repo.get_valid_equipments(verifier_id)
     )
 
-    for field, value in verification_entry_data.model_dump(exclude={"act_number"}).items():
+    for field, value in verification_entry_data.model_dump(
+        exclude={"act_number", "company_tz"}
+    ).items():
         setattr(verification_entry, field, value)
 
     if verification_entry.verification_result:
@@ -318,92 +348,18 @@ async def create_verification_entry(
     }
 
 
-@verifications_control_api_router.post("/upload-photos")
-async def upload_verification_photos(
-    verification_entry_id: int = Query(..., ge=1, le=settings.max_int),
-    company_id: int = Query(..., ge=1, le=settings.max_int),
-    new_images: List[UploadFile] = File(default_factory=list),
-    session: AsyncSession = Depends(async_db_session_begin),
-    company_repo: CompanyRepository = Depends(
-        read_company_repository
-    ),
-    verification_entry_repo: VerificationEntryRepository = Depends(
-        action_verification_entry_repository
-    ),
-):
-    new_images = [f for f in new_images if getattr(f, "filename", "").strip()]
-    if not new_images:
-        raise HTTPException(400, detail="Не выбрано файлов для загрузки.")
-
-    company_params = await company_repo.get_yandex_disk_token()
-    if not company_params.yandex_disk_token:
-        raise HTTPException(400, detail="Не настроен токен Яндекс.Диска.")
-
-    entry = await verification_entry_repo.get_by_id(verification_entry_id)
-    if not entry:
-        raise HTTPException(404, detail="Поверка не найдена.")
-
-    if len(new_images) > VER_PHOTO_LIMIT:
-        raise HTTPException(400, detail=f"Можно загрузить не более {VER_PHOTO_LIMIT} файлов.")
-
-    upload_list: List[Dict[str, Any]] = []
-    for idx, f in enumerate(new_images[:VER_PHOTO_LIMIT], 1):
-        if "." not in f.filename:
-            raise HTTPException(400, detail=f"Файл #{idx} не имеет расширения.")
-        _, ext = f.filename.rsplit(".", 1)
-        ext = ext.lower()
-        if ext not in ALLOWED_PHOTO_EXT:
-            raise HTTPException(
-                400,
-                detail=f"Файл #{idx} «{f.filename}» имеет неподдерживаемый формат «.{ext}». "
-                       "Разрешены: jpeg, jpg, png, heic, heif, webp.",
-            )
-        content = await f.read()
-        upload_list.append({"file_name": str(idx), "file_extension": ext, "file_bytes": content})
-
-    verifier = entry.verifier
-    verifier_dir = f"{verifier.last_name.title()} {verifier.name.title()} {verifier.patronymic.title()}"
-    date_dir = entry.verification_date.strftime("%d-%m-%Y")
-    verification_dir = f"{entry.series.name} {entry.act_number.act_number} {entry.factory_number}"
-
-    yandex = VerificationYandexDiskAPI(company_params.yandex_disk_token)
-    if not await yandex.check_token():
-        raise YandexTokenException
-
-    public_urls = await yandex.upload_verification_files(
-        company_params.name,
-        verifier_dir,
-        date_dir,
-        verification_dir,
-        upload_list,
-        concurrency=len(upload_list)
-    )
-
-    for idx, url in enumerate(public_urls, 1):
-        photo = VerificationEntryPhotoModel(
-            verification_entry_id=entry.id,
-            file_name=f"{idx}.{upload_list[idx - 1]['file_extension']}",
-            url=url
-        )
-        session.add(photo)
-
-    await session.flush()
-    await clear_verification_cache(company_id)
-
-    return {"status": "ok", "uploaded": len(public_urls)}
-
-
 @verifications_control_api_router.post("/update")
 async def update_verification_entry(
     verification_entry_data: UpdateVerificationEntryForm = Body(...),
     company_id: int = Query(..., ge=1, le=settings.max_int),
     verification_entry_id: int = Query(..., ge=1, le=settings.max_int),
     redirect_to_metrolog_info: bool = Query(...),
+    company_tz: str = Depends(get_company_timezone),
     session: AsyncSession = Depends(async_db_session_begin),
     employee_data: JwtData = Depends(
         check_active_access_verification),
     empl_cities_repo: EmployeeCitiesRepository = Depends(
-        read_employee_cities_repository 
+        read_employee_cities_repository
     ),
     company_repo: CompanyRepository = Depends(
         read_company_repository
@@ -421,12 +377,18 @@ async def update_verification_entry(
     status = employee_data.status
     employee_id = employee_data.id
 
+    validate_company_timezone(
+        verification_entry_data.company_tz,
+        company_tz,
+        company_id
+    )
+
     new_factory_number = verification_entry_data.factory_number
     new_verification_date = verification_entry_data.verification_date
 
     company_params = await company_repo.get_company_params()
 
-    if status not in settings.ADMIN_DIRECTOR:
+    if status not in admin_director:
         verif_date_block = company_params.verification_date_block
         if verif_date_block and verif_date_block >= \
                 verification_entry_data.verification_date:
@@ -449,7 +411,7 @@ async def update_verification_entry(
         raise VerificationEntryException
 
     if verification_entry.verification_number and \
-            status not in settings.ADMIN_DIRECTOR:
+            status not in admin_director:
         raise UpdateVerificationVerNumBlockException
 
     employee_cities_id = await empl_cities_repo.get_cities_id(employee_id)
@@ -465,7 +427,9 @@ async def update_verification_entry(
 
     old_verifier = verification_entry.verifier
 
-    check_equip_conditions(old_verifier.equipments)
+    await check_equip_conditions(
+        old_verifier.equipments, company_id=company_id
+    )
 
     last_act_number_id = verification_entry.act_number_id
     if last_act_number_id:
@@ -491,7 +455,7 @@ async def update_verification_entry(
                 entry_data=verification_entry_data,
                 session=session
             )
-            await check_act_number_limit(
+            check_act_number_limit(
                 act_number_entry=new_act_number
             )
             verification_entry.act_number_id = new_act_number.id
@@ -513,7 +477,7 @@ async def update_verification_entry(
             entry_data=verification_entry_data,
             session=session
         )
-        await check_act_number_limit(
+        check_act_number_limit(
             act_number_entry=new_act_number
         )
 
@@ -526,7 +490,7 @@ async def update_verification_entry(
 
     last_verification_date = verification_entry.verification_date
     new_verification_date = verification_entry_data.verification_date
-    is_admin_or_director = status in settings.ADMIN_DIRECTOR
+    is_admin_or_director = status in admin_director
 
     if company_params.auto_teams:
         verification_limit = company_params.daily_verifier_verif_limit
@@ -587,7 +551,7 @@ async def update_verification_entry(
                 if is_admin_or_director:
                     verification_entry.change_verifier_by_admin_or_director = True
 
-    if status in settings.ADMIN_DIRECTOR and old_verifier.id != new_verifier_id:
+    if status in admin_director and old_verifier.id != new_verifier_id:
         verification_entry.verifier_id = new_verifier_id
         valid_equipments = await equipment_repo.get_valid_equipments(
             verifier_id=new_verifier_id
@@ -598,7 +562,7 @@ async def update_verification_entry(
     old_location_id = verification_entry.location_id
 
     for field, value in verification_entry_data.model_dump(
-            exclude={"verifier_id", "act_number"}).items():
+            exclude={"verifier_id", "act_number", "company_tz"}).items():
         setattr(verification_entry, field, value)
 
     if verification_entry.verification_result:
@@ -629,7 +593,8 @@ async def update_verification_entry(
         verifier_dir = f"{verifier.last_name.title()} "
         f"{verifier.name.title()} "
         f"{verifier.patronymic.title()}"
-        date_dir = verification_entry_data.verification_date.strftime("%d-%m-%Y")
+        date_dir = verification_entry_data.verification_date.strftime(
+            "%d-%m-%Y")
         verification_dir = f"{series.name} "
         f"{act_number.act_number} "
         f"{v.factory_number}"
@@ -741,6 +706,84 @@ async def update_verification_entry(
         "metrolog_info_id": None,
         "redirect_to": "m" if redirect_to_metrolog_info else "v"
     }
+
+
+@verifications_control_api_router.post("/upload-photos")
+async def upload_verification_photos(
+    verification_entry_id: int = Query(..., ge=1, le=settings.max_int),
+    company_id: int = Query(..., ge=1, le=settings.max_int),
+    new_images: List[UploadFile] = File(default_factory=list),
+    session: AsyncSession = Depends(async_db_session_begin),
+    company_repo: CompanyRepository = Depends(
+        read_company_repository
+    ),
+    verification_entry_repo: VerificationEntryRepository = Depends(
+        action_verification_entry_repository
+    ),
+):
+    new_images = [f for f in new_images if getattr(f, "filename", "").strip()]
+    if not new_images:
+        raise HTTPException(400, detail="Не выбрано файлов для загрузки.")
+
+    company_params = await company_repo.get_yandex_disk_token()
+    if not company_params.yandex_disk_token:
+        raise HTTPException(400, detail="Не настроен токен Яндекс.Диска.")
+
+    entry = await verification_entry_repo.get_by_id(verification_entry_id)
+    if not entry:
+        raise HTTPException(404, detail="Поверка не найдена.")
+
+    if len(new_images) > VER_PHOTO_LIMIT:
+        raise HTTPException(
+            400, detail=f"Можно загрузить не более {VER_PHOTO_LIMIT} файлов.")
+
+    upload_list: List[Dict[str, Any]] = []
+    for idx, f in enumerate(new_images[:VER_PHOTO_LIMIT], 1):
+        if "." not in f.filename:
+            raise HTTPException(
+                400, detail=f"Файл #{idx} не имеет расширения.")
+        _, ext = f.filename.rsplit(".", 1)
+        ext = ext.lower()
+        if ext not in ALLOWED_PHOTO_EXT:
+            raise HTTPException(
+                400,
+                detail=f"Файл #{idx} «{f.filename}» имеет неподдерживаемый формат «.{ext}». "
+                "Разрешены: jpeg, jpg, png, heic, heif, webp.",
+            )
+        content = await f.read()
+        upload_list.append(
+            {"file_name": str(idx), "file_extension": ext, "file_bytes": content})
+
+    verifier = entry.verifier
+    verifier_dir = f"{verifier.last_name.title()} {verifier.name.title()} {verifier.patronymic.title()}"
+    date_dir = entry.verification_date.strftime("%d-%m-%Y")
+    verification_dir = f"{entry.series.name} {entry.act_number.act_number} {entry.factory_number}"
+
+    yandex = VerificationYandexDiskAPI(company_params.yandex_disk_token)
+    if not await yandex.check_token():
+        raise YandexTokenException
+
+    public_urls = await yandex.upload_verification_files(
+        company_params.name,
+        verifier_dir,
+        date_dir,
+        verification_dir,
+        upload_list,
+        concurrency=len(upload_list)
+    )
+
+    for idx, url in enumerate(public_urls, 1):
+        photo = VerificationEntryPhotoModel(
+            verification_entry_id=entry.id,
+            file_name=f"{idx}.{upload_list[idx - 1]['file_extension']}",
+            url=url
+        )
+        session.add(photo)
+
+    await session.flush()
+    await clear_verification_cache(company_id)
+
+    return {"status": "ok", "uploaded": len(public_urls)}
 
 
 @verifications_control_api_router.delete("/delete")

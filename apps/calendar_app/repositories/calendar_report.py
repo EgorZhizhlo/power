@@ -12,6 +12,8 @@ from infrastructure.db import async_db_session
 from models import CalendarReportModel, OrderModel
 from models.enums import EmployeeStatus
 
+from access_control import auditor_dispatchers
+
 
 class CalendarReportRepository:
     def __init__(self, session: AsyncSession, company_id: int):
@@ -110,7 +112,7 @@ class CalendarReportRepository:
             CalendarReportModel.company_id == self.company_id
         )
 
-        if status in settings.AUDITOR_DISPATCHERS:
+        if status in auditor_dispatchers:
             if status == EmployeeStatus.auditor:
                 query = query.where(
                     CalendarReportModel.for_auditor.is_(True)

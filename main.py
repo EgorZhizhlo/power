@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -17,9 +19,24 @@ from apps import (
     tariff_router
 )
 
+from infrastructure.cache.redis_client import init_redis, close_redis
+from infrastructure.db.session import init_db, close_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    await init_redis()
+    yield
+    # Shutdown
+    await close_redis()
+    await close_db()
+
 
 app = FastAPI(
-    docs_url=None, redoc_url=None,
+    docs_url="/test/docs", redoc_url="/test/docs",
+    lifespan=lifespan,
     # servers=[{"url": "https://powerka.pro"}]
 )
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")

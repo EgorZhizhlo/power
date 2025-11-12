@@ -116,8 +116,11 @@ class ActNumberRepository:
                 act_number=act_number,
                 series_id=series_id,
                 company_id=self._company_id,
-                **update_fields
             )
+            # Применяем дополнительные поля через setattr
+            for field, value in update_fields.items():
+                setattr(act_number_obj, field, value)
+
             self._session.add(act_number_obj)
             await self._session.flush()
             # Refresh для загрузки пустого relationship

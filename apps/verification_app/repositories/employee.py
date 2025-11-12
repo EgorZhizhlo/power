@@ -4,10 +4,14 @@ from sqlalchemy import select, func, case
 from sqlalchemy.orm import load_only, noload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from access_control import access_verification
+
 from infrastructure.db import async_db_session_begin, async_db_session
+
 from models import (
     EmployeeModel, CompanyModel, VerificationEntryModel
 )
+
 from core.config import settings
 
 
@@ -50,10 +54,6 @@ class EmployeeRepository:
         """
         Получает статистику по сотрудникам с агрегацией на уровне SQL.
         Возвращает список словарей с подсчитанными данными.
-        
-        Args:
-            date_from: Начальная дата фильтрации (опционально)
-            date_to: Конечная дата фильтрации (опционально)
         """
         stmt = (
             select(
@@ -145,7 +145,7 @@ class EmployeeRepository:
                     CompanyModel.id == self._company_id
                 ),
                 EmployeeModel.default_verifier_id.isnot(None),
-                EmployeeModel.status.in_(settings.ACCESS_VERIFICATION),
+                EmployeeModel.status.in_(access_verification),
                 VerificationEntryModel.company_id == self._company_id
             )
         )

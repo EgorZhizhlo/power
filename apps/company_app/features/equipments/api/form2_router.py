@@ -16,7 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.company_app.common import create_table_report
 from urllib.parse import quote
-from core.utils.time_utils import date_utc_now
+from core.templates.jinja_filters import get_current_date_in_tz
+from core.cache.company_timezone_cache import company_tz_cache
 from core.config import settings
 
 
@@ -88,6 +89,8 @@ async def get_autodocument_form2_report(
     session: AsyncSession = Depends(async_db_session_begin),
     user_data: JwtData = Depends(check_include_in_not_active_company),
 ):
+    company_tz = await company_tz_cache.get_timezone(company_id)
+
     try:
         result = await session.execute(
             select(CompanyActivityModel)
@@ -118,11 +121,14 @@ async def get_autodocument_form2_report(
 
         buf = create_table_report(sections)
 
+        current_date = get_current_date_in_tz(company_tz)
+        filename = f"Форма 2 от {format_date(current_date)}.xlsx"
+
         return StreamingResponse(
             buf,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
-                "Content-Disposition": f"attachment; filename*=utf-8''{quote(f"Форма 2 от {format_date(date_utc_now())}")}.xlsx"
+                "Content-Disposition": f"attachment; filename*=utf-8''{quote(filename)}"
             },
         )
 

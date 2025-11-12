@@ -52,9 +52,7 @@ async def _fetch_arshin_page(
 
 
 async def _background_fill_vri_ids(company_id: int, date_from: date_, date_to: date_) -> None:
-    # --- READ (без транзакции): компания + список интересующих записей ---
-    maker = async_session_maker()
-    async with maker() as db_read:
+    async with async_session_maker() as db_read:
         res_company = await db_read.execute(
             select(CompanyModel.name).where(CompanyModel.id == company_id)
         )
@@ -147,8 +145,7 @@ async def _background_fill_vri_ids(company_id: int, date_from: date_, date_to: d
 
                 # --- WRITE (транзакция): применяем пачку обновлений атомарно ---
                 if updates:
-                    maker = async_session_maker()
-                    async with maker() as db_write:  # type: AsyncSession
+                    async with async_session_maker() as db_write:  # type: AsyncSession
                         async with db_write.begin():  # BEGIN (auto-COMMIT/ROLLBACK)
                             ids = [u[0] for u in updates]
                             res_models = await db_write.execute(

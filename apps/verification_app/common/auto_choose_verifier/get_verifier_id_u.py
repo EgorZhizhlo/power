@@ -89,7 +89,7 @@ async def act_number_for_update(
     return act_number
 
 
-async def check_act_number_limit(
+def check_act_number_limit(
     act_number_entry: ActNumberModel,
 ) -> None:
     if not act_number_entry:

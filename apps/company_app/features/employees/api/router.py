@@ -18,6 +18,7 @@ from access_control import (
     check_include_in_not_active_company,
     check_include_in_active_company,
     bump_jwt_token_version,
+    admin_director
 )
 
 from core.config import settings
@@ -78,7 +79,7 @@ async def api_get_employees(
     if status == EmployeeStatus.director:
         filters.append(
             or_(
-                EmployeeModel.status.notin_(settings.ADMIN_DIRECTOR),
+                EmployeeModel.status.notin_(admin_director),
                 EmployeeModel.id == user_data.id  # позволяем видеть себя
             )
         )

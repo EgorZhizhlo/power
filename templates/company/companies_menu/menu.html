@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ last_name|capitalize }} {{ name|capitalize }} {{ patronymic|capitalize }} |
+{{ company_name }}{% if not company_is_active %} (неактивна){% endif %}
+{% endblock %}
+
+{% block content %}
+<h1 class="fs-xl text-center d-flex flex-column align-items-center mb-4">
+  {% if company_image %}
+  <div class="photo mb-3">
+    <img src="data:image/jpeg;base64,{{ company_image }}" alt="Изображение компании: {{ company_name }}">
+  </div>
+  {% endif %}
+  Меню компании {{ company_name }}{% if not company_is_active %} (неактивна){% endif %}
+</h1>
+
+{% if tariff_info and tariff_info.has_tariff %}
+{% set is_expired = tariff_info.is_expired %}
+{% set valid_from = tariff_info.valid_from %}
+{% set valid_to = tariff_info.valid_to %}
+
+<style>
+  .tariff-box {
+    background: #f9fafb;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    font-size: var(--font-small);
+    line-height: 1.4;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .tariff-box:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .tariff-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem 1rem;
+  }
+
+  .tariff-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .tariff-left strong {
+    font-weight: 600;
+    font-size: var(--font-base);
+  }
+
+  .tariff-status {
+    font-weight: 500;
+    color: var(--color-primary);
+  }
+
+  .tariff-status.text-danger {
+    color: #d93025 !important;
+  }
+
+  .tariff-auto {
+    color: var(--color-secondary);
+    font-size: 0.9em;
+    text-align: right;
+  }
+
+  .tariff-box hr {
+    margin: 0.5rem 0 0.6rem;
+  }
+
+  .tariff-limits {
+    text-align: center;
+  }
+
+  .tariff-limits strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-weight: 600;
+  }
+
+  .tariff-limits span {
+    white-space: nowrap;
+  }
+</style>
+
+<div class="tariff-box mb-3">
+  <div class="tariff-top">
+    <div class="tariff-left">
+      <strong>{{ tariff_info.title }}</strong> | 
+      <span class="tariff-status {{ 'text-danger' if is_expired else 'text-primary' }}">
+        {% if is_expired %}
+          Истёк {{ valid_to }}
+        {% elif valid_to %}
+          с {{ valid_from }} по {{ valid_to }}
+        {% else %}
+          Бессрочный
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="tariff-auto">
+      <strong>Подключенные автоматизации:</strong>
+      {% set features = [] %}
+      {% if tariff_info.automation.auto_manufacture_year %}
+        {% set _ = features.append("Год выпуска СИ") %}
+      {% endif %}
+      {% if tariff_info.automation.auto_teams %}
+        {% set _ = features.append("Команды") %}
+      {% endif %}
+      {% if tariff_info.automation.auto_metrolog %}
+        {% set _ = features.append("Метрологическая информация") %}
+      {% endif %}
+      {% if features %}
+        {{ features | join(", ") }}
+      {% else %}
+        <span class="text-muted">Отсутствуют</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="tariff-limits row gx-2 gy-1 small">
+    <div class="col-12 col-md-4">
+      <strong>Сотрудники:</strong>
+      {% if tariff_info.limits.max_employees == None %}
+        <span class="text-success">Безлимит</span>
+      {% elif tariff_info.limits.max_employees == 0 %}
+        <span class="text-danger">Запрещено</span>
+      {% else %}
+        {{ tariff_info.limits.used_employees }}/{{ tariff_info.limits.max_employees }}
+        <span class="text-muted">({{ tariff_info.percentages.employees }}%)</span>
+      {% endif %}
+    </div>
+
+    <div class="col-12 col-md-4">
+      <strong>Поверки:</strong>
+      {% if tariff_info.limits.max_verifications == None %}
+        <span class="text-success">Безлимит</span>
+      {% elif tariff_info.limits.max_verifications == 0 %}
+        <span class="text-danger">Запрещено</span>
+      {% else %}
+        {{ tariff_info.limits.used_verifications }}/{{ tariff_info.limits.max_verifications }}
+        <span class="text-muted">({{ tariff_info.percentages.verifications }}%)</span>
+      {% endif %}
+    </div>
+
+    <div class="col-12 col-md-4">
+      <strong>Заявки:</strong>
+      {% if tariff_info.limits.max_orders == None %}
+        <span class="text-success">Безлимит</span>
+      {% elif tariff_info.limits.max_orders == 0 %}
+        <span class="text-danger">Запрещено</span>
+      {% else %}
+        {{ tariff_info.limits.used_orders }}/{{ tariff_info.limits.max_orders }}
+        <span class="text-muted">({{ tariff_info.percentages.orders }}%)</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% elif tariff_info %}
+<div class="tariff-box mb-3 text-center border border-secondary-subtle">
+  <div class="fw-semibold text-dark mb-1">Тариф не назначен</div>
+  <div class="small text-muted">Обратитесь к администратору для назначения тарифа</div>
+</div>
+{% endif %}
+
+<div class="row justify-content-center g-4 py-3">
+  {% if status != "auditor" %}
+  {% set tiles = [
+  ('verification','Поверка','Регистрация, просмотр и управление результатами поверки СИ.', '/verification'),
+  ('calendar','Календарь','Формирование заявок, построение графика поверок и ведение отчетности.', '/calendar'),
+  ('employee','Сотрудники','Управление сотрудниками компании.', '/companies/employees'),
+  ('city','Населённые пункты','Управление населёнными пунктами компании.', '/companies/cities'),
+  ('verifier','Поверители','Управление поверителями компании.', '/companies/verifiers'),
+  ('equipment','Карточки оборудования','Управление оборудованием компании.', '/companies/equipments'),
+  ('team','Команды','Управление командами компании.', '/companies/teams') if company_auto_teams or status=='admin' else
+  None,
+  ('registry_number','Номера гос.реестра','Управление номерами гос.реестра компании.', '/companies/registry-numbers'),
+  ('method','Методики','Управление методиками компании.', '/companies/methods'),
+  ('modification','Модификации СИ','Управление модификациями СИ компании.', '/companies/si-modifications'),
+  ('act_series','Серии бланков','Управление сериями бланков компании.', '/companies/act-series'),
+  ('reason','Причины непригодности','Управление причинами непригодности компании.', '/companies/reasons'),
+  ('location','Расположения счётчика','Управление местами установки счётчиков компании.', '/companies/locations'),
+  ('act_number','Номера бланков','Управление номерами бланков компании.', '/companies/act-numbers'),
+  ('route','Маршруты','Управление маршрутами компании.', '/companies/routes'),
+  ('verification_report','Настр. отчёты (Поверка)','Управление настраиваемыми отчётами в разделе «Поверка».',
+  '/companies/verification-reports'),
+  ('calendar_report','Настр. отчёты (Календарь)','Управление настраиваемыми отчётами в разделе «Календарь».',
+  '/companies/calendar-reports'),
+  ] %}
+  {% else %}
+  {% set tiles = [
+  ('verification','Поверка','Регистрация, просмотр и управление результатами поверки СИ.', '/verification'),
+  ('calendar','Календарь','Формирование заявок, построение графика поверок и ведение отчетности.', '/calendar'),
+  ('verifier','Поверители','Управление поверителями компании.', '/companies/verifiers'),
+  ('equipment','Карточки оборудования','Управление оборудованием компании.', '/companies/equipments'),
+  ] %}
+  {% endif %}
+
+  {% for item in tiles if item %}
+  {% set key,title,subtitle,direct = item %}
+  {% set bg = (
+  'background-color: rgb(181, 242, 250);' if key=='verification' or key=='verification_report'
+  else 'background-color: rgb(181, 250, 196);' if key=='calendar' or key=='calendar_report'
+  else 'background-color: rgb(243, 252, 192);'
+  ) %}
+  <div class="
+    {% if key in ['verification','calendar'] %}
+      col-12 col-xl-6
+    {% else %}
+      col-12 col-xl-4
+    {% endif %}
+  ">
+    <div class="company-card card h-100" role="button" style="{{ bg }}"
+      onclick="location.href='{{ direct }}?company_id={{ company_id }}'">
+      <div class="card-body p-4">
+        <h3 class="card-title text-center">{{ title }}</h3>
+        <hr>
+        <p class="card-text text-center">
+          {{ subtitle }}
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
