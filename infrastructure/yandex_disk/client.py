@@ -108,6 +108,12 @@ class YandexDiskClient:
 
         raise Exception("Unexpected request exit")
 
+    async def _get_upload_url(self, path: str, overwrite=True) -> str:
+        url = (f"{self.BASE_URL}/resources/upload?"
+               f"path={self._encode(path)}&overwrite={'true' if overwrite else 'false'}")
+        data = await self._request("GET", url)
+        return data["href"]
+
     async def folder_exists(self, path: str) -> bool:
         """Проверка существования ресурса (файла или папки)."""
         try:
@@ -145,13 +151,21 @@ class YandexDiskClient:
                f"&force_async=false")
         return await self._request("DELETE", url)
 
-    async def get_existing_file_indices(self, folder_path: str) -> set:
+    async def list_folder(self, path: str, limit: int = 1000) -> list:
         """
-        Получить множество уже занятых индексов файлов в папке.
+        Получить список файлов в папке.
 
-        Парсит имена файлов формата "001_filename.jpg" и возвращает
-        множество занятых числовых индексов.
+        Returns:
+            Список элементов или пустой список если папка не существует
         """
+        try:
+            meta = await self.get_meta(path)
+            items = meta.get("_embedded", {}).get("items", [])
+            return items[:limit]
+        except Exception:
+            return []
+
+    async def get_existing_file_indices(self, folder_path: str) -> set:
         items = await self.list_folder(folder_path)
         indices = set()
 
@@ -160,16 +174,17 @@ class YandexDiskClient:
                 continue
 
             name = item.get("name", "")
-            if not name or "_" not in name:
+            if not name:
                 continue
 
-            # Парсим имя формата "001_filename.jpg"
+            # поддержка "001.jpg"
+            base = name.split(".", 1)[0]
+
             try:
-                index_str = name.split("_", 1)[0]
-                index = int(index_str)
+                index = int(base)
                 indices.add(index)
-            except (ValueError, IndexError):
-                continue
+            except:
+                pass
 
         return indices
 

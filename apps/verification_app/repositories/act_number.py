@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.db import async_db_session_begin, async_db_session
 from models import (
-    ActNumberModel, ActSeriesModel, VerificationEntryModel
+    ActNumberModel,
+    ActSeriesModel,
+    VerificationEntryModel,
+    ActNumberPhotoModel
 )
 from core.config import settings
 
@@ -37,6 +40,11 @@ class ActNumberRepository:
                     ActNumberModel.verification_date,
                     ActNumberModel.legal_entity,
                     ActNumberModel.city_id,
+                ),
+                selectinload(ActNumberModel.photos).load_only(
+                    ActNumberPhotoModel.id,
+                    ActNumberPhotoModel.file_name,
+                    ActNumberPhotoModel.url,
                 ),
                 noload('*')
             )

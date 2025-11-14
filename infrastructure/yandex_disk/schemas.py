@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import date
 
@@ -11,6 +11,14 @@ class OperationMetadata(BaseModel):
     act_series: Optional[str] = None
     act_number: Optional[str] = None
 
+    @field_validator("act_number", mode="before")
+    def validate_act_number_operation(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, int):
+            v = str(v)
+        return v
+
 
 class DocumentMetadata(BaseModel):
     """Метаданные для структурированного хранения документов."""
@@ -19,6 +27,12 @@ class DocumentMetadata(BaseModel):
     verification_date: date
     act_series: str
     act_number: str
+
+    @field_validator("act_number", mode="before")
+    def validate_act_number_document(cls, v):
+        if isinstance(v, int):
+            v = str(v)
+        return v
 
 
 class FileInfo(BaseModel):

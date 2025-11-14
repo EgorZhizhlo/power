@@ -128,6 +128,7 @@ class VerifierRepository:
         """
         stmt = (
             select(TeamModel)
+            .join(TeamModel.verifiers)
             .where(
                 TeamModel.company_id == self._company_id,
                 TeamModel.is_deleted.isnot(True),

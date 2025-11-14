@@ -10,9 +10,7 @@ from contextlib import asynccontextmanager
 from core.config import settings
 
 from infrastructure.yandex_disk.client import YandexDiskClient
-from infrastructure.yandex_disk.schemas import (
-    OperationMetadata, DocumentMetadata, FileInfo
-)
+from infrastructure.yandex_disk.schemas import OperationMetadata
 
 
 class YandexDiskService:
@@ -214,7 +212,7 @@ class YandexDiskService:
         employee_fio: str | None = None,
         verification_date: date | None = None,
         act_series: str | None = None,
-        act_number: str | None = None,
+        act_number: int | None = None,
         permanently: bool = True
     ) -> dict:
         """
@@ -285,7 +283,7 @@ class YandexDiskService:
         employee_fio: str,
         verification_date: date,
         act_series: str,
-        act_number: str,
+        act_number: int,
         file_names: List[str],
         permanently: bool = True
     ):
@@ -321,7 +319,7 @@ class YandexDiskService:
         employee_fio: str,
         verification_date: date,
         act_series: str,
-        act_number: str
+        act_number: int
     ) -> dict:
         """
         Пакетная загрузка изображений.
@@ -337,6 +335,12 @@ class YandexDiskService:
         Returns:
             dict с информацией о загруженных файлах
         """
+        buffers = []
+        for f in files:
+            content = await f.read()
+            await f.seek(0)
+            buffers.append((f, content))
+
         metadata = OperationMetadata(
             company_name=company_name,
             employee_fio=employee_fio,
@@ -381,14 +385,12 @@ class YandexDiskService:
 
         semaphore = asyncio.Semaphore(3)
 
-        async def upload_one(file: UploadFile, slot: int):
+        async def upload_one(file: UploadFile, content: bytes, slot: int):
             async with semaphore:
+                loop = asyncio.get_running_loop()
                 tmp_file = None
-                try:
-                    content = await file.read()
-                    await file.seek(0)
 
-                    loop = asyncio.get_running_loop()
+                try:
                     ext = os.path.splitext(file.filename)[1]
 
                     tmp_file = await loop.run_in_executor(
@@ -403,29 +405,40 @@ class YandexDiskService:
 
                     await self.client.upload_file(tmp_file, remote_path)
 
-                    try:
-                        await self.client.publish(remote_path)
-                        url = await self.client.get_public_url(remote_path)
-                    except Exception:
-                        url = None
+                    for _ in range(20):
+                        try:
+                            meta = await self.client.get_meta(remote_path)
+                            break
+                        except:
+                            await asyncio.sleep(0.2)
+
+                    await self.client.publish(remote_path)
+
+                    url = None
+                    for _ in range(30):
+                        try:
+                            url = await self.client.get_public_url(remote_path)
+                            if url:
+                                break
+                        except:
+                            pass
+                        await asyncio.sleep(1)
 
                     uploaded.append((final_name, url))
 
-                except Exception:
-                    failed.append(file.filename)
+                except Exception as e:
+                    failed.append(f"{file.filename}: {e}")
 
                 finally:
                     if tmp_file:
-                        loop.create_task(
-                            loop.run_in_executor(
-                                self._executor,
-                                self._cleanup_temp_file,
-                                tmp_file
-                            )
+                        await loop.run_in_executor(
+                            self._executor,
+                            self._cleanup_temp_file,
+                            tmp_file
                         )
 
         await asyncio.gather(
-            *(upload_one(f, slot) for f, slot in zip(files, assigned_indices))
+            *(upload_one(f, c, slot) for (f, c), slot in zip(buffers, assigned_indices))
         )
 
         return {

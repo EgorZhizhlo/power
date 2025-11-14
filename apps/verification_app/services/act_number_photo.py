@@ -14,7 +14,7 @@ async def process_act_number_photos(
     employee_fio: str,
     verification_date,
     act_series: str,
-    act_number: str,
+    act_number: int,
     token: str,
     new_images: List[UploadFile],
     deleted_images_id: List[int]

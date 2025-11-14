@@ -135,7 +135,9 @@ async def api_update_team(
         .where(
             TeamModel.company_id == company_id,
             TeamModel.id == team_id)
-        .options(selectinload(TeamModel.verifiers))
+        .options(
+            selectinload(TeamModel.verifiers)
+        )
     )).scalar_one_or_none()
 
     await check_is_none(

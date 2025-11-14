@@ -161,11 +161,14 @@ async function fillFormFromServer(actNumberRaw) {
             try { data = await resp.json(); } catch (_) { }
             if (data) {
                 applyActNumberData(data);
+                renderActPhotos(data.photos);
             } else {
                 resetClientFieldsToDefaults();
+                renderActPhotos([]);
             }
         } else if (resp.status === 404) {
             resetClientFieldsToDefaults();
+            renderActPhotos([]);
         } else {
             resetClientFieldsToDefaults();
         }
@@ -291,6 +294,33 @@ function applyMPI() {
         updateEndVerificationDate();
     }
 }
+
+function renderActPhotos(photos) {
+  const box = document.getElementById('act_photos_list');
+  if (!box) return;
+
+  if (!photos || !Array.isArray(photos) || photos.length === 0) {
+    box.innerHTML = `<em class="text-muted">Фотографий нет</em>`;
+    return;
+  }
+
+  let html = '';
+  photos.forEach(p => {
+    const safeName = (p.file_name || '').replace(/</g, '&lt;');
+    const safeUrl = p.url ? p.url : '#';
+
+    html += `
+      <div class="mb-2">
+        <a href="${safeUrl}" target="_blank" class="fw-bold text-primary text-decoration-underline">
+          ${safeName}
+        </a>
+      </div>
+    `;
+  });
+
+  box.innerHTML = html;
+}
+
 
 document.addEventListener("DOMContentLoaded", function () {
     $('#registry_number_id').select2({
@@ -459,56 +489,6 @@ document.addEventListener("DOMContentLoaded", function () {
     enableButtons();
     window.addEventListener('pageshow', enableButtons);
 
-    async function uploadPhotos(entryId) {
-        const input = document.getElementById('verification_images');
-        if (!input || !input.files || !input.files.length) {
-            console.log('Фото не выбраны, пропускаем загрузку.');
-            return true;
-        }
-
-        const fd = new FormData();
-        for (const file of input.files) {
-            fd.append('new_images', file);
-        }
-
-        const url = `/verification/api/verifications-control/upload-photos/?` +
-            new URLSearchParams({
-                company_id: String(window.companyId),
-                verification_entry_id: String(entryId),
-            }).toString();
-
-        try {
-            const resp = await fetch(url, {
-                method: 'POST',
-                body: fd
-            });
-
-            let data = null;
-            try { data = await resp.json(); } catch (_) { }
-
-            if (!resp.ok) {
-                const msg = (data && (data.detail || data.message || data.error || data.errors)) ||
-                            `Ошибка ${resp.status}: не удалось загрузить фото.`;
-                alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-                return false;
-            }
-
-            if (data && data.status === 'ok') {
-                console.log(`✅ Загружено фото: ${data.uploaded}`);
-                return true;
-            }
-
-            alert('⚠️ Неожиданный ответ при загрузке фото.');
-            return false;
-
-        } catch (err) {
-            console.error('Ошибка загрузки фото:', err);
-            alert('Ошибка сети при загрузке фото.');
-            return false;
-        }
-    }
-
-
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
@@ -556,17 +536,25 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const fd = new FormData(form);
-        fd.set('act_number', String(actNum));
+        const tmp = new FormData(form);
+        tmp.set('act_number', String(actNum));
 
         const obj = {};
-        fd.forEach((v, k) => {
+        tmp.forEach((v, k) => {
             if (v === 'True') obj[k] = true;
             else if (v === 'False') obj[k] = false;
             else obj[k] = v;
         });
 
-        obj.company_tz = window.companyTz || 'Europe/Moscow';
+        obj.company_tz = window.companyTz || "Europe/Moscow";
+
+        const fd = new FormData();
+        fd.append("verification_entry_data", JSON.stringify(obj));
+
+        const photos = document.getElementById("verification_images").files;
+        for (const file of photos) {
+            fd.append("new_images", file);
+        }
 
         const params = new URLSearchParams({
             company_id: String(window.companyId),
@@ -577,99 +565,72 @@ document.addEventListener("DOMContentLoaded", function () {
 
         setBusyState(true, submitter);
 
-        let resp;
         try {
-            resp = await fetch(url, { 
+            const resp = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(obj)
+                body: fd
             });
 
             let data = null;
             try { data = await resp.json(); } catch (_) { }
 
-            if (resp.ok) {
-                if (!data || data.status !== 'ok') {
-                    alert('Неожиданный ответ сервера.');
-                    setBusyState(false);
-                    return;
-                }
-
-                const ve = data.verification_entry_id;
-                const mi = data.metrolog_info_id;
-                const r = data.redirect_to;
-
-                const uploaded = await uploadPhotos(ve);
-                if (!uploaded) {
-                    alert('Некоторые фото не удалось загрузить. Запись сохранена, но фото отсутствуют.');
-                }
-
-                if (r === 'p') {
-                    const params = new URLSearchParams({
-                        company_id: String(window.companyId),
-                        verification_entry_id: String(ve),
-                        metrolog_info_id: String(mi),
-                    });
-                    if (ve != null && mi != null) {
-                        window.location.href = `/verification/api/verification-protocols/one/?${params.toString()}`;
-                    } else {
-                        alert('Не удалось сформировать протокол: отсутствуют идентификаторы.');
-                        setBusyState(false);
-                    }
-                    return;
-                }
-
-                if (r === 'm') {
-                    if (!ve) {
-                        alert('Не удалось перейти к метрологической информации: отсутствует идентификатор поверки.');
-                        setBusyState(false);
-                    }
-                    if (mi) {
-                        const params = new URLSearchParams({
-                            company_id: String(window.companyId),
-                            verification_entry_id: String(ve),
-                            metrolog_info_id: String(mi),
-                        });
-                        window.location.href = `/verification/metrologs-control/update/?${params.toString()}`;
-                    } else {
-                        const params = new URLSearchParams({
-                            company_id: String(window.companyId),
-                            verification_entry_id: String(ve),
-                        });
-                        window.location.href = `/verification/metrologs-control/create/?${params.toString()}`;
-                    }
-                    return;
-                }
-
-                if (r === 'v') {
-                    const params = new URLSearchParams({
-                        company_id: String(window.companyId),
-                    });
-                    window.location.href = `/verification/?${params.toString()}`;
-                    return;
-                }
-
-                alert('Неизвестное направление редиректа.');
-                setBusyState(false);
-                return;
-            }
-
-            if (resp.status === 400) {
+            if (!resp.ok) {
                 const msg =
                     (data && (data.detail || data.message || data.error || data.errors)) ||
-                    'Ошибка 400: некорректные данные.';
+                    `Ошибка ${resp.status}`;
                 alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
                 setBusyState(false);
                 return;
             }
 
-            const msg =
-                (data && (data.detail || data.message || data.error || data.errors)) ||
-                `Ошибка ${resp.status}`;
-            alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
+            if (!data || data.status !== 'ok') {
+                alert('Неожиданный ответ сервера.');
+                setBusyState(false);
+                return;
+            }
 
+            const ve = data.verification_entry_id;
+            const mi = data.metrolog_info_id;
+            const r = data.redirect_to;
+
+            if (r === 'p') {
+                const params = new URLSearchParams({
+                    company_id: String(window.companyId),
+                    verification_entry_id: String(ve),
+                    metrolog_info_id: String(mi),
+                });
+                window.location.href = `/verification/api/verification-protocols/one/?${params.toString()}`;
+                return;
+            }
+
+            if (r === 'm') {
+                if (mi) {
+                    const params = new URLSearchParams({
+                        company_id: String(window.companyId),
+                        verification_entry_id: String(ve),
+                        metrolog_info_id: String(mi),
+                    });
+                    window.location.href = `/verification/metrologs-control/update/?${params.toString()}`;
+                } else {
+                    const params = new URLSearchParams({
+                        company_id: String(window.companyId),
+                        verification_entry_id: String(ve),
+                    });
+                    window.location.href = `/verification/metrologs-control/create/?${params.toString()}`;
+                }
+                return;
+            }
+
+            if (r === 'v') {
+                const params = new URLSearchParams({
+                    company_id: String(window.companyId),
+                });
+                window.location.href = `/verification/?${params.toString()}`;
+                return;
+            }
+
+            alert('Неизвестное направление редиректа.');
             setBusyState(false);
-            return;
 
         } catch (err) {
             console.error(err);

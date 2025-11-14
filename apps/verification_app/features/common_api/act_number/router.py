@@ -27,4 +27,5 @@ async def get_act_number_by_number(
     )
 ):
     return await repo.find_by_number(
-        series_id=series_id, act_number=act_number)
+        series_id=series_id, act_number=act_number
+    )

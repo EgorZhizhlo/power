@@ -430,7 +430,7 @@ async def create_verification_entry_by_order(
             act_number_id=verification_entry.act_number_id,
             company_name=company_params.name,
             employee_fio=employee_fio,
-            document_date=verification_entry.verification_date,
+            verification_date=verification_entry.verification_date,
             act_series=verification_entry.series.name,
             act_number=verification_entry.act_number.act_number,
             token=company_params.yandex_disk_token,

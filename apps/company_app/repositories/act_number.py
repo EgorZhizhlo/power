@@ -97,7 +97,7 @@ class ActNumberRepository(BaseRepository[ActNumberModel]):
 
     async def exists_duplicate(
         self,
-        act_number: str,
+        act_number: int,
         series_id: int,
         company_id: int,
         exclude_id: Optional[int] = None,

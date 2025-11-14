@@ -3,7 +3,7 @@ import json
 import hashlib
 from fastapi import (
     APIRouter, Response, HTTPException, UploadFile,
-    Body, File, Depends, Query
+    Body, File, Depends, Query, Form
 )
 from fastapi.encoders import jsonable_encoder
 
@@ -149,7 +149,7 @@ async def get_verification_entries(
 
 @verifications_control_api_router.post("/create")
 async def create_verification_entry(
-    verification_entry_data: CreateVerificationEntryForm = Body(...),
+    verification_entry_data_raw: str = Form(..., alias="verification_entry_data"),
     new_images: List[UploadFile] = File(default_factory=list),
 
     company_id: int = Query(..., ge=1, le=settings.max_int),
@@ -179,6 +179,13 @@ async def create_verification_entry(
         action_equipment_repository
     )
 ):
+    try:
+        data = json.loads(verification_entry_data_raw)
+    except Exception:
+        raise HTTPException(400, "Некорректный JSON в verification_entry_data")
+
+    verification_entry_data = CreateVerificationEntryForm(**data)
+
     status = employee_data.status
     employee_id = employee_data.id
 
@@ -773,14 +780,14 @@ async def delete_verification_entry(
         await verification_entry_repo.delete_entry(ver_entry.id)
 
     verification_log = await verification_log_repo.get_for_update(
-        verifier_id=ver_entry.verifier.id,
+        verifier_id=ver_entry.verifier_id,
         verification_date=ver_entry.verification_date,
     )
     if verification_log:
         verification_log.verification_limit += 1
 
     if delete_from_disk and token:
-        employee = ver_entry.verifier
+        employee = ver_entry.employee
         employee_fio = (
             f"{employee.last_name.title()} "
             f"{employee.name.title()} "
