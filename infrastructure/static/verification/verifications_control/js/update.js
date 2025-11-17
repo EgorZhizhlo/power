@@ -6,27 +6,14 @@ import {
     getCurrentYearInTz 
 } from '/static/verification/_utils/date_utils.js';
 
-let lastRegistryData = null;
-let originalEntry = {};
+import { renderActPhotos } from '/static/verification/_utils/act_number_photos_utils.js';
 
-function initPhotoDeletion() {
-    const list = document.getElementById('photo-list');
-    const bucket = document.getElementById('photos-to-delete');
-    if (!list) return;
-    list.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn-delete-photo');
-        if (!btn) return;
-        const id = btn.dataset.photoId;
-        if (!id) return;
-        if (!confirm('Удалить это фото?')) return;
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'delete_photo_ids[]';
-        input.value = id;
-        bucket.appendChild(input);
-        btn.closest('li').remove();
-    });
-}
+window.deletedImages = window.deletedImages || [];
+window.deletedVerificationPhotos = [];
+
+let lastRegistryData = null;
+let phoneMask = null;
+let originalEntry = {};
 
 function initPhotoUploadLimit() {
     const fileInput = document.getElementById('new_verification_images');
@@ -37,6 +24,35 @@ function initPhotoUploadLimit() {
         if (existingCount + selectedCount > window.photoLimit) {
             alert(`Можно загрузить не более ${window.photoLimit} фото. Сейчас выбрано ${selectedCount}, а уже существует ${existingCount}.`);
             fileInput.value = '';
+        }
+    });
+}
+
+function initOldPhotoDeletion() {
+    const photoList = document.getElementById('photo-list');
+    if (!photoList) return;
+
+    photoList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-delete-photo');
+        if (!btn) return;
+
+        const photoId = btn.dataset.photoId;
+        if (!photoId) return;
+
+        if (!confirm('Удалить это фото?')) return;
+
+        // Добавляем в массив удаленных
+        if (!window.deletedVerificationPhotos.includes(photoId)) {
+            window.deletedVerificationPhotos.push(photoId);
+        }
+
+        // Удаляем из DOM
+        btn.closest('li').remove();
+
+        // Если список пуст, скрываем контейнер
+        if (photoList.querySelectorAll('li').length === 0) {
+            const parentDiv = photoList.closest('.col-12');
+            if (parentDiv) parentDiv.style.display = 'none';
         }
     });
 }
@@ -232,7 +248,123 @@ function applyMPI() {
     updateEndVerificationDate();
 }
 
+
+async function loadActNumberForUpdate() {
+    window.deletedImages = [];
+
+    const actInput = document.getElementById('act_number');
+    const seriesSelect = document.getElementById('series_id');
+
+    const rawAct = (actInput.value || '').replace(/\D/g, '');
+    const cleaned = rawAct.replace(/^0+/, '');
+    if (!cleaned) {
+        resetClientFieldsToDefaults();
+        renderActPhotos([]);
+        return;
+    }
+
+    const num = parseInt(cleaned, 10);
+    if (!Number.isFinite(num) || num < 1) {
+        resetClientFieldsToDefaults();
+        renderActPhotos([]);
+        return;
+    }
+
+    const seriesId = seriesSelect.value;
+    if (!seriesId) {
+        alert('Сначала выберите серию бланка.');
+        resetClientFieldsToDefaults();
+        renderActPhotos([]);
+        return;
+    }
+
+    const params = new URLSearchParams({
+        company_id: String(window.companyId),
+        series_id: String(seriesId),
+        act_number: String(num),
+    });
+
+    try {
+        const resp = await fetch(`/verification/api/act-numbers/by-number/?${params.toString()}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+
+        let data = null;
+        if (resp.ok) {
+            try {
+                data = await resp.json();
+            } catch (_) { }
+
+            if (data) {
+                // Заполнение полей формы
+                const setIf = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el && val != null) el.value = val;
+                };
+
+                setIf('client_full_name', data.client_full_name);
+                setIf('address', data.address);
+
+                if (data.client_phone) {
+                    if (phoneMask) {
+                        phoneMask.value = data.client_phone;
+                        phoneMask.updateValue();
+                    } else {
+                        setIf('client_phone', data.client_phone);
+                    }
+                }
+
+                if (data.verification_date) {
+                    setIf('verification_date', data.verification_date);
+                }
+
+                if (data.legal_entity != null) {
+                    setIf('legal_entity', data.legal_entity);
+                }
+
+                if (data.city_id != null) {
+                    const citySelect = document.getElementById('city_id');
+                    if (citySelect && [...citySelect.options].some(o => o.value == data.city_id)) {
+                        citySelect.value = String(data.city_id);
+                    }
+                }
+
+                // Рендеринг фотографий
+                renderActPhotos(data.photos || []);
+            } else {
+                resetClientFieldsToDefaults();
+                renderActPhotos([]);
+            }
+        } else if (resp.status === 404) {
+            resetClientFieldsToDefaults();
+            renderActPhotos([]);
+        } else {
+            resetClientFieldsToDefaults();
+            renderActPhotos([]);
+        }
+
+        // Пересчёт дат и интервалов
+        applyMPI();
+        updateEndVerificationDate();
+        calculateNextVerification();
+    } catch (err) {
+        console.error('Ошибка /by-number:', err);
+        resetClientFieldsToDefaults();
+        renderActPhotos([]);
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Инициализируем phoneMask в начале, ДО вызова loadActNumberForUpdate
+    const phoneInput = document.getElementById('client_phone');
+    phoneMask = IMask(phoneInput, {
+        mask: '+{7} (000) 000-00-00',
+        lazy: false
+    });
+    console.log('phoneMask initialized');
 
     $('#registry_number_id')
         .on('select2:select', (e) => {
@@ -256,10 +388,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (id) loadRegistryData(id);
         });
 
-    const phoneInput = document.getElementById('client_phone');
-    const phoneMask = IMask(phoneInput, { mask: '+{7} (000) 000-00-00', lazy: false, placeholderChar: '_' });
-    phoneMask.updateValue();
-
     const verificationDateInput = document.getElementById('verification_date');
     verificationDateInput.setAttribute('max', getTodayInCompanyTz());
 
@@ -269,8 +397,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('end_verification_date').addEventListener('change', calculateNextVerification);
 
     const regSelect = document.getElementById('registry_number_id');
-    const seriesSelect = document.getElementById('series_id');
     const actInput = document.getElementById('act_number');
+    const seriesSelect = document.getElementById('series_id');
+
+    actInput.addEventListener('change', loadActNumberForUpdate);
+    seriesSelect.addEventListener('change', loadActNumberForUpdate);
 
     if (regSelect && regSelect.value) {
         loadRegistryData(regSelect.value, true);
@@ -280,66 +411,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const digits = (actInput.value || '').replace(/\D/g, '');
         const cleaned = digits.replace(/^0+/, '');
         if (cleaned) {
-            const num = parseInt(cleaned, 10);
-            if (Number.isFinite(num) && num > 0) {
-                const params = new URLSearchParams({
-                    company_id: String(window.companyId),
-                    series_id: String(encodeURIComponent(seriesSelect.value)),
-                    act_number: String(encodeURIComponent(num)),
-                });
-
-                fetch(`/verification/api/act-numbers/by-number/?${params.toString()}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .then(data => {
-                        if (!data || data.found === false) return;
-
-                        if (Object.keys(originalEntry).length === 0) {
-                            originalEntry = {
-                                client_full_name: data.client_full_name || '',
-                                client_phone: data.client_phone || '',
-                                address: data.address || '',
-                                verification_date: data.verification_date || '',
-                                legal_entity: data.legal_entity,
-                                city_id: data.city_id ?? null
-                            };
-                        }
-
-                        const setIf = (id, val) => {
-                            const el = document.getElementById(id);
-                            if (el && val !== undefined && val !== null) el.value = val;
-                        };
-                        setIf('client_full_name', data.client_full_name);
-                        setIf('address', data.address);
-                        if (data.client_phone) {
-                            try {
-                                if (typeof phoneMask !== 'undefined' && phoneMask) {
-                                    phoneMask.value = data.client_phone;
-                                } else {
-                                    document.getElementById('client_phone').value = data.client_phone;
-                                }
-                            } catch { document.getElementById('client_phone').value = data.client_phone; }
-                        }
-                        if (data.verification_date) setIf('verification_date', String(data.verification_date));
-                        if (data.legal_entity !== undefined && data.legal_entity !== null) {
-                            setIf('legal_entity', data.legal_entity);
-                        }
-                        if (data.city_id !== undefined && data.city_id !== null) {
-                            const citySelect = document.getElementById('city_id');
-                            if (citySelect && [...citySelect.options].some(o => o.value == String(data.city_id))) {
-                                citySelect.value = String(data.city_id);
-                            }
-                        }
-                        applyMPI();
-                        updateEndVerificationDate();
-                        calculateNextVerification();
-                    })
-                    .catch(err => console.error('Ошибка подгрузки act_number:', err));
-            }
+            // Подгружаем данные act_number при инициализации
+            loadActNumberForUpdate();
         }
     }
 
-    initPhotoDeletion();
     initPhotoUploadLimit();
+    initOldPhotoDeletion();
 
     applyMPI();
     toggleAdditionalInput();
@@ -347,131 +425,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const INT_MAX = 2147483647;
     let lastActQuery = null;
-
-    actInput.addEventListener('blur', async () => {
-        const digits = (actInput.value || '').replace(/\D/g, '');
-        if (!digits) return;
-
-        const cleaned = digits.replace(/^0+/, '');
-        if (!cleaned) return;
-
-        const num = parseInt(cleaned, 10);
-        if (!Number.isFinite(num) || num < 1) return;
-
-        if (num > INT_MAX) {
-            alert(`Номер бланка превышает допустимый максимум (${INT_MAX}).`);
-            return;
-        }
-
-        const seriesSelect = document.getElementById('series_id');
-        const seriesId = seriesSelect ? seriesSelect.value : '';
-
-        const queryKey = `${seriesId}:${num}:${Date.now()}`;
-        lastActQuery = queryKey;
-
-        const setIf = (id, val) => {
-            const el = document.getElementById(id);
-            if (el != null && val !== undefined && val !== null) el.value = val;
-        };
-
-        const applyOriginal = () => {
-            setIf('client_full_name', originalEntry.client_full_name);
-            setIf('address', originalEntry.address);
-
-            const phoneEl = document.getElementById('client_phone');
-            if (phoneEl) {
-                try {
-                    if (typeof phoneMask !== 'undefined' && phoneMask) {
-                        phoneMask.value = originalEntry.client_phone || '';
-                    } else {
-                        phoneEl.value = originalEntry.client_phone || '';
-                    }
-                } catch {
-                    phoneEl.value = originalEntry.client_phone || '';
-                }
-            }
-
-            if (originalEntry.verification_date) {
-                setIf('verification_date', String(originalEntry.verification_date));
-            }
-
-            if (typeof originalEntry.legal_entity !== 'undefined' && originalEntry.legal_entity !== null) {
-                setIf('legal_entity', originalEntry.legal_entity);
-            }
-
-            if (originalEntry.city_id != null) {
-                const citySelect = document.getElementById('city_id');
-                if (citySelect && [...citySelect.options].some(o => o.value == String(originalEntry.city_id))) {
-                    citySelect.value = String(originalEntry.city_id);
-                }
-            }
-
-            applyMPI();
-            updateEndVerificationDate();
-            calculateNextVerification();
-        };
-
-        try {
-            const params = new URLSearchParams({
-                company_id: String(window.companyId),
-                series_id: String(encodeURIComponent(seriesId)),
-                act_number: String(encodeURIComponent(num)),
-            });
-            const url = `/verification/api/act-numbers/by-number/?${params.toString()}`;
-            const resp = await fetch(url, { method: 'GET' });
-            if (!resp.ok) {
-                if (lastActQuery === queryKey) applyOriginal();
-                return;
-            }
-            let data = null;
-            try { data = await resp.json(); } catch { data = null; }
-
-            if (lastActQuery !== queryKey) return;
-
-            if (!data || (typeof data === 'object' && Object.keys(data).length === 0) || data.found === false) {
-                applyOriginal();
-                return;
-            }
-
-            setIf('client_full_name', data.client_full_name);
-            setIf('address', data.address);
-
-            const phoneEl = document.getElementById('client_phone');
-            if (phoneEl && (data.client_phone !== undefined)) {
-                try {
-                    if (typeof phoneMask !== 'undefined' && phoneMask) {
-                        phoneMask.value = data.client_phone || '';
-                    } else {
-                        phoneEl.value = data.client_phone || '';
-                    }
-                } catch {
-                    phoneEl.value = data.client_phone || '';
-                }
-            }
-
-            if (data.verification_date) {
-                setIf('verification_date', String(data.verification_date));
-            }
-
-            if (data.legal_entity !== undefined && data.legal_entity !== null) {
-                setIf('legal_entity', data.legal_entity);
-            }
-
-            if (data.city_id !== undefined && data.city_id !== null) {
-                const citySelect = document.getElementById('city_id');
-                if (citySelect && [...citySelect.options].some(o => o.value == String(data.city_id))) {
-                    citySelect.value = String(data.city_id);
-                }
-            }
-
-            applyMPI();
-            updateEndVerificationDate();
-            calculateNextVerification();
-
-        } catch (e) {
-            console.error('Ошибка запроса /act-number/by-number:', e);
-        }
-    });
 
     actInput.addEventListener('keydown', (e) => {
         const allowedCtrl =
@@ -506,55 +459,6 @@ document.addEventListener('DOMContentLoaded', function () {
         calculateNextVerification();
     });
 
-    async function uploadPhotos(entryId) {
-        const input = document.getElementById('new_verification_images');
-        if (!input || !input.files || !input.files.length) {
-            console.log('📸 Новые фото не выбраны — пропускаем загрузку.');
-            return true;
-        }
-
-        const fd = new FormData();
-        for (const file of input.files) {
-            fd.append('new_images', file);
-        }
-
-        const url = `/verification/api/verifications-control/upload-photos/?` +
-            new URLSearchParams({
-                company_id: String(window.companyId),
-                verification_entry_id: String(entryId),
-            }).toString();
-
-        try {
-            const resp = await fetch(url, {
-                method: 'POST',
-                body: fd
-            });
-
-            let data = null;
-            try { data = await resp.json(); } catch (_) { }
-
-            if (!resp.ok) {
-                const msg = (data && (data.detail || data.message || data.error || data.errors)) ||
-                            `Ошибка ${resp.status}: не удалось загрузить фото.`;
-                alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-                return false;
-            }
-
-            if (data && data.status === 'ok') {
-                console.log(`✅ Фото успешно загружены (${data.uploaded || input.files.length})`);
-                return true;
-            }
-
-            alert('⚠️ Неожиданный ответ при загрузке фото.');
-            return false;
-
-        } catch (err) {
-            console.error('Ошибка загрузки фото:', err);
-            alert('Ошибка сети при загрузке фото.');
-            return false;
-        }
-    }
-
     const form = document.getElementById('edit-entry-form');
     const buttons = form.querySelectorAll('button[type=submit]');
 
@@ -582,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const submitter = e.submitter || null;
         const redirectFlag = (submitter && submitter.id === 'edit-entry-and-metrolog') ? '1' : '0';
 
+        const phoneInput = document.getElementById('client_phone');
         const raw = phoneMask.unmaskedValue;
         const allowShort = raw.length <= 2;
         const allowFull = phoneMask.masked.isComplete;
@@ -610,127 +515,124 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const rawAct = (actInput.value || '').replace(/\D/g, '');
         const cleaned = rawAct.replace(/^0+/, '');
-        const actNum = cleaned === '' ? null : parseInt(cleaned, 10);
-
-        if (actNum === null || !Number.isFinite(actNum) || actNum < 1) {
-            alert('Введите корректный номер бланка (целое число > 0).');
-            return;
-        }
-        if (actNum > INT_MAX) {
-            alert(`Номер бланка превышает допустимый максимум (${INT_MAX}).`);
+        if (!cleaned || cleaned === '0') {
+            alert('Введите корректный номер бланка.');
+            setBusyState(false, submitter);
             return;
         }
 
-        if (!form.checkValidity()) {
-            form.reportValidity();
+        const actNum = parseInt(cleaned, 10);
+        if (!Number.isFinite(actNum) || actNum < 1 || actNum > INT_MAX) {
+            alert(`Номер бланка должен быть в диапазоне 1..${INT_MAX}`);
+            setBusyState(false, submitter);
             return;
         }
-
-        const obj = Object.fromEntries(new FormData(form).entries());
-        obj.act_number = String(actNum);
-
-        obj.company_tz = window.companyTz || 'Europe/Moscow';
-
-        const params = new URLSearchParams({
-            company_id: String(window.companyId),
-            verification_entry_id: window.verifEntryId,
-            redirect_to_metrolog_info: String(redirectFlag),
-        });
-
-        const url = `/verification/api/verifications-control/update/?${params.toString()}`;
 
         setBusyState(true, submitter);
 
         try {
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(obj)
+            // 1. Формируем JSON объект с данными формы
+            const tmp = new FormData(form);
+            tmp.set('act_number', String(actNum));
+
+            const obj = {};
+            tmp.forEach((v, k) => {
+                if (v === 'True') obj[k] = true;
+                else if (v === 'False') obj[k] = false;
+                else obj[k] = v;
             });
-            let data = null;
-            try { data = await resp.json(); } catch (_) { }
 
-            if (resp.ok) {
-                if (!data || data.status !== 'ok') {
-                    alert('Неожиданный ответ сервера.');
-                    setBusyState(false);
-                    return;
+            obj.company_tz = window.companyTz || "Europe/Moscow";
+            obj.deleted_images_id = window.deletedImages; // Фото act_number
+            obj.deleted_verification_photos_id = window.deletedVerificationPhotos; // Старые фото поверки
+
+            // 2. Создаем FormData для отправки
+            const fd = new FormData();
+            fd.append("verification_entry_data", JSON.stringify(obj));
+
+            // 3. Добавляем новые фото
+            const newPhotosInput = document.getElementById('new_verification_images');
+            if (newPhotosInput && newPhotosInput.files) {
+                for (const file of newPhotosInput.files) {
+                    fd.append("new_images", file);
                 }
+            }
 
-                const ve = data.verification_entry_id;
-                const mi = data.metrolog_info_id;
-                const r = data.redirect_to;
+            // 4. Отправка на сервер
+            const params = new URLSearchParams({
+                company_id: String(window.companyId),
+                verification_entry_id: String(window.verifEntryId),
+                redirect_to_metrolog_info: redirectFlag,
+            });
 
-                const uploaded = await uploadPhotos(ve);
-                if (!uploaded) {
-                    alert('⚠️ Фото не удалось загрузить. Запись обновлена, но изображения не добавлены.');
-                }
+            const url = `/verification/api/verifications-control/update/?${params.toString()}`;
 
-                if (r === 'p') {
+            const resp = await fetch(url, {
+                method: 'PUT',
+                body: fd
+            });
+
+            if (!resp.ok) {
+                const errText = await resp.text();
+                console.error('Ошибка обновления:', resp.status, errText);
+                alert(`Ошибка при обновлении записи (${resp.status}). Проверьте данные.`);
+                setBusyState(false, submitter);
+                return;
+            }
+
+            const data = await resp.json();
+            console.log('Ответ сервера:', data);
+
+            // 5. Обработка редиректа
+            const ve = data.verification_entry_id || window.verifEntryId;
+            const mi = data.metrolog_info_id;
+            const r = data.redirect_to;
+
+            if (r === 'p') {
+                // Протокол поверки
+                const params = new URLSearchParams({
+                    company_id: String(window.companyId),
+                    verification_entry_id: String(ve),
+                    metrolog_info_id: String(mi),
+                });
+                window.location.href = `/verification/api/verification-protocols/one/?${params.toString()}`;
+                return;
+            }
+
+            if (r === 'm') {
+                // Метрологическая информация
+                if (mi) {
                     const params = new URLSearchParams({
                         company_id: String(window.companyId),
                         verification_entry_id: String(ve),
                         metrolog_info_id: String(mi),
                     });
-                    if (ve != null && mi != null) {
-                        window.location.href = `/verification/api/verification-protocols/one/?${params.toString()}`;
-                    } else {
-                        alert('Не удалось сформировать протокол: отсутствуют идентификаторы.');
-                        setBusyState(false);
-                    }
-                    return;
-                }
-
-                if (r === 'm') {
-                    if (!ve) {
-                        alert('Не удалось перейти к метрологической информации: отсутствует идентификатор поверки.');
-                        setBusyState(false);
-                    }
-                    if (mi) {
-                        const params = new URLSearchParams({
-                            company_id: String(window.companyId),
-                            verification_entry_id: String(ve),
-                            metrolog_info_id: String(mi),
-                        });
-                        window.location.href = `/verification/metrologs-control/update/?${params.toString()}`;
-                    } else {
-                        const params = new URLSearchParams({
-                            company_id: String(window.companyId),
-                            verification_entry_id: String(ve),
-                        });
-                        window.location.href = `/verification/metrologs-control/create/?${params.toString()}`;
-                    }
-                    return;
-                }
-
-                if (r === 'v') {
+                    window.location.href = `/verification/metrologs-control/update/?${params.toString()}`;
+                } else {
                     const params = new URLSearchParams({
                         company_id: String(window.companyId),
+                        verification_entry_id: String(ve),
                     });
-                    window.location.href = `/verification/?${params.toString()}`;
-                    return;
+                    window.location.href = `/verification/metrologs-control/create/?${params.toString()}`;
                 }
-
-                alert('Неизвестное направление редиректа.');
-                setBusyState(false);
                 return;
             }
 
-            if (resp.status === 400) {
-                const msg = (data && (data.detail || data.message || data.error || data.errors)) || 'Ошибка 400: некорректные данные.';
-                alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-                setBusyState(false);
+            if (r === 'v') {
+                // Возврат к списку поверок
+                const params = new URLSearchParams({
+                    company_id: String(window.companyId),
+                });
+                window.location.href = `/verification/?${params.toString()}`;
                 return;
             }
 
-            const msg = (data && (data.detail || data.message || data.error || data.errors)) || `Ошибка ${resp.status}`;
-            alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-            setBusyState(false);
-
+            // Fallback редирект
+            window.location.href = `/verification/?company_id=${window.companyId}`;
         } catch (err) {
-            console.error(err);
-            alert('Сеть недоступна или сервер временно недоступен.');
-            setBusyState(false);
+            console.error('Ошибка отправки формы:', err);
+            alert('Произошла ошибка при отправке формы. Попробуйте снова.');
+            setBusyState(false, submitter);
         }
     });
 });

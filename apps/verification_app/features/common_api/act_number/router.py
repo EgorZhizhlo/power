@@ -26,6 +26,8 @@ async def get_act_number_by_number(
         read_act_number_repository
     )
 ):
-    return await repo.find_by_number(
+    act_num = await repo.find_by_number(
         series_id=series_id, act_number=act_number
     )
+
+    return act_num

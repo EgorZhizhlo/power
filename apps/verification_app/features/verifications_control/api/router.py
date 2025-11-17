@@ -1,9 +1,9 @@
-from typing import List, Dict, Any
+from typing import List
 import json
 import hashlib
 from fastapi import (
     APIRouter, Response, HTTPException, UploadFile,
-    Body, File, Depends, Query, Form
+    File, Depends, Query, Form
 )
 from fastapi.encoders import jsonable_encoder
 
@@ -149,7 +149,9 @@ async def get_verification_entries(
 
 @verifications_control_api_router.post("/create")
 async def create_verification_entry(
-    verification_entry_data_raw: str = Form(..., alias="verification_entry_data"),
+    verification_entry_data_raw: str = Form(
+        ..., alias="verification_entry_data"
+    ),
     new_images: List[UploadFile] = File(default_factory=list),
 
     company_id: int = Query(..., ge=1, le=settings.max_int),
@@ -181,10 +183,9 @@ async def create_verification_entry(
 ):
     try:
         data = json.loads(verification_entry_data_raw)
+        verification_entry_data = CreateVerificationEntryForm(**data)
     except Exception:
         raise HTTPException(400, "Некорректный JSON в verification_entry_data")
-
-    verification_entry_data = CreateVerificationEntryForm(**data)
 
     status = employee_data.status
     employee_id = employee_data.id
@@ -389,9 +390,11 @@ async def create_verification_entry(
     }
 
 
-@verifications_control_api_router.post("/update")
+@verifications_control_api_router.put("/update")
 async def update_verification_entry(
-    verification_entry_data: UpdateVerificationEntryForm = Body(...),
+    verification_entry_data_raw: str = Form(
+        ..., alias="verification_entry_data"
+    ),
     new_images: List[UploadFile] = File(default_factory=list),
 
     company_id: int = Query(..., ge=1, le=settings.max_int),
@@ -420,6 +423,12 @@ async def update_verification_entry(
 ):
     status = employee_data.status
     employee_id = employee_data.id
+
+    try:
+        data = json.loads(verification_entry_data_raw)
+        verification_entry_data = UpdateVerificationEntryForm(**data)
+    except Exception:
+        raise HTTPException(400, "Некорректный JSON в verification_entry_data")
 
     validate_company_timezone(
         verification_entry_data.company_tz,
@@ -647,8 +656,8 @@ async def update_verification_entry(
             act_series=series.name,
             act_number=act_num.act_number,
             token=company_params.yandex_disk_token,
-            new_images=new_images or [],
-            deleted_images_id=verification_entry_data.deleted_images_id or []
+            new_images=new_images,
+            deleted_images_id=verification_entry_data.deleted_images_id
         )
 
     if company_params.auto_metrolog:

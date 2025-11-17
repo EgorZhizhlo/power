@@ -1,8 +1,9 @@
 import math
+import json
 from typing import List
 from fastapi import (
     APIRouter, Response, HTTPException, UploadFile,
-    Depends, Body, Query, File
+    Depends, Body, Query, File, Form
 )
 from fastapi import status as status_code
 
@@ -257,7 +258,9 @@ async def delete_counter_assignment(
 
 @orders_control_api_router.post("/create/")
 async def create_verification_entry_by_order(
-    verification_entry_data: CreateVerificationEntryForm = Body(...),
+    verification_entry_data_raw: str = Form(
+        ..., alias="verification_entry_data"
+    ),
     new_images: List[UploadFile] = File(default_factory=list),
 
     company_id: int = Query(..., ge=1, le=settings.max_int),
@@ -294,6 +297,12 @@ async def create_verification_entry_by_order(
 ):
     status = employee_data.status
     employee_id = employee_data.id
+
+    try:
+        data = json.loads(verification_entry_data_raw)
+        verification_entry_data = CreateVerificationEntryForm(**data)
+    except Exception as e:
+        raise HTTPException(400, f"Некорректный запрос. Ошибка: {e}")
 
     validate_company_timezone(
         verification_entry_data.company_tz,

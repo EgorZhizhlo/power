@@ -351,36 +351,28 @@
         </div>
         {% endif %}
 
-        <div class="col-md-6 mb-3">
+        <div class="col-md-6 mb-3 flex-grow-1 d-flex flex-column">
           <label for="new_verification_images" class="form-label text-truncate">
-            Загрузить новые фото (до {{ image_limit_per_verification }})
+            Загрузить изображения (до {{ image_limit_per_verification }} файлов)
           </label>
-          <input
-            type="file"
+          <input 
+            type="file" 
             id="new_verification_images"
-            name="new_verification_images"
-            class="form-control form-control-sm"
-            accept="image/*"
-            multiple
-          >
-          <div class="form-text">
-            Максимум {{ image_limit_per_verification }} файлов (jpeg, png, heic, webp и т.д.)
+            name="new_verification_images" 
+            class="form-control"
+            accept="image/*" 
+            multiple />
+          <div class="form-text text-truncate">
+            Максимум {{ image_limit_per_verification }} файлов: jpeg, jpg, png, heic, heif, webp.
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Фотографии акта</label>
+            <div id="act_photos_list" class="border rounded p-3 bg-light" style="min-height: 40px;">
+              <em class="text-muted">Фотографий нет</em>
+            </div>
           </div>
         </div>
-
-        {% if verification_entry_photos %}
-        <ol id="photo-list" class="photo-list mt-3">
-          {% for photo in verification_entry_photos %}
-          <li data-photo-id="{{ photo.id }}">
-            <a href="{{ photo.url | safe }}" target="_blank" rel="noopener">Фото {{ loop.index }}</a>
-            <button type="button" class="btn-delete-photo" data-photo-id="{{ photo.id }}">×</button>
-          </li>
-          {% endfor %}
-        </ol>
-        <div id="photos-to-delete"></div>
-        {% else %}
-        <p class="text-muted text-center mt-2 mb-0 small">Фотографий ещё нет.</p>
-        {% endif %}
 
         <div class="form-actions d-flex justify-content-end mt-4">
           <button id="edit-entry" type="submit" class="btn btn-save fw-bold">✅ Сохранить</button>

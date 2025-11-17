@@ -5,6 +5,7 @@ from models.enums import VerificationLegalEntity
 
 
 class ActNumberPhotoResponse(BaseModel):
+    id: int
     file_name: str
     url: Optional[str] = None
 

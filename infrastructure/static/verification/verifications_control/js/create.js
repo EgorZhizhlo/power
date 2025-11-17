@@ -5,6 +5,11 @@ import {
     addYearsInTz,
     getCurrentYearInTz 
 } from '/static/verification/_utils/date_utils.js';
+import { 
+    renderActPhotos 
+} from '/static/verification/_utils/act_number_photos_utils.js';
+
+window.deletedImages = window.deletedImages || [];
 
 document.getElementById('verification_images')
     .addEventListener('change', function () {
@@ -70,7 +75,7 @@ function toggleAdditionalInput() {
     additionalInput.style.display = verificationResult.value === 'False' ? 'block' : 'none';
 }
 
-function resetClientFieldsToDefaults() {
+function resetActFormClientFields() {
     const addressInput = document.getElementById("address");
     const clientNameInput = document.getElementById("client_full_name");
     const phoneInput = document.getElementById("client_phone");
@@ -125,10 +130,12 @@ function applyActNumberData(data) {
     }
 }
 
-async function fillFormFromServer(actNumberRaw) {
+async function loadActNumberData(actNumberRaw) {
+    window.deletedImages = [];
+
     const keyNum = parseInt(String(actNumberRaw).replace(/\D/g, ''), 10);
     if (!Number.isInteger(keyNum) || keyNum < 1) {
-        resetClientFieldsToDefaults();
+        resetActFormClientFields();
         return;
     }
 
@@ -137,7 +144,7 @@ async function fillFormFromServer(actNumberRaw) {
 
     if (!Number.isInteger(seriesId) || seriesId < 1) {
         alert('Сначала выберите серию бланка.');
-        resetClientFieldsToDefaults();
+        resetActFormClientFields();
         return;
     }
 
@@ -163,18 +170,18 @@ async function fillFormFromServer(actNumberRaw) {
                 applyActNumberData(data);
                 renderActPhotos(data.photos);
             } else {
-                resetClientFieldsToDefaults();
+                resetActFormClientFields();
                 renderActPhotos([]);
             }
         } else if (resp.status === 404) {
-            resetClientFieldsToDefaults();
+            resetActFormClientFields();
             renderActPhotos([]);
         } else {
-            resetClientFieldsToDefaults();
+            resetActFormClientFields();
         }
     } catch (e) {
         console.error('fetch act number error:', e);
-        resetClientFieldsToDefaults();
+        resetActFormClientFields();
     }
 }
 
@@ -295,33 +302,6 @@ function applyMPI() {
     }
 }
 
-function renderActPhotos(photos) {
-  const box = document.getElementById('act_photos_list');
-  if (!box) return;
-
-  if (!photos || !Array.isArray(photos) || photos.length === 0) {
-    box.innerHTML = `<em class="text-muted">Фотографий нет</em>`;
-    return;
-  }
-
-  let html = '';
-  photos.forEach(p => {
-    const safeName = (p.file_name || '').replace(/</g, '&lt;');
-    const safeUrl = p.url ? p.url : '#';
-
-    html += `
-      <div class="mb-2">
-        <a href="${safeUrl}" target="_blank" class="fw-bold text-primary text-decoration-underline">
-          ${safeName}
-        </a>
-      </div>
-    `;
-  });
-
-  box.innerHTML = html;
-}
-
-
 document.addEventListener("DOMContentLoaded", function () {
     $('#registry_number_id').select2({
         width: '100%',
@@ -407,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const num = getSanitizedActNumber();
             if (num === null || num < 1 || num > INT_MAX) return;
 
-            await fillFormFromServer(String(num));
+            await loadActNumberData(String(num));
 
             updateEndVerificationDate();
             calculateNextVerification();
@@ -442,10 +422,10 @@ document.addEventListener("DOMContentLoaded", function () {
         actInput.value = (actInput.value || '').replace(/\D/g, '');
     });
 
-    actInput.addEventListener('blur', async () => {
+    actInput.addEventListener('change', async () => {
         const num = getSanitizedActNumber();
         if (num === null || num < 1) {
-            resetClientFieldsToDefaults();
+            resetActFormClientFields();
             return;
         }
         if (num > INT_MAX) {
@@ -453,7 +433,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        await fillFormFromServer(String(num));
+        await loadActNumberData(String(num));
         updateEndVerificationDate();
         calculateNextVerification();
     });
@@ -547,8 +527,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         obj.company_tz = window.companyTz || "Europe/Moscow";
+        obj.deleted_images_id = window.deletedImages;
 
-        const fd = new FormData();
+        const fd = new FormData(form);
         fd.append("verification_entry_data", JSON.stringify(obj));
 
         const photos = document.getElementById("verification_images").files;
