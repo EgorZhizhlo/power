@@ -6,6 +6,10 @@ import {
   getCurrentYearInTz
 } from '/static/verification/_utils/date_utils.js';
 
+import { renderActPhotos } from '/static/verification/_utils/act_number_photos_utils.js';
+
+window.deletedImages = window.deletedImages || [];
+
 const companyId = window.companyId;
 const userStatus = window.userStatus;
 const autoManufactureYear = window.autoManufactureYear;
@@ -290,14 +294,30 @@ function fillFromOrder(prefill) {
 let lastActQueryKey = null;
 
 async function queryActNumber() {
+  window.deletedImages = [];
+
   const seriesId = seriesSelect ? seriesSelect.value : '';
   const digits = (actInput.value || '').replace(/\D/g, '').replace(/^0+/, '');
-  if (!seriesId || !digits) return;
+  
+  if (!seriesId) {
+    alert('Сначала выберите серию бланка.');
+    renderActPhotos([]);
+    return;
+  }
+
+  if (!digits) {
+    renderActPhotos([]);
+    return;
+  }
 
   const num = parseInt(digits, 10);
-  if (!Number.isFinite(num) || num < 1) return;
+  if (!Number.isFinite(num) || num < 1) {
+    renderActPhotos([]);
+    return;
+  }
   if (num > INT_MAX) {
     alert(`Номер бланка превышает допустимый максимум (${INT_MAX}).`);
+    renderActPhotos([]);
     return;
   }
 
@@ -319,60 +339,55 @@ async function queryActNumber() {
 
     let data = null;
     if (resp.ok) {
-      try { data = await resp.json(); } catch { data = null; }
+      try {
+        data = await resp.json();
+      } catch (_) { }
+      
       if (lastActQueryKey !== queryKey) return;
       
       if (data && data.found !== false) {
+        // Заполнение полей формы
         const setIf = (id, val) => {
           const el = document.getElementById(id);
-          if (el != null && val !== undefined && val !== null) el.value = val;
+          if (el && val != null) el.value = val;
         };
 
         setIf('client_full_name', data.client_full_name);
         setIf('address', data.address);
 
-        const phoneEl = document.getElementById('client_phone');
-        if (phoneEl && (data.client_phone !== undefined)) {
-          try {
-            if (typeof phoneMask !== 'undefined' && phoneMask) {
-              phoneMask.value = data.client_phone || '';
-            } else {
-              phoneEl.value = data.client_phone || '';
-            }
-          } catch {
-            phoneEl.value = data.client_phone || '';
-          }
+        if (data.client_phone && phoneMask) {
+          phoneMask.value = data.client_phone;
+          phoneMask.updateValue();
         }
 
-        if (data.verification_date) setIf('verification_date', String(data.verification_date));
-
-        if (data.legal_entity !== undefined && data.legal_entity !== null) {
-          setIf('legal_entity', data.legal_entity ? 'legal' : 'individual');
-          document.getElementById('legal_entity').dispatchEvent(new Event('change'));
+        if (data.verification_date) {
+          setIf('verification_date', data.verification_date);
         }
 
-        if (data.city_id !== undefined && data.city_id !== null) {
+        if (data.legal_entity != null) {
+          setIf('legal_entity', data.legal_entity);
+        }
+
+        if (data.city_id != null) {
           const citySelect = document.getElementById('city_id');
-          if (citySelect && [...citySelect.options].some(o => o.value == String(data.city_id))) {
+          if (citySelect && [...citySelect.options].some(o => o.value == data.city_id)) {
             citySelect.value = String(data.city_id);
-            citySelect.dispatchEvent(new Event('change'));
           }
         }
 
-        updateEndVerificationDate();
-        calculateNextVerification();
+        // Рендеринг фотографий
+        renderActPhotos(data.photos || []);
       } else {
-        fillFromOrder(prefillData);
+        renderActPhotos([]);
       }
     } else if (resp.status === 404) {
-      if (lastActQueryKey !== queryKey) return;
-      fillFromOrder(prefillData);
+      renderActPhotos([]);
     } else {
-      if (lastActQueryKey !== queryKey) return;
-      fillFromOrder(prefillData);
+      renderActPhotos([]);
     }
   } catch (e) {
     console.error('Ошибка запроса /act-numbers/by-number:', e);
+    renderActPhotos([]);
   }
 }
 
@@ -452,43 +467,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   window.addEventListener('pageshow', () => setBusyState(false));
 
-  async function uploadPhotos(verificationEntryId) {
-    const photosInput = document.getElementById('verification_images');
-    if (!photosInput || !photosInput.files || photosInput.files.length === 0) {
-      return { success: true };
-    }
-
-    const formData = new FormData();
-    Array.from(photosInput.files).forEach((file) => {
-      formData.append('files', file);
-    });
-
-    const params = new URLSearchParams({
-      company_id: companyId,
-      verification_entry_id: verificationEntryId
-    });
-
-    try {
-      const resp = await fetch(`/verification/api/verifications-control/upload-photos/?${params.toString()}`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        return { 
-          success: false, 
-          error: errorData.detail || `Ошибка загрузки фото: ${resp.status}` 
-        };
-      }
-
-      return { success: true };
-    } catch (err) {
-      console.error('Ошибка при загрузке фото:', err);
-      return { success: false, error: 'Ошибка сети при загрузке фотографий' };
-    }
-  }
-
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (isSubmitting) return;
@@ -554,79 +532,68 @@ document.addEventListener('DOMContentLoaded', function () {
     setBusyState(true, submitter);
 
     try {
-      const resp = await fetch(url, { 
+      const resp = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(obj)
+        body: fd
       });
-      let data = null;
-      try { data = await resp.json(); } catch (_) { }
 
-      if (resp.ok) {
-        if (!data || data.status !== 'ok') {
-          console.error('Неожиданный ответ сервера:', data);
-          alert('Неожиданный ответ сервера.');
-          setBusyState(false);
-          return;
-        }
-
-        const ve = data.verification_entry_id;
-        const mi = data.metrolog_info_id;
-        const r = data.redirect_to;
-
-        const photosInput = document.getElementById('verification_images');
-        if (photosInput && photosInput.files && photosInput.files.length > 0) {
-          const uploadResult = await uploadPhotos(ve);
-          if (!uploadResult.success) {
-            alert(`Запись создана, но ошибка при загрузке фото: ${uploadResult.error}`);
-          }
-        }
-
-        if (r === 'p') {
-          if (ve != null && mi != null) {
-            const protocolParams = new URLSearchParams({
-              company_id: companyId,
-              verification_entry_id: ve,
-              metrolog_info_id: mi
-            });
-            window.location.href = `/verification/api/verification-protocols/one/?${protocolParams.toString()}`;
-          } else {
-            alert('Не удалось сформировать протокол: отсутствуют идентификаторы.');
-            setBusyState(false);
-          }
-          return;
-        }
-        if (r === 'm') {
-          if (ve != null) {
-            const metrologParams = new URLSearchParams({
-              company_id: companyId,
-              verification_entry_id: ve
-            });
-            window.location.href = `/verification/metrologs-control/create/?${metrologParams.toString()}`;
-          } else {
-            alert('Не удалось перейти к метрологической информации: отсутствует идентификатор поверки.');
-            setBusyState(false);
-          }
-          return;
-        }
-        if (r === 'v') {
-          const listParams = new URLSearchParams({ company_id: companyId });
-          window.location.href = `/verification/orders-control/?${listParams.toString()}`;
-          return;
-        }
-        const listParams = new URLSearchParams({ company_id: companyId });
-        window.location.href = `/verification/orders-control/?${listParams.toString()}`;
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('Ошибка создания:', resp.status, errText);
+        alert(`Ошибка при создании записи (${resp.status}). Проверьте данные.`);
+        setBusyState(false, submitter);
         return;
       }
 
-      console.error('Ошибка сервера:', {
-        status: resp.status,
-        statusText: resp.statusText,
-        data: data
-      });
-      const msg = (data && (data.detail || data.message || data.error || data.errors)) || `Ошибка ${resp.status}`;
-      alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-      setBusyState(false);
+      const data = await resp.json();
+      console.log('Ответ сервера:', data);
+
+      // Обработка редиректа
+      const ve = data.verification_entry_id;
+      const mi = data.metrolog_info_id;
+      const r = data.redirect_to;
+
+      if (r === 'p') {
+        // Протокол поверки
+        const params = new URLSearchParams({
+          company_id: String(companyId),
+          verification_entry_id: String(ve),
+          metrolog_info_id: String(mi),
+        });
+        window.location.href = `/verification/api/verification-protocols/one/?${params.toString()}`;
+        return;
+      }
+
+      if (r === 'm') {
+        // Метрологическая информация
+        if (mi) {
+          const params = new URLSearchParams({
+            company_id: String(companyId),
+            verification_entry_id: String(ve),
+            metrolog_info_id: String(mi),
+          });
+          window.location.href = `/verification/metrologs-control/update/?${params.toString()}`;
+        } else {
+          const params = new URLSearchParams({
+            company_id: String(companyId),
+            verification_entry_id: String(ve),
+          });
+          window.location.href = `/verification/metrologs-control/create/?${params.toString()}`;
+        }
+        return;
+      }
+
+      if (r === 'v') {
+        // Возврат к списку заказов
+        const params = new URLSearchParams({
+          company_id: String(companyId),
+        });
+        window.location.href = `/verification/orders-control/?${params.toString()}`;
+        return;
+      }
+
+      // Fallback редирект
+      window.location.href = `/verification/orders-control/?company_id=${companyId}`;
     } catch (err) {
       console.error('Ошибка при отправке формы:', err);
       alert('Сеть недоступна или сервер временно недоступен.');
