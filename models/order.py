@@ -49,6 +49,7 @@ class OrderModel(BaseModel):
 
     legal_entity = Column(
         Enum(VerificationLegalEntity, name="verification_legal_entity_enum"),
+        default=VerificationLegalEntity.individual,
         nullable=True
     )
 
@@ -56,6 +57,7 @@ class OrderModel(BaseModel):
 
     water_type = Column(
         Enum(OrderWaterType, name="order_water_type_enum"),
+        default=OrderWaterType.unnamed,
         nullable=False
     )
 
@@ -66,8 +68,8 @@ class OrderModel(BaseModel):
 
     status = Column(
         Enum(OrderStatus, name="order_status_enum"),
+        default=OrderStatus.pending,
         nullable=False,
-        default=OrderStatus.pending
     )
 
     no_date = Column(Boolean, default=False, nullable=False)

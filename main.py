@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    docs_url="/test/docs", redoc_url="/test/docs",
+    docs_url="/test/docs", redoc_url="/test/redocs",
     lifespan=lifespan,
     # servers=[{"url": "https://powerka.pro"}]
 )

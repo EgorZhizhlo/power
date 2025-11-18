@@ -126,6 +126,11 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (!citySelect.value) {
+    alert('Выберите город');
+    return;
+  }
+
   const clientName = p.customer_field
     ? clientInput.value.trim()
     : '';

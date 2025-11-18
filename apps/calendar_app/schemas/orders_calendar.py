@@ -94,9 +94,9 @@ class CalendarOrderDetailResponse(CalendarBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class OrderCreateForm(BaseModel):
+class OrderForm(BaseModel):
     route_id: Optional[int] = None
-    city_id: Optional[int]
+    city_id: int
     address: str
     client_full_name: Optional[str] = None
     phone_number: str
@@ -109,25 +109,6 @@ class OrderCreateForm(BaseModel):
     date: Optional[date_] = None
     weight: Optional[int] = None
     no_date: Optional[bool] = False
-
-    model_config = ConfigDict(from_attributes=False)
-
-
-class OrderUpdateForm(BaseModel):
-    route_id: Optional[int] = None
-    city_id: Optional[int] = None
-    address: Optional[str] = None
-    client_full_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    sec_phone_number: Optional[str] = None
-    legal_entity: Optional[VerificationLegalEntity] = VerificationLegalEntity.individual
-    counter_number: int = Field(..., ge=0, le=10)
-    water_type: Optional[OrderWaterType] = OrderWaterType.unnamed
-    price: Optional[float] = None
-    additional_info: Optional[str] = None
-    weight: Optional[int] = None
-    date: Optional[date_] = None
-    no_date: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=False)
 

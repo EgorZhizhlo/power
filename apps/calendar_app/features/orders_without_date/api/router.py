@@ -9,7 +9,7 @@ from sqlalchemy import func, desc, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .schemas import (
+from apps.calendar_app.schemas.orders_without_date import (
     RouteSchema, OrderSchema, OrdersPaginated, OrderListParams,
     OrderStatusUpdate
 )

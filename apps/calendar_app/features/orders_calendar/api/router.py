@@ -46,8 +46,7 @@ from apps.calendar_app.schemas.orders_calendar import (
     OrderSchema,
     RouteOrdersSchema,
     CalendarOrderDetailResponse,
-    OrderUpdateForm,
-    OrderCreateForm,
+    OrderForm,
     RouteSchema,
     CitySchema,
     EmployeeSchema,
@@ -170,7 +169,7 @@ async def order_calendar(
 )
 async def create_order_calendar(
     company_id: int = Query(..., ge=1, le=settings.max_int),
-    form: OrderCreateForm = Body(...),
+    form: OrderForm = Body(...),
     employee_data: JwtData = Depends(
         check_active_access_calendar
     ),
@@ -282,7 +281,7 @@ async def create_order_calendar(
 async def update_order_calendar(
     company_id: int = Query(..., ge=1, le=settings.max_int),
     order_id: int = Query(..., ge=1, le=settings.max_int),
-    form: OrderUpdateForm = Body(...),
+    form: OrderForm = Body(...),
     employee_data: JwtData = Depends(
         check_active_access_calendar
     ),

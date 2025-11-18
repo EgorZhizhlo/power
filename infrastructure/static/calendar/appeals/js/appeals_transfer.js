@@ -161,7 +161,7 @@ export async function openTransferModal(appealId, appealData) {
         ]);
 
         const citySelect = document.getElementById('transferCity');
-        citySelect.innerHTML = '<option value="">Без города</option>';
+        citySelect.innerHTML = '';
         cities.forEach(city => {
             if (!city.is_deleted) {
                 const option = document.createElement('option');
@@ -209,6 +209,10 @@ export async function openTransferModal(appealId, appealData) {
         }
         if (!payload.phone_number) {
             alert('Заполните телефон');
+            return;
+        }
+        if (!payload.city_id) {
+            alert('Выберите город');
             return;
         }
         // Проверяем заказчика только если поле активно и обязательно
