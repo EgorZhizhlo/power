@@ -15,11 +15,8 @@ from access_control import (
 
 from core.config import settings
 from core.db.dependencies import get_company_timezone
-from core.exceptions import CustomHTTPException
 from core.templates.jinja_filters import format_datetime_tz
-from core.exceptions.api.common import (
-    NotFoundError, BadRequestError, ForbiddenError
-)
+from core.exceptions.api.common import NotFoundError
 
 from infrastructure.db import async_db_session, async_db_session_begin
 

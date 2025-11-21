@@ -104,7 +104,7 @@ async def view_update_registry_number(
     if not registry_number:
         raise NotFoundError(
             company_id=company_id,
-            detail="Гос.реестр не найден!"
+            detail="Номер госреестра не найден!"
         )
 
     methods = (

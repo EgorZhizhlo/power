@@ -14,7 +14,7 @@ from core.config import settings
 from core.db.dependencies import get_company_timezone
 from core.templates.jinja_filters import format_datetime_tz
 from core.exceptions.api.common import (
-    NotFoundError, BadRequestError, ForbiddenError
+    NotFoundError, ConflictError, ForbiddenError
 )
 
 from access_control import (
@@ -113,14 +113,15 @@ async def api_create_equipment(
 
     if await repo.exists_with_factory_number(
             company_id, equipment_data.name, equipment_data.factory_number):
-        raise BadRequestError(
+        raise ConflictError(
             detail="Оборудование с таким заводским номером уже существует!"
         )
 
     if await repo.exists_with_inventory_number(
             company_id, equipment_data.inventory_number):
-        raise BadRequestError(
-            detail="Оборудование с таким инвентарным номером уже существует!")
+        raise ConflictError(
+            detail="Оборудование с таким инвентарным номером уже существует!"
+        )
 
     if equipment_data.image:
         validate_image(equipment_data.image)
@@ -149,14 +150,14 @@ async def api_update_equipment(
     if await repo.exists_with_factory_number(
             company_id, equipment_data.name, equipment_data.factory_number,
             exclude_id=equipment_id):
-        raise BadRequestError(
+        raise ConflictError(
             detail="Оборудование с таким заводским номером уже существует!"
         )
 
     if await repo.exists_with_inventory_number(
             company_id, equipment_data.inventory_number,
             exclude_id=equipment_id):
-        raise BadRequestError(
+        raise ConflictError(
             detail="Оборудование с таким инвентарным номером уже существует!"
         )
 

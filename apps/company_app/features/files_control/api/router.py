@@ -10,14 +10,18 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from core.exceptions.api.common import BadRequestError
+from core.exceptions.frontend.common import (
+    BadRequestError, InternalServerError
+)
 
 from infrastructure.db import async_db_session_begin
 from models import (
-    MethodModel, SiModificationModel, RegistryNumberModel)
+    MethodModel, SiModificationModel, RegistryNumberModel
+)
 
 from access_control import (
-    JwtData, check_include_in_active_company)
+    JwtData, check_include_in_active_company
+)
 
 
 files_control_api_router = APIRouter(
@@ -37,6 +41,7 @@ async def api_upload_file(
     ext = file.filename.rsplit(".", 1)[-1].lower()
     if ext not in allowed_extensions:
         raise BadRequestError(
+            company_id=company_id,
             detail="Только .csv, .xlsx и .xls файлы разрешены!"
         )
 
@@ -48,7 +53,8 @@ async def api_upload_file(
             xls = pd.ExcelFile(file.file)
             df = xls.parse(xls.sheet_names[0])
     except Exception as e:
-        raise BadRequestError(
+        raise InternalServerError(
+            company_id=company_id,
             detail=f"Ошибка чтения файла: {e}"
         )
 

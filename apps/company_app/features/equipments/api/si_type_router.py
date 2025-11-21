@@ -7,7 +7,7 @@ from access_control import (
 )
 from core.config import settings
 from core.exceptions.api.common import (
-    NotFoundError, BadRequestError
+    NotFoundError, ConflictError
 )
 
 from infrastructure.db import async_db_session_begin
@@ -47,7 +47,7 @@ async def create_si_type(
     repo = CompanySiTypeRepository(session)
 
     if await repo.exists_si_type_by_name_in_company(data.name, company_id):
-        raise BadRequestError(
+        raise ConflictError(
             detail="Такой тип СИ уже существует!",
         )
 
@@ -76,7 +76,7 @@ async def update_si_type(
 
     if data.name.strip().lower() != si_type.name.strip().lower():
         if await repo.exists_si_type_by_name_in_company(data.name, company_id):
-            raise BadRequestError(
+            raise ConflictError(
                 detail="Такой тип СИ уже существует!",
             )
 

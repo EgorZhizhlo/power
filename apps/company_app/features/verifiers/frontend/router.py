@@ -10,7 +10,9 @@ from core.exceptions.frontend.common import NotFoundError
 
 from infrastructure.db import async_db_session
 from models import (
-    VerifierModel, EquipmentModel)
+    VerifierModel,
+    EquipmentModel
+)
 
 from apps.company_app.common import make_context
 

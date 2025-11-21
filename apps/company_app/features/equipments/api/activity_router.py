@@ -10,7 +10,7 @@ from infrastructure.db import async_db_session_begin
 
 from core.config import settings
 from core.exceptions.api.common import (
-    NotFoundError, BadRequestError
+    NotFoundError, ConflictError
 )
 
 from apps.company_app.repositories import CompanyActivityRepository
@@ -48,7 +48,7 @@ async def create_activity(
     repo = CompanyActivityRepository(session)
 
     if await repo.exists_activity_by_name_in_company(data.name, company_id):
-        raise BadRequestError(
+        raise ConflictError(
             detail="Такой вид измерений уже существует!"
         )
 
@@ -79,7 +79,7 @@ async def update_activity(
     if data.name.strip().lower() != activity.name.strip().lower():
         if await repo.exists_activity_by_name_in_company(
                 data.name, company_id):
-            raise BadRequestError(
+            raise ConflictError(
                 detail="Такой вид измерений уже существует!"
             )
 

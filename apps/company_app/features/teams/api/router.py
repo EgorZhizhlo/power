@@ -143,7 +143,6 @@ async def api_update_team(
 
     if not team:
         raise NotFoundError(
-            company_id=company_id,
             detail="Команда не найдена!"
         )
 
@@ -182,7 +181,9 @@ async def api_delete_team(
     ).scalar_one_or_none()
 
     if team is None:
-        raise HTTPException(404, "Команда не найдена")
+        raise NotFoundError(
+            detail="Команда не найдена!"
+        )
 
     has_any_verification = any(
         bool(v.verification) for v in (team.verifiers or [])
@@ -220,7 +221,9 @@ async def api_restore_team(
     ).scalar_one_or_none()
 
     if team is None:
-        raise HTTPException(404, "Удалённая команда не найдена")
+        raise NotFoundError(
+            detail="Удалённая команда не найдена!"
+        )
 
     team.is_deleted = False
     await session.flush()

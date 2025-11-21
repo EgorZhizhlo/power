@@ -44,7 +44,6 @@ async def check_verification_limit_available(
     """Проверяет наличие доступного лимита поверок."""
     repo = CompanyTariffStateRepository(session)
 
-    # Быстрая проверка по кешу
     cached = await tariff_cache.get_cached_limits(company_id)
 
     if cached and cached.get("has_tariff"):
@@ -58,7 +57,6 @@ async def check_verification_limit_available(
                 used_verif, max_verif, required_slots
             )
 
-    # Проверка с блокировкой для защиты от гонок
     state = await repo.get_by_company(company_id, for_update=True)
     if not state:
         raise TariffNotFoundError

@@ -25,7 +25,8 @@ from core.config import settings
 from core.db.dependencies import get_company_timezone
 from core.templates.jinja_filters import format_datetime_tz
 from core.exceptions.api.common import (
-    NotFoundError, ForbiddenError, BadRequestError
+    NotFoundError, ForbiddenError, BadRequestError,
+    ConflictError
 )
 
 from infrastructure.db import async_db_session, async_db_session_begin

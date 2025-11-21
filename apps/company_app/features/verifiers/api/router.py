@@ -138,8 +138,8 @@ async def api_create_verifier(
         if etalon_count > 1:
             raise ConflictError(
                 detail=(
-                    "Поверитель может использовать не более 1 средства"
-                    " измерений, используемое в качестве эталона!"
+                    "Поверитель может использовать не более 1 средства "
+                    "измерений, используемое в качестве эталона!"
                 )
             )
 
@@ -186,7 +186,6 @@ async def api_update_verifier(
 
     if not verifier:
         raise NotFoundError(
-            company_id=company_id,
             detail="Поверитель не найден!"
         )
 
@@ -284,7 +283,6 @@ async def api_delete_verifier(
 
     if not verifier:
         raise NotFoundError(
-            company_id=company_id,
             detail="Поверитель не найден!"
         )
 

@@ -107,7 +107,6 @@ async def api_get_verification_report(
 
     if not report:
         raise NotFoundError(
-            company_id=company_id,
             detail="Настраиваемый отчет поверки не найден!"
         )
 
@@ -204,7 +203,6 @@ async def api_update_verification_report(
 
     if not report:
         raise NotFoundError(
-            company_id=company_id,
             detail="Настраиваемый отчет поверки не найден!"
         )
 
@@ -284,7 +282,6 @@ async def api_delete_verification_report(
 
     if not report:
         raise NotFoundError(
-            company_id=company_id,
             detail="Настраиваемый отчет поверки не найден!"
         )
 

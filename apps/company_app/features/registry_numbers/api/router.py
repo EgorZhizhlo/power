@@ -1,6 +1,6 @@
 import math
 from fastapi import (
-    APIRouter, HTTPException, Response, status as status_code,
+    APIRouter, Response, status as status_code,
     Depends, Query, Body)
 
 from sqlalchemy import select, delete, func, cast, String
@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import settings
 from core.db.dependencies import get_company_timezone
 from core.templates.jinja_filters import format_datetime_tz
-from core.exceptions.api.common import NotFoundError
+from core.exceptions.api.common import NotFoundError, ConflictError
 
 from access_control import (
     JwtData,
@@ -19,6 +19,7 @@ from access_control import (
 )
 
 from infrastructure.db import async_db_session, async_db_session_begin
+
 from models import SiModificationModel, RegistryNumberModel
 from models.associations import (
     registry_numbers_modifications
@@ -142,8 +143,7 @@ async def api_update_registry_number(
 
     if not registry_number:
         raise NotFoundError(
-            company_id=company_id,
-            detail="Гос.реестр не найден!"
+            detail="Номер госреестра не найден!"
         )
 
     for field, value in registry_number_data.model_dump().items():
@@ -191,9 +191,9 @@ async def api_delete_registry_number(
         ]
     )
     if not registry or registry.company_id != company_id or registry.is_deleted:
-        raise HTTPException(
-            status_code.HTTP_404_NOT_FOUND,
-            "Номер госреестра не найден")
+        raise NotFoundError(
+            detail="Номер госреестра не найден!"
+        )
 
     # разрываем связи с модификациями
     registry.modifications.clear()
@@ -228,14 +228,17 @@ async def api_restore_registry_number(
         options=[selectinload(RegistryNumberModel.method)]
     )
     if not registry or registry.company_id != company_id or not registry.is_deleted:
-        raise HTTPException(404, "Удалённый номер госреестра не найден")
+        raise NotFoundError(
+            detail="Удалённый номер госреестра не найден!"
+        )
 
     if registry.method and registry.method.is_deleted:
-        raise HTTPException(
-            status_code.HTTP_400_BAD_REQUEST,
-            "Номер госреестра невозможно восстановить, "
-            "так как связанная методика помечена как удалённая. "
-            "Сначала восстановите методику."
+        raise ConflictError(
+            detail=(
+                "Номер госреестра невозможно восстановить, "
+                "так как связанная методика помечена как удалённая. "
+                "Сначала восстановите методику."
+            )
         )
 
     registry.is_deleted = False

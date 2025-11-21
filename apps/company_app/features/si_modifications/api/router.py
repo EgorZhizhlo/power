@@ -118,7 +118,6 @@ async def api_update_modification(
 
     if not modification:
         raise NotFoundError(
-            company_id=company_id,
             detail="Модификация СИ не найдена!"
         )
 
@@ -153,7 +152,6 @@ async def api_delete_modification(
 
     if not modification:
         raise NotFoundError(
-            company_id=company_id,
             detail="Модификация СИ не найдена!"
         )
 
@@ -190,7 +188,6 @@ async def api_restore_modification(
 
     if not modification:
         raise NotFoundError(
-            company_id=company_id,
             detail="Модификация СИ не найдена!"
         )
 

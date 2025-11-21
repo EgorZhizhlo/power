@@ -44,7 +44,6 @@ async def check_order_limit_available(
     """Проверяет наличие свободного лимита календарных заявок."""
     repo = CompanyTariffStateRepository(session)
 
-    # Быстрая проверка по кешу
     cached_limits = await tariff_cache.get_cached_limits(company_id)
 
     if cached_limits and cached_limits.get('has_tariff'):
@@ -52,14 +51,12 @@ async def check_order_limit_available(
         max_orders = limits.get('max_orders')
         used_orders = limits.get('used_orders', 0)
 
-        # Если безлимит (None) - сразу пропускаем
         if max_orders is not None:
             check_order_limit_zero(max_orders)
             check_order_limit_exceeded(
                 used_orders, max_orders, required_slots
             )
 
-    # Проверка с блокировкой для защиты от гонок
     state = await repo.get_by_company(company_id, for_update=True)
     if not state:
         raise TariffNotFoundError

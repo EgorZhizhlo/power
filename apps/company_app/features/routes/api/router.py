@@ -18,7 +18,7 @@ from core.config import settings
 from core.db.dependencies import get_company_timezone
 from core.templates.jinja_filters import format_datetime_tz
 from core.exceptions.api.common import (
-    NotFoundError, BadRequestError
+    NotFoundError, ConflictError
 )
 
 from infrastructure.db import async_db_session, async_db_session_begin
@@ -98,7 +98,7 @@ async def api_create_route(
                       RouteModel.company_id == company_id))
     )
     if exists_q.scalar_one():
-        raise BadRequestError(
+        raise ConflictError(
             detail=f"Маршрут {route_data.name} уже существует!"
         )
 
@@ -130,7 +130,7 @@ async def api_update_route(
         )
     )
     if dup.scalar_one():
-        raise BadRequestError(
+        raise ConflictError(
             detail=f"Маршрут {route_data.name} уже существует!"
         )
 
@@ -198,7 +198,6 @@ async def api_delete_route(
 
     if not route:
         raise NotFoundError(
-            company_id=company_id,
             detail="Маршрут не найден!"
         )
 
@@ -233,7 +232,6 @@ async def api_restore_route(
 
     if not route:
         raise NotFoundError(
-            company_id=company_id,
             detail="Маршрут не найден!"
         )
 
