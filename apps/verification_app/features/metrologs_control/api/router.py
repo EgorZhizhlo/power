@@ -12,13 +12,14 @@ from access_control import (
 )
 
 from core.config import settings
-from apps.verification_app.exceptions import (
-    VerificationVerifierException,
+from core.exceptions.api import (
+    CreateMetrologInfoAccessError,
+    UpdateMetrologInfoAccessError,
+    DeleteMetrologInfoAccessError,
 
-    CreateMetrologInfoAccessException,
-    UpdateMetrologInfoAccessException,
-    DeleteMetrologInfoAccessException
+    VerificationVerifierError,
 )
+
 from apps.verification_app.common import (
     check_equip_conditions, clear_verification_cache
 )
@@ -56,7 +57,7 @@ async def create_metrolog_info(
         verification_entry_id=verification_entry_id
     )
     if check_exist_metrolog:
-        raise CreateMetrologInfoAccessException
+        raise CreateMetrologInfoAccessError
 
     verification_entry = await metrolog_info_repo.get_for_create(
         verification_entry_id=verification_entry_id,
@@ -64,10 +65,10 @@ async def create_metrolog_info(
     )
 
     if not verification_entry:
-        raise CreateMetrologInfoAccessException
+        raise CreateMetrologInfoAccessError
 
     if not verification_entry.verifier_id:
-        raise VerificationVerifierException
+        raise VerificationVerifierError
 
     await check_equip_conditions(
         verification_entry.equipments, company_id=company_id
@@ -121,10 +122,10 @@ async def update_metrolog_info(
         employee_id=employee_id, status=status
     )
     if not metrolog_info:
-        raise UpdateMetrologInfoAccessException
+        raise UpdateMetrologInfoAccessError
 
     if not metrolog_info.verification.verifier_id:
-        raise VerificationVerifierException
+        raise VerificationVerifierError
 
     await check_equip_conditions(
         metrolog_info.verification.equipments, company_id=company_id
@@ -165,7 +166,7 @@ async def delete_metrolog_info(
         metrolog_info_id, verification_entry_id, employee_id, status
     )
     if not deleted:
-        raise DeleteMetrologInfoAccessException
+        raise DeleteMetrologInfoAccessError
 
     await clear_verification_cache(company_id)
     return Response(status_code=204)

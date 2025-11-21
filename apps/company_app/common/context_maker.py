@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import CompanyModel
 
-from core.exceptions.app.common import NotFoundError
+from core.exceptions.app import NotFoundError
 
 from apps.company_app.repositories import CompanyRepository
 

@@ -5,7 +5,7 @@ from access_control.roles.definitions import (
     access_verification_no_admin,
 )
 
-from core.exceptions.app.common import (
+from core.exceptions.app import (
     UnauthorizedError, ForbiddenError
 )
 

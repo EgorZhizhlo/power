@@ -12,7 +12,7 @@ from access_control.tokens import (
 )
 
 from core.config import settings
-from core.exceptions.app.auth.token import (
+from core.exceptions.app import (
     InvalidTokenError, TokenExpiredError
 )
 

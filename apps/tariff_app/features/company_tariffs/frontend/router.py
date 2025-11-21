@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -6,11 +6,10 @@ from access_control import JwtData, check_tariff_access
 
 from core.config import settings
 
-from apps.tariff_app.services.company_tariff import (
+from apps.tariff_app.services import (
     CompanyTariffService,
-    get_company_tariff_service_read
-)
-from apps.tariff_app.services.base_tariff import (
+    get_company_tariff_service_read,
+
     BaseTariffService,
     get_base_tariff_service_read
 )

@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict
 
 from core.config import settings
 from core.exceptions.base import RedirectHttpException
-from core.exceptions.app.auth.token import (
+from core.exceptions.app import (
     InvalidTokenError, TokenExpiredError
 )
 

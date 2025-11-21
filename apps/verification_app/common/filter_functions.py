@@ -1,5 +1,7 @@
 from models import (
-    VerificationEntryModel, ActNumberModel)
+    VerificationEntryModel,
+    ActNumberModel
+)
 
 from sqlalchemy import and_
 from sqlalchemy.orm import with_loader_criteria

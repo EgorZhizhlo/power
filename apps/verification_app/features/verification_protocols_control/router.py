@@ -18,16 +18,16 @@ from core.config import settings
 from core.templates.jinja_filters import get_current_date_in_tz
 from core.db.dependencies import get_company_timezone
 from core.utils.cpu_bounds_runner import run_cpu_bounds_task
+from core.exceptions.frontend import (
+    FrontendVerificationVerifierError,
+    FrontendVerifProtocolAccessError
+)
 
 from apps.verification_app.common import (
     check_equip_conditions, generate_protocol, get_protocol_info
 )
 from apps.verification_app.repositories import (
     VerificationEntryRepository, read_verification_entry_repository
-)
-from apps.verification_app.exceptions import (
-    VerificationProtocolAccessException,
-    CustomVerificationVerifierException
 )
 from apps.verification_app.schemas.verification_protocols_control import (
     ReportProtocolsForm
@@ -81,9 +81,9 @@ async def pdf_verification_protocol(
     )
 
     if not verification_entry:
-        raise VerificationProtocolAccessException(company_id=company_id)
+        raise FrontendVerifProtocolAccessError(company_id=company_id)
     if not verification_entry.verifier_id:
-        raise CustomVerificationVerifierException(company_id=company_id)
+        raise FrontendVerificationVerifierError(company_id=company_id)
 
     await check_equip_conditions(
         verification_entry.equipments, company_id=company_id

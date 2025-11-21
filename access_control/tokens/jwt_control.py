@@ -4,7 +4,7 @@ from itsdangerous import (
 )
 
 from core.config import settings
-from core.exceptions.app.auth.token import (
+from core.exceptions.app import (
     InvalidTokenError, TokenExpiredError
 )
 from access_control.tokens.jwt_versioning import bump_jwt_token_version

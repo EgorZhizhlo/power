@@ -1,10 +1,14 @@
 from core.templates.jinja_filters import get_current_date_in_tz
 from core.cache.company_timezone_cache import company_tz_cache
-from apps.verification_app.exceptions import (
-    VerificationEquipmentException, VerificationEquipmentExpiredException,
-    CustomVerificationEquipmentException,
-    CustomVerificationEquipmentExpiredException
+from core.exceptions.api import (
+    VerificationEquipmentError,
+    VerificationEquipmentExpiredError,
 )
+from core.exceptions.frontend import (
+    FrontendVerificationEquipmentError,
+    FrontendVerificationEquipmentExpiredError
+)
+
 from models.enums import EquipmentInfoType
 
 
@@ -13,13 +17,13 @@ async def check_equip_conditions(
 ) -> None:
     if not equipments:
         if for_view:
-            raise CustomVerificationEquipmentException
-        raise VerificationEquipmentException
+            raise FrontendVerificationEquipmentError
+        raise VerificationEquipmentError
 
     company_tz = "Europe/Moscow"
     if company_id:
         company_tz = await company_tz_cache.get_timezone(company_id)
-    
+
     today = get_current_date_in_tz(company_tz)
     expired_equipment = []
 
@@ -51,9 +55,9 @@ async def check_equip_conditions(
 
     if expired_equipment:
         if for_view:
-            raise CustomVerificationEquipmentExpiredException(
+            raise FrontendVerificationEquipmentExpiredError(
                 equipments=expired_equipment
             )
-        raise VerificationEquipmentExpiredException(
+        raise VerificationEquipmentExpiredError(
             equipments=expired_equipment
         )

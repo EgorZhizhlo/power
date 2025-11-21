@@ -5,7 +5,7 @@ from models.enums import EmployeeStatus
 
 from core.config import settings
 from core.exceptions.base import RedirectHttpException
-from core.exceptions.app.common import ForbiddenError
+from core.exceptions.app import ForbiddenError
 
 from access_control.tokens import (
     JwtData,

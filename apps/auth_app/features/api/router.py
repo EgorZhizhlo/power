@@ -19,7 +19,7 @@ from apps.auth_app.repositories import EmployeeRepository, CompanyRepository
 from apps.auth_app.schemas.auth import LoginRequestSchema
 
 from core.config import settings
-from core.exceptions.app.common import (
+from core.exceptions.app import (
     UnauthorizedError
 )
 

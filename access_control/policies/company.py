@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.exceptions.base import RedirectHttpException
-from core.exceptions.app.common import ForbiddenError
+from core.exceptions.app import ForbiddenError
 
 from models import EmployeeModel
 from models.enums import EmployeeStatus

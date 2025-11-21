@@ -4,13 +4,15 @@ from typing import List
 
 from infrastructure.db.session import async_db_session, async_db_session_begin
 from models import BaseTariff
+
 from apps.tariff_app.repositories import BaseTariffRepository
 from apps.tariff_app.schemas.base_tariff import (
     BaseTariffCreate,
     BaseTariffUpdate,
     BaseTariffResponse
 )
-from core.exceptions import BadRequestException, NotFoundException
+
+from core.exceptions.api.common import BadRequestError, NotFoundError
 
 
 class BaseTariffService:
@@ -28,16 +30,18 @@ class BaseTariffService:
         """Получить базовый тариф по ID"""
         tariff = await self.repository.get_by_id(tariff_id)
         if not tariff:
-            raise NotFoundException(
+            raise NotFoundError(
                 detail=f"Базовый тариф с ID {tariff_id} не найден"
             )
         return BaseTariffResponse.model_validate(tariff)
 
-    async def create_tariff(self, data: BaseTariffCreate) -> BaseTariffResponse:
+    async def create_tariff(
+            self, data: BaseTariffCreate
+    ) -> BaseTariffResponse:
         """Создать новый базовый тариф"""
         # Проверка уникальности названия
         if await self.repository.exists_by_title(data.title):
-            raise BadRequestException(
+            raise BadRequestError(
                 detail=f"Тариф с названием '{data.title}' уже существует"
             )
 
@@ -64,14 +68,14 @@ class BaseTariffService:
         """Обновить существующий базовый тариф"""
         tariff = await self.repository.get_by_id(tariff_id)
         if not tariff:
-            raise NotFoundException(
+            raise NotFoundError(
                 detail=f"Базовый тариф с ID {tariff_id} не найден"
             )
 
         # Проверка уникальности названия (если меняется)
         if data.title and data.title != tariff.title:
             if await self.repository.exists_by_title(data.title, exclude_id=tariff_id):
-                raise BadRequestException(
+                raise BadRequestError(
                     detail=f"Тариф с названием '{data.title}' уже существует"
                 )
 
@@ -87,13 +91,13 @@ class BaseTariffService:
         """Удалить базовый тариф"""
         tariff = await self.repository.get_by_id(tariff_id)
         if not tariff:
-            raise NotFoundException(
+            raise NotFoundError(
                 detail=f"Базовый тариф с ID {tariff_id} не найден"
             )
 
         success = await self.repository.delete(tariff_id)
         if not success:
-            raise BadRequestException(
+            raise BadRequestError(
                 detail="Не удалось удалить тариф"
             )
 

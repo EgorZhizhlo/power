@@ -7,11 +7,11 @@ from access_control import (
     check_active_access_verification)
 
 from core.config import settings, format_date
-from apps.verification_app.exceptions import (
-    CustomVerificationVerifierException,
+from core.exceptions.frontend import (
+    FrontendVerificationVerifierError,
 
-    CustomCreateMetrologInfoAccessException,
-    CustomUpdateMetrologInfoAccessException,
+    FrontendCreateMetrologInfoAccessError,
+    FrontendUpdateMetrologInfoAccessError
 )
 
 from apps.verification_app.common import check_equip_conditions
@@ -53,7 +53,7 @@ async def create_metrolog_info_page(
         verification_entry_id=verification_entry_id
     )
     if check_exist_metrolog:
-        raise CustomCreateMetrologInfoAccessException(company_id=company_id)
+        raise FrontendCreateMetrologInfoAccessError(company_id=company_id)
 
     verification_entry = await metrolog_info_repo.get_for_create(
         verification_entry_id=verification_entry_id,
@@ -61,9 +61,9 @@ async def create_metrolog_info_page(
     )
 
     if not verification_entry:
-        raise CustomCreateMetrologInfoAccessException(company_id=company_id)
+        raise FrontendCreateMetrologInfoAccessError(company_id=company_id)
     if not verification_entry.verifier_id:
-        raise CustomVerificationVerifierException(company_id=company_id)
+        raise FrontendVerificationVerifierError(company_id=company_id)
     await check_equip_conditions(
         verification_entry.equipments, for_view=True,
         company_id=company_id)
@@ -115,10 +115,10 @@ async def update_metrolog_info_page(
         employee_id=employee_id, status=status
     )
     if not metrolog_info:
-        raise CustomUpdateMetrologInfoAccessException(company_id=company_id)
+        raise FrontendUpdateMetrologInfoAccessError(company_id=company_id)
 
     if not metrolog_info.verification.verifier_id:
-        raise CustomVerificationVerifierException(company_id=company_id)
+        raise FrontendVerificationVerifierError(company_id=company_id)
 
     await check_equip_conditions(
         metrolog_info.verification.equipments, for_view=True,

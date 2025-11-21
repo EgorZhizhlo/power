@@ -1,5 +1,6 @@
 from models.enums import EquipmentType, ReasonType
-from .utils import raise_exception
+
+from core.exceptions.frontend.common import NotFoundError
 
 
 def f4(v: float) -> str:
@@ -38,8 +39,8 @@ def get_protocol_info(
             }
         )
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о записе поверки."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о записе поверки!"
         )
 
     if v.metrolog:
@@ -86,8 +87,8 @@ def get_protocol_info(
 
         fields["qh"] = m_log.qh
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о метрологических характеристиках."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о метрологических характеристиках."
         )
 
     if v.verifier:
@@ -98,8 +99,8 @@ def get_protocol_info(
             f"{ver.patronymic.title()}"
         ) or ""
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о поверителе."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о поверителе."
         )
 
     if v.equipments:
@@ -114,8 +115,8 @@ def get_protocol_info(
             for e in equip
         ]
     else:
-        raise_exception(
-            "В протоколе отсутствует информация об оборудовании."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация об оборудовании."
         )
 
     if v.reason:
@@ -141,16 +142,16 @@ def get_protocol_info(
         modif = v.modification
         fields["modification_name"] = modif.modification_name or ""
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о модификации СИ."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о модификации СИ."
         )
 
     if v.method:
         m = v.method
         fields["method_name"] = m.name or ""
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о методике."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о методике."
         )
 
     if v.registry_number:
@@ -158,8 +159,8 @@ def get_protocol_info(
         fields["si_type"] = reg.si_type
         fields["registry_number"] = reg.registry_number
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о номере гос. реестра."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о номере гос. реестра."
         )
 
     if v.company:
@@ -168,8 +169,8 @@ def get_protocol_info(
         fields["accreditation_certificat"] = сomp.accreditation_certificat or ""
         fields["company_address"] = сomp.address or ""
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о компании."
+        raise NotFoundError(
+            detail="В протоколе отсутствует информация о компании."
         )
 
     if v.act_number and v.city:
@@ -180,9 +181,11 @@ def get_protocol_info(
             c.name + ",   " if c.name else ""}{
                 num.address}"
     else:
-        raise_exception(
-            "В протоколе отсутствует информация о "
-            "номере акта или населенном пункте."
+        raise NotFoundError(
+            detail=(
+                "В протоколе отсутствует информация о "
+                "номере акта или населенном пункте."
+            )
         )
 
     return fields

@@ -4,7 +4,8 @@ from datetime import date as date_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.templates.jinja_filters import get_current_date_in_tz
-from core.exceptions import CustomHTTPException
+from core.exceptions.api.common import NotFoundError, ConflictError
+
 from models import (
     VerificationEntryModel, VerificationLogModel, VerifierModel,
     ActNumberModel, TeamModel
@@ -42,14 +43,12 @@ def check_act_number_limit(
     act_number_entry: ActNumberModel,
 ) -> None:
     if not act_number_entry:
-        raise CustomHTTPException(
-            status_code=404,
-            detail="Запись номера акта не была найдена."
+        raise NotFoundError(
+            detail="Номер акта не был найден!"
         )
 
     if act_number_entry.count <= 0:
-        raise CustomHTTPException(
-            status_code=409,
+        raise ConflictError(
             detail=(
                 f"Лимит записей по номеру акта: "
                 f"{act_number_entry.act_number} превышен."
@@ -486,7 +485,6 @@ async def get_verifier_id_create(
                     await session.flush()
                     return verifier_id_in_teams
 
-    raise CustomHTTPException(
-        status_code=404,
-        detail="Лимит записей поверок на данную дату превышен."
+    raise ConflictError(
+        detail="Лимит записей поверок на данную дату превышен!"
     )

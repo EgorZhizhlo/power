@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Body, status
+from fastapi import APIRouter, status as status_codes, Depends, Query, Body
 
 from access_control import JwtData, check_tariff_access
 
@@ -60,7 +60,7 @@ async def get_company_tariff_history(
 @company_tariffs_api_router.post(
     "/",
     response_model=CompanyTariffFullResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status_codes.HTTP_201_CREATED
 )
 async def assign_company_tariff(
     company_id: int = Query(..., ge=1, le=settings.max_int),
@@ -101,7 +101,7 @@ async def update_company_tariff(
 
 @company_tariffs_api_router.delete(
     "/",
-    status_code=status.HTTP_204_NO_CONTENT
+    status_code=status_codes.HTTP_204_NO_CONTENT
 )
 async def delete_company_tariff(
     company_id: int = Query(..., ge=1, le=settings.max_int),

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Body, status
+from fastapi import APIRouter, status as status_codes, Depends, Query, Body
 
 from access_control import JwtData, check_tariff_access
 
@@ -58,7 +58,7 @@ async def get_base_tariff_by_id(
 @base_tariffs_api_router.post(
     "/",
     response_model=BaseTariffResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status_codes.HTTP_201_CREATED
 )
 async def create_base_tariff(
     data: BaseTariffCreate = Body(...),
@@ -93,7 +93,7 @@ async def update_base_tariff(
 
 @base_tariffs_api_router.delete(
     "/",
-    status_code=status.HTTP_204_NO_CONTENT
+    status_code=status_codes.HTTP_204_NO_CONTENT
 )
 async def delete_base_tariff(
     tariff_id: int = Query(..., ge=1, le=settings.max_int),

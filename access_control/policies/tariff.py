@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import Cookie
 
-from core.exceptions.app.common import ForbiddenError
+from core.exceptions.app import ForbiddenError
 
 from access_control.tokens import (
     JwtData,

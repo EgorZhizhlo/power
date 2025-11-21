@@ -31,7 +31,6 @@ from core.config import settings
 from core.db.dependencies import get_company_timezone
 from core.utils.time_utils import validate_company_timezone
 from core.exceptions import (
-    CompanyVerificationLimitException,
     CustomHTTPException
 )
 
@@ -63,14 +62,16 @@ from apps.verification_app.common import (
     get_verifier_id_create, right_automatisation_metrolog,
     clear_verification_cache,
 )
-from apps.verification_app.exceptions import (
-    VerificationEntryException,
-    VerificationVerifierException,
-    VerificationEquipmentException,
-    CreateVerificationCitiesBlockException,
-    CreateVerificationDateBlockException,
-    CreateVerificationFactoryNumBlockException,
-    CreateVerificationDefaultVerifierException,
+from core.exceptions.api import (
+    VerificationLimitError,
+    VerificationVerifierError,
+    VerificationEntryError,
+    VerificationEquipmentError,
+
+    CreateVerificationCitiesBlockError,
+    CreateVerificationDateBlockError,
+    CreateVerificationFactoryNumBlockError,
+    CreateVerificationDefaultVerifierError,
 )
 
 
@@ -329,7 +330,7 @@ async def create_verification_entry_by_order(
 
         if verification_entry_data.city_id and verification_entry_data.\
                 city_id not in employee_cities_id:
-            raise CreateVerificationCitiesBlockException
+            raise CreateVerificationCitiesBlockError
 
     company_params = await company_repo.get_company_params()
 
@@ -337,7 +338,7 @@ async def create_verification_entry_by_order(
         verif_date_block = company_params.verification_date_block
         if verif_date_block and verif_date_block >= \
                 verification_entry_data.verification_date:
-            raise CreateVerificationDateBlockException
+            raise CreateVerificationDateBlockError
 
     new_factory_number = verification_entry_data.factory_number
     new_verification_date = verification_entry_data.verification_date
@@ -347,13 +348,13 @@ async def create_verification_entry_by_order(
         verification_date=new_verification_date
     )
     if exists_factory:
-        raise CreateVerificationFactoryNumBlockException
+        raise CreateVerificationFactoryNumBlockError
 
     default_verifier = await verifier_repo.default_verifier_for_create(
         employee_id=employee_id
     )
     if not default_verifier:
-        raise CreateVerificationDefaultVerifierException
+        raise CreateVerificationDefaultVerifierError
 
     await check_equip_conditions(
         default_verifier.equipments, company_id=company_id
@@ -373,7 +374,7 @@ async def create_verification_entry_by_order(
     if company_params.auto_teams:
         verification_limit = company_params.daily_verifier_verif_limit
         if not verification_limit or verification_limit < 0:
-            raise CompanyVerificationLimitException
+            raise VerificationLimitError
 
         verification_date = verification_entry_data.verification_date
 
@@ -462,13 +463,13 @@ async def create_verification_entry_by_order(
         reason_type = None
 
         if not verification_entry:
-            raise VerificationEntryException
+            raise VerificationEntryError
 
         if not verification_entry.verifier_id:
-            raise VerificationVerifierException
+            raise VerificationVerifierError
 
         if not verification_entry.equipments:
-            raise VerificationEquipmentException
+            raise VerificationEquipmentError
 
         use_opt_flag = any(e.is_opt for e in verification_entry.equipments)
 

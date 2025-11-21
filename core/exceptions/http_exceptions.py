@@ -129,14 +129,6 @@ class VerificationCityIdBlockException(HTTPException):
         super().__init__(status_code=400, detail=detail)
 
 
-class CompanyVerificationLimitException(HTTPException):
-    def __init__(
-        self,
-        detail: str = "Лимит поверок на день в компании не задан или имеет недопустимое значение.",
-    ):
-        super().__init__(status_code=400, detail=detail)
-
-
 class CustomCompanyVerificationLimitException(CustomHTTPException):
     def __init__(
         self,
@@ -177,24 +169,6 @@ class CustomVerificationDefaultVerifierEquipmentException(CustomHTTPException):
         self,
         detail: str = "У поверителя по умолчанию не задано оборудование.",
         company_id: int = None
-    ):
-        super().__init__(status_code=400, detail=detail, company_id=company_id)
-
-
-class CustomVerificationVerifierException(HTTPException):
-    def __init__(
-        self,
-        detail: str = "В записи поверки отсутствует поверитель.",
-        company_id: int = None,
-    ):
-        super().__init__(status_code=400, detail=detail, company_id=company_id)
-
-
-class CustomVerificationEquipmentException(HTTPException):
-    def __init__(
-        self,
-        detail: str = "В записи поверки отсутствует оборудование.",
-        company_id: int = None,
     ):
         super().__init__(status_code=400, detail=detail, company_id=company_id)
 
