@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.db import async_db_session_begin, async_db_session
 from models import OrderModel, CompanyModel
+
 from core.config import settings
-from core.exceptions import CustomVerificationDateBlockException
+from core.exceptions.frontend import FrontendVerificationDateBlockError
 
 
 class OrderRepository:
@@ -73,8 +74,8 @@ class OrderRepository:
         )
         result = await self._session.execute(stmt)
         if not result.scalar_one_or_none():
-            raise CustomVerificationDateBlockException(
-                company_id=self._company_id
+            raise FrontendVerificationDateBlockError(
+                company_id=self._company_id,
             )
 
 

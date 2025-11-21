@@ -84,7 +84,12 @@ class MethodNotAllowedException(CustomHTTPException):
 
 class CompanyIsNotActive(CustomHTTPException):
     def __init__(
-            self, detail: str = "Данная компания является неактивной! Внести изменения не получится. Обратитесь к администрации.",
+            self,
+            detail: str = (
+                "Данная компания является неактивной! "
+                "Внести изменения не получится. "
+                "Обратитесь к администрации."
+            ),
             company_id: int = None):
         super().__init__(status_code=404, detail=detail, company_id=company_id)
 
@@ -99,18 +104,12 @@ class EmployeeIsNotActive(CustomHTTPException):
 class VerificationDateBlockException(HTTPException):
     def __init__(
         self,
-        detail: str = "Создание или редактирование записи поверки на указанную дату невозможно.",
+        detail: str = (
+            "Создание или редактирование записи поверки на указанную"
+            " дату невозможно."
+        ),
     ):
         super().__init__(status_code=400, detail=detail)
-
-
-class CustomVerificationDateBlockException(CustomHTTPException):
-    def __init__(
-        self,
-        detail: str = "Создание или редактирование записи поверки на указанную дату невозможно.",
-        company_id: int = None
-    ):
-        super().__init__(status_code=400, detail=detail, company_id=company_id)
 
 
 class VerificationFactoryNumBlockException(HTTPException):

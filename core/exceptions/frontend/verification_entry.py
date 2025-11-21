@@ -92,3 +92,19 @@ class FrontendCreateVerifDefaultVerifierError(FrontendHttpException):
             detail=detail,
             company_id=company_id
         )
+
+
+class FrontendVerificationDateBlockError(FrontendHttpException):
+    def __init__(
+        self,
+        detail: str = (
+            "Создание или редактирование записи поверки на указанную дату "
+            "невозможно."
+        ),
+        company_id: int = None
+    ):
+        super().__init__(
+            status_code=status_codes.HTTP_409_CONFLICT,
+            detail=detail,
+            company_id=company_id
+        )

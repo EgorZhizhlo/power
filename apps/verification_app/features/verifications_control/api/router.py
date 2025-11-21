@@ -178,7 +178,7 @@ async def create_verification_entry(
         )
 
     empl_cities_repo = EmployeeCitiesRepository(session)
-    company_repo = CompanyRepository(session)
+    company_repo = CompanyRepository(session=session, company_id=company_id)
     verification_entry_repo = VerificationEntryRepository(session)
     verifier_repo = VerifierRepository(session)
     location_repo = LocationRepository(session)
@@ -417,7 +417,7 @@ async def update_verification_entry(
     employee_id = employee_data.id
 
     empl_cities_repo = EmployeeCitiesRepository(session)
-    company_repo = CompanyRepository(session)
+    company_repo = CompanyRepository(session=session, company_id=company_id)
     verification_entry_repo = VerificationEntryRepository(session)
     location_repo = LocationRepository(session)
     equipment_repo = EquipmentRepository(session)

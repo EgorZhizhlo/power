@@ -17,7 +17,7 @@ from access_control import JwtData, auditor_verifier_exception
 
 arshin_router = APIRouter(prefix="/api/arshin")
 
-ARSHIN_BASE_URL = "https://fgis.gost.ru/fundmetrology/eapi"
+ARSHIN_BASE_URL = "https://fgis.gost.ru/fundmetrology/eapi/"
 PAGE_SIZE = 100
 RETRIES = 4
 AIOHTTP_TIMEOUT = 60
@@ -36,7 +36,7 @@ async def fetch_page(session, org_title, date_str, start):
 
     for attempt in range(RETRIES):
         try:
-            async with session.get("/vri", params=params) as resp:
+            async with session.get("vri", params=params) as resp:
                 if resp.status in (429, 500, 502, 503):
                     await asyncio.sleep(0.2 * (attempt + 1))
                     continue
@@ -59,11 +59,13 @@ async def process_vri(
     date_to: date_,
 ) -> Dict[str, Any]:
 
+    # получаем название компании
     res = await db.execute(
         select(CompanyModel.name).where(CompanyModel.id == company_id)
     )
     org_title = res.scalar_one()
 
+    # выбираем записи, у которых отсутствует verification_number
     res2 = await db.execute(
         select(
             VerificationEntryModel.id,
@@ -74,15 +76,14 @@ async def process_vri(
             VerificationEntryModel.verification_date >= date_from,
             VerificationEntryModel.verification_date <= date_to,
             or_(
-                VerificationEntryModel.verification_result.is_(None),
-                func.length(
-                    func.trim(
-                        VerificationEntryModel.verification_result)) == 0,
+                VerificationEntryModel.verification_number.is_(None),
+                func.length(func.trim(VerificationEntryModel.verification_number)) == 0,
             ),
         )
     )
     rows: List[Tuple[int, str, date_]] = res2.all()
 
+    # группируем по датам
     by_date: Dict[date_, List[Tuple[int, str]]] = {}
     for vid, fac_no, d in rows:
         if fac_no:
@@ -91,6 +92,7 @@ async def process_vri(
     updated = 0
     not_found = 0
 
+    # основной цикл
     for ver_date, entries in sorted(by_date.items()):
         date_str = ver_date.strftime("%Y-%m-%d")
 
@@ -135,8 +137,9 @@ async def process_vri(
                 )
                 models = res3.scalars().all()
 
+                # ВАЖНО: пишем в verification_number
                 for m in models:
-                    m.verification_result = id2doc[m.id]
+                    m.verification_number = id2doc[m.id]
 
                 updated += len(updates)
 
